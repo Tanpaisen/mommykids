@@ -73,65 +73,33 @@
         <a href="#" class="btn-primary shrink-0">Nhận ngay</a>
     </section>
 
-    {{-- ============ PRODUCT SECTION (repeatable) ============ --}}
-    @php
-        // Sample data — replace with real data from a ProductController in production.
-        $sampleProducts = collect(range(1, 6))->map(fn ($i) => [
-            'name' => "Sản phẩm mẹ & bé #$i",
-            'image' => 'https://via.placeholder.com/300?text=Product+' . $i,
-            'price' => 245000 + $i * 10000,
-            'old_price' => $i % 2 === 0 ? 295000 + $i * 10000 : null,
-            'discount' => $i % 2 === 0 ? 17 : null,
-            'url' => '#',
-        ]);
-    @endphp
-
-    <section class="card p-4 lg:p-6">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl">🍼</span>
-                <h2 class="font-display font-bold text-lg lg:text-xl text-ink">Sữa Cho Bé</h2>
+    {{-- ============ PRODUCT SECTIONS ============ --}}
+    {{-- $sections comes from App\Http\Controllers\HomeController@index — one block per category with products --}}
+    @forelse ($sections as $section)
+        <section class="card p-4 lg:p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">{{ $section['icon'] ?? '🛍️' }}</span>
+                    <h2 class="font-display font-bold text-lg lg:text-xl text-ink">{{ $section['title'] }}</h2>
+                </div>
+                <a href="{{ $section['url'] }}" class="text-sm font-semibold text-coral flex items-center gap-1">
+                    Xem tất cả
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
             </div>
-            <a href="#" class="text-sm font-semibold text-coral flex items-center gap-1">
-                Xem tất cả
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-            </a>
-        </div>
 
-        {{-- Sub-category chips --}}
-        <div class="flex gap-2 mb-5 overflow-x-auto pb-1">
-            @foreach (['Sữa bột các loại', 'Sữa theo công dụng', 'Sữa theo xuất xứ', 'Sữa theo độ tuổi'] as $tab)
-                <button class="shrink-0 px-4 py-1.5 rounded-pill text-sm font-medium border border-coral-light hover:border-coral hover:text-coral">{{ $tab }}</button>
-            @endforeach
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            @foreach ($sampleProducts as $product)
-                <x-product-card :product="$product" />
-            @endforeach
-        </div>
-    </section>
-
-    <section class="card p-4 lg:p-6">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl">🧷</span>
-                <h2 class="font-display font-bold text-lg lg:text-xl text-ink">Bỉm - Tã & Vệ Sinh</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                @foreach ($section['products'] as $product)
+                    <x-product-card :product="$product" :product-id="$product['id']" />
+                @endforeach
             </div>
-            <a href="#" class="text-sm font-semibold text-coral flex items-center gap-1">
-                Xem tất cả
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-            </a>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            @foreach ($sampleProducts as $product)
-                <x-product-card :product="$product" />
-            @endforeach
-        </div>
-    </section>
+        </section>
+    @empty
+        <section class="card p-8 text-center text-ink-soft">
+            Chưa có danh mục/sản phẩm nào. Chạy <code class="bg-cream px-1.5 py-0.5 rounded">php artisan db:seed</code> để nạp dữ liệu mẫu.
+        </section>
+    @endforelse
 
 @endsection

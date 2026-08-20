@@ -11,39 +11,30 @@ use Illuminate\Support\Facades\Route;
 class RouteServiceProvider extends ServiceProvider
 {
     /**
-     * The path to the "home" route for your application.
-     *
-     * Typically, users are redirected here after authentication.
-     *
-     * @var string
+     * The path to your application's "home" route.
      */
-    public const HOME = '/home';
+    public const HOME = '/';
 
-    /**
-     * Define your route model bindings, pattern filters, and other route configuration.
-     */
     public function boot(): void
     {
         $this->configureRateLimiting();
 
         $this->routes(function () {
+            // routes/api.php -> real stateless JSON REST API, prefixed /api, "api" middleware group
             Route::middleware('api')
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
+            // routes/web.php -> Blade storefront pages + session-based /api/cart used by resources/js/app.js
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
-            Route::middleware(['web']) // Tạm thời để 'web' để test. Sau khi làm xong Đăng nhập sẽ đổi thành: ['web', 'auth', 'role:admin']
-                ->prefix('admin')
-                ->name('admin.')
+            // routes/admin.php -> Admin panel (auth:admin guard, permission-gated per module)
+            Route::middleware('web')
                 ->group(base_path('routes/admin.php'));
         });
     }
 
-    /**
-     * Configure the rate limiters for the application.
-     */
     protected function configureRateLimiting(): void
     {
         RateLimiter::for('api', function (Request $request) {
