@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\PermissionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -62,20 +63,46 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // ── Module 2: Kiến thức & Sản phẩm ──
     Route::get('/giai-doan', fn () => (new PlaceholderController)->index('Giai đoạn của bé'))->name('stages.index');
     Route::get('/danh-muc', fn () => (new PlaceholderController)->index('Danh mục & Thuộc tính'))->name('categories.index');
     Route::get('/san-pham', fn () => (new PlaceholderController)->index('Sản phẩm'))->name('products.index');
+
+    // ── Module 3: Cẩm nang & Tương tác ──
     Route::get('/cam-nang', fn () => (new PlaceholderController)->index('Bài viết Cẩm nang'))->name('articles.index');
     Route::get('/hoi-dap', fn () => (new PlaceholderController)->index('Trung tâm Hỏi đáp'))->name('comments.index');
+
+    // ── Module 4: Đơn hàng & Dòng tiền ──
     Route::get('/don-hang', fn () => (new PlaceholderController)->index('Đơn hàng'))->name('orders.index');
     Route::get('/van-chuyen', fn () => (new PlaceholderController)->index('Vận chuyển (GHN)'))->name('shipments.index');
     Route::get('/doi-tra', fn () => (new PlaceholderController)->index('Đổi trả & Hoàn tiền'))->name('refunds.index');
+
+    // ── Module 5: CRM & Marketing ──
     Route::get('/khach-hang', fn () => (new PlaceholderController)->index('Khách hàng'))->name('clients.index');
     Route::get('/voucher', fn () => (new PlaceholderController)->index('Voucher'))->name('vouchers.index');
     Route::get('/banner', fn () => (new PlaceholderController)->index('Banner'))->name('banners.index');
 
-    Route::resource('roles', RoleController::class)->except(['show']);
+    // ── Hệ thống: Tài khoản quản trị ──
+    Route::get('/quan-tri-vien', [AdminController::class, 'index'])->name('admins.index');
     Route::get('/quan-tri-vien/them', [AdminController::class, 'create'])->name('admins.create');
     Route::post('/quan-tri-vien', [AdminController::class, 'store'])->name('admins.store');
     Route::patch('/quan-tri-vien/{admin}/vai-tro', [AdminController::class, 'updateRole'])->name('admins.updateRole');
+    Route::delete('/quan-tri-vien/{admin}', [AdminController::class, 'destroy'])->name('admins.destroy');
+
+    // ── Hệ thống: Nhóm quyền (CRUD tên role) ──
+    Route::resource('nhom-quyen', RoleController::class)
+        ->except(['show'])
+        ->names([
+            'index'   => 'roles.index',
+            'create'  => 'roles.create',
+            'store'   => 'roles.store',
+            'edit'    => 'roles.edit',
+            'update'  => 'roles.update',
+            'destroy' => 'roles.destroy',
+        ]);
+
+    // ── Hệ thống: Phân quyền (permissions của từng role, tìm bằng id) ──
+    Route::get('/phan-quyen', [PermissionController::class, 'index'])->name('permissions.index');
+    Route::get('/phan-quyen/{nhomQuyen}', [PermissionController::class, 'edit'])->name('permissions.edit');
+    Route::put('/phan-quyen/{nhomQuyen}', [PermissionController::class, 'update'])->name('permissions.update');
 });

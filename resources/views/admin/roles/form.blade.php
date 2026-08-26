@@ -9,14 +9,16 @@
 
 <div class="card p-5 lg:p-6 space-y-6">
 
-    <div>
-        <label class="block text-sm font-semibold text-ink mb-1.5">Tên nhóm quyền</label>
-        <input type="text" name="name" value="{{ old('name', $role->name ?? '') }}" required
-               {{ $isSuperAdmin ? 'readonly' : '' }}
-               placeholder="VD: Biên tập viên, Kế toán, Nhân viên CSKH..."
-               class="w-full max-w-md h-11 px-4 rounded-xl border border-admin-border focus:border-coral outline-none text-sm {{ $isSuperAdmin ? 'bg-admin-bg text-ink-soft' : '' }}">
-        @error('name') <p class="text-xs text-coral mt-1">{{ $message }}</p> @enderror
-    </div>
+    @unless ($hideNameField)
+        <div>
+            <label class="block text-sm font-semibold text-ink mb-1.5">Tên nhóm quyền</label>
+            <input type="text" name="name" value="{{ old('name', $role->name ?? '') }}" required
+                {{ $isSuperAdmin ? 'readonly' : '' }}
+                placeholder="VD: Biên tập viên, Kế toán, Nhân viên CSKH..."
+                class="w-full max-w-md h-11 px-4 rounded-xl border border-admin-border focus:border-coral outline-none text-sm {{ $isSuperAdmin ? 'bg-admin-bg text-ink-soft' : '' }}">
+            @error('name') <p class="text-xs text-coral mt-1">{{ $message }}</p> @enderror
+        </div>
+    @endunless
 
     @if ($isSuperAdmin)
         <p class="text-sm text-gold bg-gold-light rounded-xl px-4 py-3">
