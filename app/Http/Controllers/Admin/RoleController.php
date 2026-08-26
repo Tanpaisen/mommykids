@@ -15,7 +15,7 @@ class RoleController extends Controller
      * in admin/roles/form.blade.php and the sidebar menu (admin/partials/sidebar.blade.php)
      * always stay in sync. Add a new permission here + a matching Gate check where needed.
      */
-    protected function permissionGroups(): array
+    public function permissionGroups(): array
     {
         $labels = [
             'dashboard' => ['icon' => '📊', 'label' => 'Dashboard & Thống kê', 'permissions' => [

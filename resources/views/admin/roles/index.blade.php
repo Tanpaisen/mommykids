@@ -54,40 +54,4 @@
         </table>
     </div>
 
-    {{-- ============ ADMIN ACCOUNTS + ROLE ASSIGNMENT ============ --}}
-    <div class="card p-5 lg:p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="font-display font-bold text-lg text-ink">Tài khoản quản trị</h2>
-            <a href="{{ route('admin.admins.create') ?? '#' }}" class="btn-outline text-sm px-4 py-2">+ Thêm nhân viên</a>
-        </div>
-
-        <div class="divide-y divide-admin-border">
-            @forelse ($admins as $admin)
-                <div class="flex items-center gap-3 py-3">
-                    <span class="w-9 h-9 rounded-full bg-coral-light text-coral font-display font-bold flex items-center justify-center text-sm">
-                        {{ strtoupper(substr($admin->name, 0, 1)) }}
-                    </span>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-ink">{{ $admin->name }}</p>
-                        <p class="text-xs text-ink-soft truncate">{{ $admin->email }}</p>
-                    </div>
-
-                    {{-- Inline role reassignment --}}
-                    <form action="{{ route('admin.admins.updateRole', $admin) ?? '#' }}" method="POST" class="flex items-center gap-2">
-                        @csrf @method('PATCH')
-                        <select name="role" onchange="this.form.submit()"
-                                class="text-sm border border-admin-border rounded-pill px-3 py-1.5 focus:border-coral outline-none">
-                            <option value="">— Chưa gán —</option>
-                            @foreach ($roles as $role)
-                                <option value="{{ $role->name }}" @selected($admin->roles->pluck('name')->contains($role->name))>{{ $role->name }}</option>
-                            @endforeach
-                        </select>
-                    </form>
-                </div>
-            @empty
-                <p class="text-ink-soft text-sm py-6 text-center">Chưa có tài khoản quản trị nào khác ngoài bạn.</p>
-            @endforelse
-        </div>
-    </div>
-
 @endsection
