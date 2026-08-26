@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\OrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,7 +74,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/hoi-dap', fn () => (new PlaceholderController)->index('Trung tâm Hỏi đáp'))->name('comments.index');
 
     // ── Module 4: Đơn hàng & Dòng tiền ──
-    Route::get('/don-hang', fn () => (new PlaceholderController)->index('Đơn hàng'))->name('orders.index');
+    // ── Đơn hàng & Vận chuyển ──────────────────────────────────
+    Route::prefix('don-hang')->name('orders.')->group(function () {
+        Route::get('/',                         [OrderController::class, 'index'])         ->name('index');
+        Route::get('/{order}',                  [OrderController::class, 'show'])          ->name('show');
+        Route::patch('/{order}/status',         [OrderController::class, 'updateStatus'])  ->name('status');
+
+        // GHN API
+        Route::post('/tinh-phi-ship',           [OrderController::class, 'calcFee'])       ->name('calc-fee');
+        Route::post('/{order}/tao-van-don',     [OrderController::class, 'createShipment'])->name('shipment.create');
+        Route::get('/{order}/tra-cuu',          [OrderController::class, 'trackShipment']) ->name('shipment.track');
+        Route::get('/{order}/in-van-don',       [OrderController::class, 'printLabel'])    ->name('shipment.print');
+        Route::delete('/{order}/huy-van-don',   [OrderController::class, 'cancelShipment'])->name('shipment.cancel');
+    });
     Route::get('/van-chuyen', fn () => (new PlaceholderController)->index('Vận chuyển (GHN)'))->name('shipments.index');
     Route::get('/doi-tra', fn () => (new PlaceholderController)->index('Đổi trả & Hoàn tiền'))->name('refunds.index');
 
