@@ -6,13 +6,12 @@ use App\Models\Category;
 use App\Services\CartService;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use App\Services\GHNService;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(GHNService::class);
+        //
     }
 
     public function boot(): void
