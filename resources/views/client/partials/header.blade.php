@@ -62,7 +62,7 @@
         </div>
     </div>
 
-    {{-- Utility strip: quick links 
+    {{-- Utility strip: quick links --}}
     <div class="hidden lg:block bg-coral-light/60">
         <div class="max-w-[1280px] mx-auto px-6 py-1.5 flex items-center gap-6 text-xs font-medium text-ink-soft">
             <a href="#" class="hover:text-coral">Hàng mới</a>
@@ -77,5 +77,4 @@
             @endauth
         </div>
     </div>
-    --}}
 </header>

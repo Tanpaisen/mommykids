@@ -31,10 +31,4 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'vietqr' => [
-    'bank_id' => env('VIETQR_BANK_ID', '970407'),
-    'account_no' => env('VIETQR_ACCOUNT_NO'),
-    'account_name' => env('VIETQR_ACCOUNT_NAME', 'MOMMYKIDS'),
-],
-
 ];
