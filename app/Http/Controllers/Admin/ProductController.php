@@ -15,6 +15,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        // SoftDeletes tự loại sản phẩm deleted_at != NULL.
         $query = Product::query()
             ->with('category');
 
@@ -28,7 +29,10 @@ class ProductController extends Controller
         }
 
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
+            $query->where(
+                'category_id',
+                $request->category_id
+            );
         }
 
         if ($request->status === 'active') {
@@ -52,9 +56,12 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
+        $trashCount = Product::onlyTrashed()->count();
+
         return view('admin.products.index', compact(
             'products',
-            'categories'
+            'categories',
+            'trashCount'
         ));
     }
 
@@ -91,12 +98,11 @@ class ProductController extends Controller
             $validated['name']
         );
 
-        /*
-         * Trường hợp người dùng để slug rỗng nhưng slug tự sinh
-         * lại trùng với sản phẩm khác.
-         */
+        // Kiểm tra cả sản phẩm nằm trong thùng rác.
         if (
-            Product::where('slug', $validated['slug'])->exists()
+            Product::withTrashed()
+                ->where('slug', $validated['slug'])
+                ->exists()
         ) {
             return back()
                 ->withInput()
@@ -105,26 +111,17 @@ class ProductController extends Controller
                 ]);
         }
 
-        $validated['is_active'] = $request->boolean('is_active');
+        $validated['is_active'] =
+            $request->boolean('is_active');
 
-        /*
-        |--------------------------------------------------------------------------
-        | Ảnh đại diện
-        |--------------------------------------------------------------------------
-        */
-
+        // Ảnh đại diện.
         if ($request->hasFile('image')) {
             $validated['image'] = $request
                 ->file('image')
                 ->store('products/main', 'public');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Gallery
-        |--------------------------------------------------------------------------
-        */
-
+        // Gallery.
         $gallery = [];
 
         if ($request->hasFile('images')) {
@@ -140,7 +137,9 @@ class ProductController extends Controller
 
         unset(
             $validated['stage_ids'],
-            $validated['tag_ids']
+            $validated['tag_ids'],
+            $validated['remove_image'],
+            $validated['remove_gallery']
         );
 
         $product = Product::create($validated);
@@ -196,7 +195,6 @@ class ProductController extends Controller
             'nullable',
             'string',
             'max:255',
-            'unique:products,slug,' . $product->id,
         ];
 
         $validated = $request->validate(
@@ -209,7 +207,8 @@ class ProductController extends Controller
             $validated['name']
         );
 
-        $slugExists = Product::query()
+        // Kiểm tra cả sản phẩm đã xóa mềm.
+        $slugExists = Product::withTrashed()
             ->where('slug', $validated['slug'])
             ->where('id', '!=', $product->id)
             ->exists();
@@ -222,27 +221,22 @@ class ProductController extends Controller
                 ]);
         }
 
-        $validated['is_active'] = $request->boolean('is_active');
+        $validated['is_active'] =
+            $request->boolean('is_active');
 
         /*
         |--------------------------------------------------------------------------
-        | Xóa ảnh đại diện hiện tại nếu admin yêu cầu
+        | Ảnh đại diện
         |--------------------------------------------------------------------------
         */
 
         if ($request->boolean('remove_image')) {
             $this->deleteLocalImage($product->image);
+
             $validated['image'] = null;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Thay ảnh đại diện
-        |--------------------------------------------------------------------------
-        */
-
         if ($request->hasFile('image')) {
-
             $this->deleteLocalImage($product->image);
 
             $validated['image'] = $request
@@ -252,17 +246,11 @@ class ProductController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Gallery hiện tại
+        | Gallery
         |--------------------------------------------------------------------------
         */
 
         $gallery = $product->images ?? [];
-
-        /*
-        |--------------------------------------------------------------------------
-        | Xóa ảnh gallery được chọn
-        |--------------------------------------------------------------------------
-        */
 
         $removeGallery = $request->input(
             'remove_gallery',
@@ -270,11 +258,17 @@ class ProductController extends Controller
         );
 
         if (is_array($removeGallery)) {
-
             foreach ($removeGallery as $imageToRemove) {
-
-                if (in_array($imageToRemove, $gallery, true)) {
-                    $this->deleteLocalImage($imageToRemove);
+                if (
+                    in_array(
+                        $imageToRemove,
+                        $gallery,
+                        true
+                    )
+                ) {
+                    $this->deleteLocalImage(
+                        $imageToRemove
+                    );
                 }
             }
 
@@ -291,16 +285,8 @@ class ProductController extends Controller
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Thêm ảnh gallery mới
-        |--------------------------------------------------------------------------
-        */
-
         if ($request->hasFile('images')) {
-
             foreach ($request->file('images') as $file) {
-
                 $gallery[] = $file->store(
                     'products/gallery',
                     'public'
@@ -312,7 +298,9 @@ class ProductController extends Controller
 
         unset(
             $validated['stage_ids'],
-            $validated['tag_ids']
+            $validated['tag_ids'],
+            $validated['remove_image'],
+            $validated['remove_gallery']
         );
 
         $product->update($validated);
@@ -327,30 +315,170 @@ class ProductController extends Controller
 
         return redirect()
             ->route('admin.products.index')
-            ->with('success', 'Cập nhật sản phẩm thành công.');
+            ->with(
+                'success',
+                'Cập nhật sản phẩm thành công.'
+            );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Xóa mềm
+    |--------------------------------------------------------------------------
+    */
 
     public function destroy(Product $product)
     {
-        $this->deleteLocalImage($product->image);
+        /*
+         * Lưu người thực hiện.
+         *
+         * Hiện middleware auth admin của project đang tắt,
+         * nên khi chưa đăng nhập giá trị có thể là NULL.
+         */
+        $product->update([
+            'deleted_by' => auth()->id(),
+
+            // Xóa lần nữa sau khi đã từng restore thì reset.
+            'restored_by' => null,
+            'restored_at' => null,
+        ]);
+
+        /*
+         * Chỉ cập nhật deleted_at.
+         *
+         * KHÔNG xóa ảnh.
+         * KHÔNG detach Stage.
+         * KHÔNG detach Tag.
+         */
+        $product->delete();
+
+        return redirect()
+            ->route('admin.products.index')
+            ->with(
+                'success',
+                'Sản phẩm đã được chuyển vào thùng rác.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Thùng rác
+    |--------------------------------------------------------------------------
+    */
+
+    public function trash(Request $request)
+    {
+        $query = Product::onlyTrashed()
+            ->with('category');
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+
+            $query->where(function ($q) use ($search) {
+                $q->where(
+                    'name',
+                    'like',
+                    '%' . $search . '%'
+                )
+                ->orWhere(
+                    'slug',
+                    'like',
+                    '%' . $search . '%'
+                );
+            });
+        }
+
+        $products = $query
+            ->orderByDesc('deleted_at')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view(
+            'admin.products.trash',
+            compact('products')
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Khôi phục
+    |--------------------------------------------------------------------------
+    */
+
+    public function restore(string $id)
+    {
+        $product = Product::onlyTrashed()
+            ->findOrFail($id);
+
+        /*
+         * Laravel sẽ đưa deleted_at về NULL.
+         */
+        $product->restore();
+
+        /*
+         * Ghi lại lịch sử khôi phục.
+         *
+         * deleted_by vẫn giữ nguyên để biết trước đó ai xóa.
+         */
+        $product->update([
+            'restored_by' => auth()->id(),
+            'restored_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('admin.products.trash')
+            ->with(
+                'success',
+                'Khôi phục sản phẩm thành công.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Xóa vĩnh viễn
+    |--------------------------------------------------------------------------
+    */
+
+    public function forceDelete(string $id)
+    {
+        $product = Product::onlyTrashed()
+            ->findOrFail($id);
+
+        /*
+         * Chỉ lúc xóa vĩnh viễn mới xóa file ảnh.
+         */
+        $this->deleteLocalImage(
+            $product->image
+        );
 
         foreach ($product->images ?? [] as $image) {
             $this->deleteLocalImage($image);
         }
 
         /*
-         * Với belongsToMany, detach trước cho rõ ràng.
-         * Nếu pivot đã có cascade thì thao tác này vẫn an toàn.
+         * Xóa quan hệ pivot.
          */
         $product->stages()->detach();
         $product->tags()->detach();
 
-        $product->delete();
+        /*
+         * Xóa thật khỏi database.
+         */
+        $product->forceDelete();
 
         return redirect()
-            ->route('admin.products.index')
-            ->with('success', 'Xóa sản phẩm thành công.');
+            ->route('admin.products.trash')
+            ->with(
+                'success',
+                'Đã xóa vĩnh viễn sản phẩm.'
+            );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validation
+    |--------------------------------------------------------------------------
+    */
 
     private function rules(): array
     {
@@ -370,7 +498,6 @@ class ProductController extends Controller
                 'nullable',
                 'string',
                 'max:255',
-                'unique:products,slug',
             ],
 
             'description' => [
@@ -405,14 +532,10 @@ class ProductController extends Controller
 
             'is_active' => [
                 'nullable',
+                'boolean',
             ],
 
-            /*
-            |--------------------------------------------------------------------------
-            | Ảnh
-            |--------------------------------------------------------------------------
-            */
-
+            // Ảnh đại diện.
             'image' => [
                 'nullable',
                 'image',
@@ -420,6 +543,7 @@ class ProductController extends Controller
                 'max:4096',
             ],
 
+            // Gallery.
             'images' => [
                 'nullable',
                 'array',
@@ -442,12 +566,7 @@ class ProductController extends Controller
                 'array',
             ],
 
-            /*
-            |--------------------------------------------------------------------------
-            | Stage
-            |--------------------------------------------------------------------------
-            */
-
+            // Stage.
             'stage_ids' => [
                 'nullable',
                 'array',
@@ -457,12 +576,7 @@ class ProductController extends Controller
                 'exists:stages,id',
             ],
 
-            /*
-            |--------------------------------------------------------------------------
-            | Tag
-            |--------------------------------------------------------------------------
-            */
-
+            // Tag.
             'tag_ids' => [
                 'nullable',
                 'array',
@@ -486,9 +600,6 @@ class ProductController extends Controller
             'name.required' =>
                 'Vui lòng nhập tên sản phẩm.',
 
-            'slug.unique' =>
-                'Slug sản phẩm đã tồn tại.',
-
             'price.required' =>
                 'Vui lòng nhập giá sản phẩm.',
 
@@ -500,6 +611,9 @@ class ProductController extends Controller
 
             'old_price.integer' =>
                 'Giá cũ phải là số.',
+
+            'old_price.min' =>
+                'Giá cũ không được nhỏ hơn 0.',
 
             'discount_percent.integer' =>
                 'Phần trăm giảm phải là số nguyên.',
@@ -553,6 +667,12 @@ class ProductController extends Controller
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Xóa ảnh local
+    |--------------------------------------------------------------------------
+    */
+
     private function deleteLocalImage(
         ?string $image
     ): void {
@@ -560,10 +680,14 @@ class ProductController extends Controller
             return;
         }
 
+        // Không xóa URL ảnh bên ngoài.
         if (
             Str::startsWith(
                 $image,
-                ['http://', 'https://']
+                [
+                    'http://',
+                    'https://',
+                ]
             )
         ) {
             return;

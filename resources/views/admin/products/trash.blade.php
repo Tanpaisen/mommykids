@@ -1,13 +1,13 @@
 @extends('admin.layouts.app')
 
-@section('page_title', 'Sản phẩm')
-@section('page_subtitle', 'Quản lý sản phẩm, hình ảnh, giá và tồn kho')
+@section('page_title', 'Thùng rác sản phẩm')
+@section('page_subtitle', 'Khôi phục hoặc xóa vĩnh viễn các sản phẩm đã xóa')
 
 
 @section('content')
 
 {{-- =====================================================
-    HEADER ACTIONS
+    HEADER
 ====================================================== --}}
 <div
     class="flex flex-col sm:flex-row
@@ -16,236 +16,98 @@
 >
 
     <div>
+
         <h2 class="text-lg font-semibold text-ink">
-            Danh sách sản phẩm
+            Thùng rác sản phẩm
         </h2>
 
         <p class="text-sm text-ink-soft mt-1">
-            Quản lý các sản phẩm đang hoạt động trong hệ thống.
+            Danh sách các sản phẩm đã được xóa mềm.
         </p>
-    </div>
-
-
-    <div class="flex flex-wrap items-center gap-3">
-
-        {{-- THÙNG RÁC SẢN PHẨM --}}
-        <a
-            href="{{ route('admin.products.trash') }}"
-            class="inline-flex items-center gap-2
-                   h-11 px-4
-                   rounded-xl
-                   border border-admin-border
-                   bg-white
-                   text-sm font-medium text-ink
-                   hover:border-red-300
-                   hover:text-red-500
-                   transition"
-        >
-            <span class="text-base">
-                🗑️
-            </span>
-
-            <span>
-                Thùng rác
-            </span>
-
-            @if (($trashCount ?? 0) > 0)
-                <span
-                    class="inline-flex
-                           min-w-5 h-5
-                           items-center justify-center
-                           rounded-full
-                           bg-red-500
-                           px-1.5
-                           text-[11px]
-                           font-semibold
-                           text-white"
-                >
-                    {{ $trashCount }}
-                </span>
-            @endif
-        </a>
-
-
-        {{-- THÊM SẢN PHẨM --}}
-        <a
-            href="{{ route('admin.products.create') }}"
-            class="inline-flex items-center justify-center gap-2
-                   h-11 px-5
-                   rounded-xl
-                   bg-coral
-                   text-white
-                   text-sm font-semibold
-                   hover:opacity-90
-                   transition"
-        >
-            <span>+</span>
-
-            <span>
-                Thêm sản phẩm
-            </span>
-        </a>
 
     </div>
+
+
+    <a
+        href="{{ route('admin.products.index') }}"
+        class="inline-flex
+               items-center justify-center gap-2
+               h-11 px-4
+               rounded-xl
+               border border-admin-border
+               bg-white
+               text-sm font-medium text-ink
+               hover:bg-admin-bg
+               transition"
+    >
+        ← Quay lại sản phẩm
+    </a>
 
 </div>
 
 
 
 {{-- =====================================================
-    FILTER
+    SEARCH
 ====================================================== --}}
 <div class="card mb-5">
 
     <form
         method="GET"
-        action="{{ route('admin.products.index') }}"
-        class="grid grid-cols-1
-               md:grid-cols-2
-               xl:grid-cols-[2fr_1fr_1fr_auto_auto]
-               gap-3"
+        action="{{ route('admin.products.trash') }}"
+        class="flex flex-col md:flex-row gap-3"
     >
 
-        {{-- SEARCH --}}
         <input
             type="text"
             name="search"
             value="{{ request('search') }}"
-            placeholder="Tìm theo tên hoặc slug sản phẩm..."
-            class="border border-admin-border
-                   rounded-xl px-4 py-3
-                   bg-white
-                   outline-none
-                   focus:border-coral
-                   focus:ring-2
-                   focus:ring-coral/10"
-        >
-
-
-        {{-- CATEGORY --}}
-        <select
-            name="category_id"
-            class="border border-admin-border
-                   rounded-xl px-4 py-3
-                   bg-white
-                   outline-none
-                   focus:border-coral
-                   focus:ring-2
-                   focus:ring-coral/10"
-        >
-            <option value="">
-                Tất cả danh mục
-            </option>
-
-            @foreach ($categories as $category)
-                <option
-                    value="{{ $category->id }}"
-                    @selected(
-                        (string) request('category_id')
-                        ===
-                        (string) $category->id
-                    )
-                >
-                    {{ $category->name }}
-                </option>
-            @endforeach
-        </select>
-
-
-        {{-- STATUS --}}
-        <select
-            name="status"
-            class="border border-admin-border
-                   rounded-xl px-4 py-3
-                   bg-white
-                   outline-none
-                   focus:border-coral
-                   focus:ring-2
-                   focus:ring-coral/10"
-        >
-            <option value="">
-                Tất cả trạng thái
-            </option>
-
-            <option
-                value="active"
-                @selected(request('status') === 'active')
-            >
-                Đang bán
-            </option>
-
-            <option
-                value="inactive"
-                @selected(request('status') === 'inactive')
-            >
-                Đã ẩn
-            </option>
-        </select>
-
-
-        {{-- LOW STOCK --}}
-        <label
-            class="flex items-center justify-center gap-2
+            placeholder="Tìm sản phẩm đã xóa..."
+            class="flex-1
                    border border-admin-border
-                   rounded-xl px-4 py-3
+                   rounded-xl
+                   px-4 py-3
                    bg-white
-                   cursor-pointer
-                   whitespace-nowrap"
+                   outline-none
+                   focus:border-coral
+                   focus:ring-2
+                   focus:ring-coral/10"
         >
-            <input
-                type="checkbox"
-                name="low_stock"
-                value="1"
-                @checked(request()->boolean('low_stock'))
-                class="accent-coral"
-            >
-
-            <span>
-                Tồn kho thấp
-            </span>
-        </label>
 
 
-        {{-- FILTER BUTTON --}}
         <button
             type="submit"
-            class="bg-coral
-                   text-white
+            class="px-6 py-3
                    rounded-xl
-                   px-6 py-3
+                   bg-coral
+                   text-white
                    font-semibold
                    hover:opacity-90
                    transition"
         >
-            Lọc
+            Tìm kiếm
         </button>
 
-    </form>
 
-
-    {{-- RESET FILTER --}}
-    @if (
-        request()->filled('search')
-        || request()->filled('category_id')
-        || request()->filled('status')
-        || request()->boolean('low_stock')
-    )
-
-        <div class="mt-3">
+        @if (request()->filled('search'))
 
             <a
-                href="{{ route('admin.products.index') }}"
-                class="inline-flex items-center gap-1
-                       text-sm text-ink-soft
-                       hover:text-coral
+                href="{{ route('admin.products.trash') }}"
+                class="px-5 py-3
+                       rounded-xl
+                       border border-admin-border
+                       bg-white
+                       text-center
+                       text-ink
+                       hover:bg-admin-bg
                        transition"
             >
-                ↻ Làm mới bộ lọc
+                Xóa lọc
             </a>
 
-        </div>
+        @endif
 
-    @endif
+    </form>
 
 </div>
 
@@ -260,11 +122,8 @@
 
         <table class="w-full min-w-[1100px] text-sm">
 
-            <thead
-                class="bg-admin-bg
-                       text-xs uppercase
-                       text-ink-soft"
-            >
+            <thead class="bg-admin-bg text-xs uppercase text-ink-soft">
+
                 <tr>
 
                     <th class="text-left px-5 py-4">
@@ -280,15 +139,11 @@
                     </th>
 
                     <th class="text-left px-5 py-4">
-                        Giá
-                    </th>
-
-                    <th class="text-center px-5 py-4">
-                        Tồn kho
+                        Người xóa
                     </th>
 
                     <th class="text-left px-5 py-4">
-                        Trạng thái
+                        Thời gian xóa
                     </th>
 
                     <th class="text-right px-5 py-4">
@@ -296,6 +151,7 @@
                     </th>
 
                 </tr>
+
             </thead>
 
 
@@ -322,8 +178,8 @@
                                            shrink-0
                                            rounded-xl
                                            border border-admin-border
-                                           overflow-hidden
                                            bg-white
+                                           overflow-hidden
                                            flex items-center justify-center"
                                 >
 
@@ -369,10 +225,11 @@
                                     </p>
 
                                     <p
-                                        class="text-xs text-ink-soft
-                                               truncate
-                                               max-w-[280px]
-                                               mt-1"
+                                        class="text-xs
+                                               text-ink-soft
+                                               mt-1
+                                               max-w-[300px]
+                                               truncate"
                                         title="{{ $product->slug }}"
                                     >
                                         {{ $product->slug }}
@@ -394,133 +251,69 @@
 
                             <span
                                 class="inline-flex
-                                       bg-admin-bg
                                        rounded-lg
+                                       bg-admin-bg
                                        px-2.5 py-1
                                        text-xs"
                             >
-                                {{ $product->category?->name ?? 'Chưa phân loại' }}
+                                {{ $product->category?->name ?? 'Không có danh mục' }}
                             </span>
 
                         </td>
 
 
-                        {{-- PRICE --}}
+                        {{-- DELETED BY --}}
                         <td class="px-5 py-4">
 
-                            <p class="font-semibold text-coral">
-                                {{ number_format(
-                                    $product->price,
-                                    0,
-                                    ',',
-                                    '.'
-                                ) }}đ
-                            </p>
+                            @if ($product->deleted_by)
 
+                                <div>
 
-                            @if ($product->old_price)
+                                    <p class="font-medium text-ink">
+                                        Admin #{{ $product->deleted_by }}
+                                    </p>
 
-                                <p
-                                    class="text-xs text-ink-soft
-                                           line-through
-                                           mt-1"
-                                >
-                                    {{ number_format(
-                                        $product->old_price,
-                                        0,
-                                        ',',
-                                        '.'
-                                    ) }}đ
-                                </p>
+                                    <p class="text-xs text-ink-soft mt-1">
+                                        ID người thực hiện
+                                    </p>
 
-                            @endif
-
-
-                            @if ($product->discount_percent)
-
-                                <span
-                                    class="inline-flex
-                                           mt-1
-                                           bg-red-50
-                                           text-red-500
-                                           rounded-full
-                                           px-2 py-0.5
-                                           text-xs"
-                                >
-                                    -{{ $product->discount_percent }}%
-                                </span>
-
-                            @endif
-
-                        </td>
-
-
-                        {{-- STOCK --}}
-                        <td class="px-5 py-4 text-center">
-
-                            <span
-                                class="inline-flex
-                                       min-w-10 h-9
-                                       items-center justify-center
-                                       rounded-xl px-2
-                                       {{ $product->stock <= 10
-                                            ? 'bg-red-50 text-red-500'
-                                            : 'bg-admin-bg text-ink' }}
-                                       font-semibold"
-                            >
-                                {{ $product->stock }}
-                            </span>
-
-                        </td>
-
-
-                        {{-- STATUS --}}
-                        <td class="px-5 py-4">
-
-                            @if ($product->is_active)
-
-                                <span
-                                    class="inline-flex
-                                           items-center gap-2
-                                           rounded-full
-                                           bg-green-50
-                                           text-green-600
-                                           px-3 py-1.5
-                                           text-xs
-                                           font-semibold"
-                                >
-
-                                    <span
-                                        class="w-2 h-2
-                                               rounded-full
-                                               bg-green-500"
-                                    ></span>
-
-                                    Đang bán
-
-                                </span>
+                                </div>
 
                             @else
 
                                 <span
                                     class="inline-flex
-                                           items-center gap-2
                                            rounded-full
                                            bg-gray-100
-                                           text-gray-500
-                                           px-3 py-1.5
+                                           px-3 py-1
                                            text-xs
-                                           font-semibold"
+                                           text-gray-500"
                                 >
+                                    Chưa xác định
+                                </span>
 
-                                    <span
-                                        class="w-2 h-2
-                                               rounded-full
-                                               bg-gray-400"
-                                    ></span>
+                            @endif
 
-                                    Đã ẩn
+                        </td>
 
+
+                        {{-- DELETED AT --}}
+                        <td class="px-5 py-4">
+
+                            @if ($product->deleted_at)
+
+                                <p class="font-medium text-ink">
+                                    {{ $product->deleted_at->format('H:i') }}
+                                </p>
+
+                                <p class="text-xs text-ink-soft mt-1">
+                                    {{ $product->deleted_at->format('d/m/Y') }}
+                                </p>
+
+                            @else
+
+                                <span class="text-ink-soft">
+                                    —
                                 </span>
 
                             @endif
@@ -531,43 +324,58 @@
                         {{-- ACTION --}}
                         <td class="px-5 py-4">
 
-                            <div class="flex justify-end gap-2">
+                            <div
+                                class="flex
+                                       items-center
+                                       justify-end
+                                       gap-2"
+                            >
 
-                                {{-- EDIT --}}
-                                <a
-                                    href="{{ route(
-                                        'admin.products.edit',
-                                        $product
-                                    ) }}"
-                                    class="px-4 py-2
-                                           border border-admin-border
-                                           rounded-lg
-                                           text-ink
-                                           hover:border-coral
-                                           hover:text-coral
-                                           transition"
-                                >
-                                    Sửa
-                                </a>
-
-
-                                {{-- SOFT DELETE --}}
+                                {{-- RESTORE --}}
                                 <button
                                     type="button"
                                     data-action="{{ route(
-                                        'admin.products.destroy',
-                                        $product
+                                        'admin.products.restore',
+                                        $product->id
                                     ) }}"
                                     data-name="{{ $product->name }}"
-                                    onclick="openDeleteProductModal(this)"
-                                    class="px-4 py-2
+                                    onclick="openRestoreProductModal(this)"
+                                    class="inline-flex
+                                           items-center gap-2
+                                           rounded-xl
+                                           bg-green-50
+                                           px-4 py-2.5
+                                           text-sm
+                                           font-medium
+                                           text-green-600
+                                           hover:bg-green-100
+                                           transition"
+                                >
+                                    ↶ Khôi phục
+                                </button>
+
+
+                                {{-- FORCE DELETE --}}
+                                <button
+                                    type="button"
+                                    data-action="{{ route(
+                                        'admin.products.forceDelete',
+                                        $product->id
+                                    ) }}"
+                                    data-name="{{ $product->name }}"
+                                    onclick="openForceDeleteProductModal(this)"
+                                    class="inline-flex
+                                           items-center gap-2
+                                           rounded-xl
                                            bg-red-50
+                                           px-4 py-2.5
+                                           text-sm
+                                           font-medium
                                            text-red-500
-                                           rounded-lg
                                            hover:bg-red-100
                                            transition"
                                 >
-                                    Xóa
+                                    🗑 Xóa vĩnh viễn
                                 </button>
 
                             </div>
@@ -581,21 +389,36 @@
                     <tr>
 
                         <td
-                            colspan="7"
+                            colspan="6"
                             class="py-20 text-center"
                         >
 
-                            <div class="text-4xl">
-                                🛍️
+                            <div class="text-5xl">
+                                🗑️
                             </div>
 
-                            <p class="font-semibold mt-3 text-ink">
-                                Không tìm thấy sản phẩm
+                            <p class="mt-4 font-semibold text-ink">
+                                Thùng rác đang trống
                             </p>
 
-                            <p class="text-sm text-ink-soft mt-1">
-                                Không có sản phẩm phù hợp với bộ lọc hiện tại.
+                            <p class="mt-1 text-sm text-ink-soft">
+                                Chưa có sản phẩm nào bị xóa.
                             </p>
+
+
+                            <a
+                                href="{{ route('admin.products.index') }}"
+                                class="inline-flex
+                                       mt-5
+                                       px-5 py-2.5
+                                       rounded-xl
+                                       bg-coral
+                                       text-white
+                                       text-sm
+                                       font-semibold"
+                            >
+                                Quay lại sản phẩm
+                            </a>
 
                         </td>
 
@@ -645,7 +468,7 @@
                     {{ $products->total() }}
                 </strong>
 
-                sản phẩm
+                sản phẩm đã xóa
 
             </p>
 
@@ -671,7 +494,6 @@
 
                 <div class="flex items-center gap-1">
 
-                    {{-- PREVIOUS --}}
                     @if ($products->onFirstPage())
 
                         <span
@@ -693,8 +515,7 @@
                                    rounded-xl
                                    flex items-center justify-center
                                    hover:border-coral
-                                   hover:text-coral
-                                   transition"
+                                   hover:text-coral"
                         >
                             ‹
                         </a>
@@ -702,7 +523,6 @@
                     @endif
 
 
-                    {{-- FIRST PAGE --}}
                     @if ($start > 1)
 
                         <a
@@ -710,10 +530,7 @@
                             class="w-10 h-10
                                    border border-admin-border
                                    rounded-xl
-                                   flex items-center justify-center
-                                   hover:border-coral
-                                   hover:text-coral
-                                   transition"
+                                   flex items-center justify-center"
                         >
                             1
                         </a>
@@ -729,7 +546,6 @@
                     @endif
 
 
-                    {{-- PAGE WINDOW --}}
                     @for ($page = $start; $page <= $end; $page++)
 
                         @if ($page === $current)
@@ -754,8 +570,7 @@
                                        rounded-xl
                                        flex items-center justify-center
                                        hover:border-coral
-                                       hover:text-coral
-                                       transition"
+                                       hover:text-coral"
                             >
                                 {{ $page }}
                             </a>
@@ -765,7 +580,6 @@
                     @endfor
 
 
-                    {{-- LAST PAGE --}}
                     @if ($end < $last)
 
                         @if ($end < $last - 1)
@@ -782,10 +596,7 @@
                             class="w-10 h-10
                                    border border-admin-border
                                    rounded-xl
-                                   flex items-center justify-center
-                                   hover:border-coral
-                                   hover:text-coral
-                                   transition"
+                                   flex items-center justify-center"
                         >
                             {{ $last }}
                         </a>
@@ -793,7 +604,6 @@
                     @endif
 
 
-                    {{-- NEXT --}}
                     @if ($products->hasMorePages())
 
                         <a
@@ -803,8 +613,7 @@
                                    rounded-xl
                                    flex items-center justify-center
                                    hover:border-coral
-                                   hover:text-coral
-                                   transition"
+                                   hover:text-coral"
                         >
                             ›
                         </a>
@@ -836,14 +645,13 @@
 
 
 {{-- =====================================================
-    SOFT DELETE MODAL
+    RESTORE MODAL
 ====================================================== --}}
 <div
-    id="deleteProductModal"
+    id="restoreProductModal"
     class="fixed inset-0 z-50
            hidden items-center justify-center
            bg-black/40 px-4"
-    onclick="closeDeleteProductModalOnBackdrop(event)"
 >
 
     <div
@@ -852,7 +660,109 @@
                rounded-2xl
                shadow-2xl
                p-6"
-        onclick="event.stopPropagation()"
+    >
+
+        <div class="flex items-start gap-4">
+
+            <div
+                class="w-12 h-12
+                       shrink-0
+                       rounded-full
+                       bg-green-50
+                       text-green-600
+                       flex items-center justify-center
+                       text-xl"
+            >
+                ↶
+            </div>
+
+
+            <div class="flex-1">
+
+                <h3 class="text-lg font-semibold text-ink">
+                    Khôi phục sản phẩm?
+                </h3>
+
+                <p class="text-sm text-ink-soft mt-2 leading-6">
+
+                    Bạn có chắc muốn khôi phục
+
+                    <strong
+                        id="restoreProductName"
+                        class="text-ink"
+                    ></strong>?
+
+                </p>
+
+                <p class="text-xs text-ink-soft mt-2">
+                    Sản phẩm sẽ được đưa trở lại danh sách sản phẩm.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="flex justify-end gap-3 mt-6">
+
+            <button
+                type="button"
+                onclick="closeRestoreProductModal()"
+                class="border border-admin-border
+                       rounded-xl
+                       px-4 py-2.5
+                       text-sm
+                       hover:bg-admin-bg"
+            >
+                Hủy
+            </button>
+
+
+            <form
+                id="restoreProductForm"
+                method="POST"
+            >
+                @csrf
+                @method('PATCH')
+
+                <button
+                    type="submit"
+                    class="bg-green-500
+                           text-white
+                           rounded-xl
+                           px-4 py-2.5
+                           text-sm font-semibold
+                           hover:bg-green-600"
+                >
+                    Khôi phục
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+{{-- =====================================================
+    FORCE DELETE MODAL
+====================================================== --}}
+<div
+    id="forceDeleteProductModal"
+    class="fixed inset-0 z-50
+           hidden items-center justify-center
+           bg-black/40 px-4"
+>
+
+    <div
+        class="w-full max-w-md
+               bg-white
+               rounded-2xl
+               shadow-2xl
+               p-6"
     >
 
         <div class="flex items-start gap-4">
@@ -866,32 +776,30 @@
                        flex items-center justify-center
                        text-xl"
             >
-                🗑️
+                ⚠️
             </div>
 
 
             <div class="flex-1">
 
                 <h3 class="text-lg font-semibold text-ink">
-                    Chuyển vào thùng rác?
+                    Xóa vĩnh viễn?
                 </h3>
 
                 <p class="text-sm text-ink-soft mt-2 leading-6">
 
-                    Bạn có chắc muốn chuyển
+                    Bạn có chắc muốn xóa vĩnh viễn
 
                     <strong
-                        id="deleteProductName"
+                        id="forceDeleteProductName"
                         class="text-ink"
-                    ></strong>
-
-                    vào thùng rác?
+                    ></strong>?
 
                 </p>
 
-                <p class="text-xs text-ink-soft mt-2">
-                    Sản phẩm sẽ không còn hiển thị ở danh sách
-                    và phía khách hàng, nhưng vẫn có thể khôi phục sau này.
+                <p class="text-xs text-red-500 mt-2">
+                    Hành động này không thể khôi phục.
+                    Ảnh và các liên kết của sản phẩm cũng sẽ bị xóa.
                 </p>
 
             </div>
@@ -903,23 +811,21 @@
 
             <button
                 type="button"
-                onclick="closeDeleteProductModal()"
+                onclick="closeForceDeleteProductModal()"
                 class="border border-admin-border
                        rounded-xl
                        px-4 py-2.5
-                       text-sm text-ink
-                       hover:bg-admin-bg
-                       transition"
+                       text-sm
+                       hover:bg-admin-bg"
             >
                 Hủy
             </button>
 
 
             <form
-                id="deleteProductForm"
+                id="forceDeleteProductForm"
                 method="POST"
             >
-
                 @csrf
                 @method('DELETE')
 
@@ -930,10 +836,9 @@
                            rounded-xl
                            px-4 py-2.5
                            text-sm font-semibold
-                           hover:bg-red-600
-                           transition"
+                           hover:bg-red-600"
                 >
-                    Chuyển vào thùng rác
+                    Xóa vĩnh viễn
                 </button>
 
             </form>
@@ -951,25 +856,18 @@
 @push('scripts')
 
 <script>
-    function openDeleteProductModal(button) {
+    function openRestoreProductModal(button) {
         const modal = document.getElementById(
-            'deleteProductModal'
+            'restoreProductModal'
         );
 
-        const form = document.getElementById(
-            'deleteProductForm'
-        );
+        document.getElementById(
+            'restoreProductForm'
+        ).action = button.dataset.action;
 
-        const name = document.getElementById(
-            'deleteProductName'
-        );
-
-        if (!modal || !form || !name) {
-            return;
-        }
-
-        form.action = button.dataset.action;
-        name.textContent = button.dataset.name;
+        document.getElementById(
+            'restoreProductName'
+        ).textContent = button.dataset.name;
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -978,14 +876,10 @@
     }
 
 
-    function closeDeleteProductModal() {
+    function closeRestoreProductModal() {
         const modal = document.getElementById(
-            'deleteProductModal'
+            'restoreProductModal'
         );
-
-        if (!modal) {
-            return;
-        }
 
         modal.classList.add('hidden');
         modal.classList.remove('flex');
@@ -994,21 +888,47 @@
     }
 
 
-    function closeDeleteProductModalOnBackdrop(event) {
-        if (
-            event.target.id === 'deleteProductModal'
-        ) {
-            closeDeleteProductModal();
-        }
+    function openForceDeleteProductModal(button) {
+        const modal = document.getElementById(
+            'forceDeleteProductModal'
+        );
+
+        document.getElementById(
+            'forceDeleteProductForm'
+        ).action = button.dataset.action;
+
+        document.getElementById(
+            'forceDeleteProductName'
+        ).textContent = button.dataset.name;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        document.body.style.overflow = 'hidden';
+    }
+
+
+    function closeForceDeleteProductModal() {
+        const modal = document.getElementById(
+            'forceDeleteProductModal'
+        );
+
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+
+        document.body.style.overflow = '';
     }
 
 
     document.addEventListener(
         'keydown',
         function (event) {
+
             if (event.key === 'Escape') {
-                closeDeleteProductModal();
+                closeRestoreProductModal();
+                closeForceDeleteProductModal();
             }
+
         }
     );
 </script>

@@ -20,228 +20,353 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')
+    ->name('admin.')
+    ->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Dashboard
-    |--------------------------------------------------------------------------
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard
+        |--------------------------------------------------------------------------
+        */
 
-    Route::get('/', [DashboardController::class, 'index'])
-        ->name('dashboard');
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Module 2 — Kiến thức & Sản phẩm
-    |--------------------------------------------------------------------------
-    */
-
-    // Giai đoạn của bé
-    Route::resource('giai-doan', StageController::class)
-        ->parameters([
-            'giai-doan' => 'stage',
-        ])
-        ->names('stages')
-        ->except(['show']);
+        Route::get(
+            '/',
+            [DashboardController::class, 'index']
+        )->name('dashboard');
 
 
-    // Danh mục
-    Route::resource('danh-muc', CategoryController::class)
-        ->parameters([
-            'danh-muc' => 'category',
-        ])
-        ->names('categories')
-        ->except(['show']);
+        /*
+        |--------------------------------------------------------------------------
+        | Module 2 — Kiến thức & Sản phẩm
+        |--------------------------------------------------------------------------
+        */
 
 
-    // Thuộc tính / Tag
-    Route::post(
-        '/danh-muc/tags',
-        [TagController::class, 'store']
-    )->name('tags.store');
+        /*
+        |--------------------------------------------------------------------------
+        | Giai đoạn của bé
+        |--------------------------------------------------------------------------
+        */
 
-    Route::put(
-        '/danh-muc/tags/{tag}',
-        [TagController::class, 'update']
-    )->name('tags.update');
-
-    Route::delete(
-        '/danh-muc/tags/{tag}',
-        [TagController::class, 'destroy']
-    )->name('tags.destroy');
-
-
-    // Sản phẩm
-    Route::resource('san-pham', ProductController::class)
-        ->parameters([
-            'san-pham' => 'product',
-        ])
-        ->names('products')
-        ->except(['show']);
+        Route::resource(
+            'giai-doan',
+            StageController::class
+        )
+            ->parameters([
+                'giai-doan' => 'stage',
+            ])
+            ->names('stages')
+            ->except(['show']);
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Module 3 — Cẩm nang & Tương tác
-    |--------------------------------------------------------------------------
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | DANH MỤC — THÙNG RÁC
+        |--------------------------------------------------------------------------
+        */
 
-    Route::get(
-        '/cam-nang',
-        fn () => (new PlaceholderController)->index('Bài viết Cẩm nang')
-    )->name('articles.index');
+        // Danh sách danh mục đã xóa mềm
+        Route::get(
+            '/danh-muc-thung-rac',
+            [CategoryController::class, 'trash']
+        )->name('categories.trash');
 
-    Route::get(
-        '/hoi-dap',
-        fn () => (new PlaceholderController)->index('Trung tâm Hỏi đáp')
-    )->name('comments.index');
+        // Khôi phục danh mục
+        Route::patch(
+            '/danh-muc-thung-rac/{id}/khoi-phuc',
+            [CategoryController::class, 'restore']
+        )->name('categories.restore');
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Module 4 — Đơn hàng & Dòng tiền
-    |--------------------------------------------------------------------------
-    */
-
-    /*
-    |----------------------------------------------------------------------
-    | Đơn hàng
-    |----------------------------------------------------------------------
-    |
-    | Đây là phần mới từ master.
-    | Không dùng placeholder /don-hang cũ nữa.
-    |
-    */
-
-    Route::prefix('don-hang')
-        ->name('orders.')
-        ->group(function () {
-
-            // Danh sách đơn hàng
-            Route::get(
-                '/',
-                [OrderController::class, 'index']
-            )->name('index');
+        // Xóa vĩnh viễn danh mục
+        Route::delete(
+            '/danh-muc-thung-rac/{id}',
+            [CategoryController::class, 'forceDelete']
+        )->name('categories.forceDelete');
 
 
-            // Chi tiết đơn hàng
-            Route::get(
-                '/{order}',
-                [OrderController::class, 'show']
-            )->name('show');
+        /*
+        |--------------------------------------------------------------------------
+        | DANH MỤC — CRUD
+        |--------------------------------------------------------------------------
+        */
+
+        Route::resource(
+            'danh-muc',
+            CategoryController::class
+        )
+            ->parameters([
+                'danh-muc' => 'category',
+            ])
+            ->names('categories')
+            ->except(['show']);
 
 
-            // Cập nhật trạng thái
-            Route::patch(
-                '/{order}/status',
-                [OrderController::class, 'updateStatus']
-            )->name('status');
+        /*
+        |--------------------------------------------------------------------------
+        | THUỘC TÍNH / TAG — THÙNG RÁC
+        |--------------------------------------------------------------------------
+        */
+
+        // Danh sách Tag đã xóa mềm
+        Route::get(
+            '/thuoc-tinh-thung-rac',
+            [TagController::class, 'trash']
+        )->name('tags.trash');
+
+        // Khôi phục Tag
+        Route::patch(
+            '/thuoc-tinh-thung-rac/{id}/khoi-phuc',
+            [TagController::class, 'restore']
+        )->name('tags.restore');
+
+        // Xóa vĩnh viễn Tag
+        Route::delete(
+            '/thuoc-tinh-thung-rac/{id}',
+            [TagController::class, 'forceDelete']
+        )->name('tags.forceDelete');
 
 
-            /*
-            |------------------------------------------------------------------
-            | GHN API
-            |------------------------------------------------------------------
-            */
+        /*
+        |--------------------------------------------------------------------------
+        | THUỘC TÍNH / TAG — CRUD
+        |--------------------------------------------------------------------------
+        */
 
-            // Tính phí vận chuyển
-            Route::post(
-                '/tinh-phi-ship',
-                [OrderController::class, 'calcFee']
-            )->name('calc-fee');
+        Route::post(
+            '/danh-muc/tags',
+            [TagController::class, 'store']
+        )->name('tags.store');
 
+        Route::put(
+            '/danh-muc/tags/{tag}',
+            [TagController::class, 'update']
+        )->name('tags.update');
 
-            // Tạo vận đơn
-            Route::post(
-                '/{order}/tao-van-don',
-                [OrderController::class, 'createShipment']
-            )->name('shipment.create');
-
-
-            // Tra cứu vận đơn
-            Route::get(
-                '/{order}/tra-cuu',
-                [OrderController::class, 'trackShipment']
-            )->name('shipment.track');
+        Route::delete(
+            '/danh-muc/tags/{tag}',
+            [TagController::class, 'destroy']
+        )->name('tags.destroy');
 
 
-            // In vận đơn
-            Route::get(
-                '/{order}/in-van-don',
-                [OrderController::class, 'printLabel']
-            )->name('shipment.print');
+        /*
+        |--------------------------------------------------------------------------
+        | SẢN PHẨM — THÙNG RÁC
+        |--------------------------------------------------------------------------
+        */
+
+        // Danh sách sản phẩm đã xóa mềm
+        Route::get(
+            '/san-pham-thung-rac',
+            [ProductController::class, 'trash']
+        )->name('products.trash');
+
+        // Khôi phục sản phẩm
+        Route::patch(
+            '/san-pham-thung-rac/{id}/khoi-phuc',
+            [ProductController::class, 'restore']
+        )->name('products.restore');
+
+        // Xóa vĩnh viễn sản phẩm
+        Route::delete(
+            '/san-pham-thung-rac/{id}',
+            [ProductController::class, 'forceDelete']
+        )->name('products.forceDelete');
 
 
-            // Hủy vận đơn
-            Route::delete(
-                '/{order}/huy-van-don',
-                [OrderController::class, 'cancelShipment']
-            )->name('shipment.cancel');
-        });
+        /*
+        |--------------------------------------------------------------------------
+        | SẢN PHẨM — CRUD
+        |--------------------------------------------------------------------------
+        */
+
+        Route::resource(
+            'san-pham',
+            ProductController::class
+        )
+            ->parameters([
+                'san-pham' => 'product',
+            ])
+            ->names('products')
+            ->except(['show']);
 
 
-    // Trang vận chuyển tổng quan
-    Route::get(
-        '/van-chuyen',
-        fn () => (new PlaceholderController)->index('Vận chuyển (GHN)')
-    )->name('shipments.index');
+        /*
+        |--------------------------------------------------------------------------
+        | Module 3 — Cẩm nang & Tương tác
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/cam-nang',
+            fn () =>
+                (new PlaceholderController)
+                    ->index('Bài viết Cẩm nang')
+        )->name('articles.index');
+
+        Route::get(
+            '/hoi-dap',
+            fn () =>
+                (new PlaceholderController)
+                    ->index('Trung tâm Hỏi đáp')
+        )->name('comments.index');
 
 
-    // Đổi trả & hoàn tiền
-    Route::get(
-        '/doi-tra',
-        fn () => (new PlaceholderController)->index('Đổi trả & Hoàn tiền')
-    )->name('refunds.index');
+        /*
+        |--------------------------------------------------------------------------
+        | Module 4 — Đơn hàng & Dòng tiền
+        |--------------------------------------------------------------------------
+        */
+
+        Route::prefix('don-hang')
+            ->name('orders.')
+            ->group(function () {
+
+                // Danh sách đơn hàng
+                Route::get(
+                    '/',
+                    [OrderController::class, 'index']
+                )->name('index');
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Module 5 — CRM & Marketing
-    |--------------------------------------------------------------------------
-    */
-
-    Route::get(
-        '/khach-hang',
-        fn () => (new PlaceholderController)->index('Khách hàng')
-    )->name('clients.index');
-
-    Route::get(
-        '/voucher',
-        fn () => (new PlaceholderController)->index('Voucher')
-    )->name('vouchers.index');
-
-    Route::get(
-        '/banner',
-        fn () => (new PlaceholderController)->index('Banner')
-    )->name('banners.index');
+                // Tính phí vận chuyển
+                // Đặt trước /{order}
+                Route::post(
+                    '/tinh-phi-ship',
+                    [OrderController::class, 'calcFee']
+                )->name('calc-fee');
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Phân quyền & Quản trị viên
-    |--------------------------------------------------------------------------
-    */
-
-    Route::resource('roles', RoleController::class)
-        ->except(['show']);
+                // Chi tiết đơn hàng
+                Route::get(
+                    '/{order}',
+                    [OrderController::class, 'show']
+                )->name('show');
 
 
-    Route::get(
-        '/quan-tri-vien/them',
-        [AdminController::class, 'create']
-    )->name('admins.create');
+                // Cập nhật trạng thái đơn hàng
+                Route::patch(
+                    '/{order}/status',
+                    [OrderController::class, 'updateStatus']
+                )->name('status');
 
 
-    Route::post(
-        '/quan-tri-vien',
-        [AdminController::class, 'store']
-    )->name('admins.store');
+                // GHN — Tạo vận đơn
+                Route::post(
+                    '/{order}/tao-van-don',
+                    [OrderController::class, 'createShipment']
+                )->name('shipment.create');
 
 
-    Route::patch(
-        '/quan-tri-vien/{admin}/vai-tro',
-        [AdminController::class, 'updateRole']
-    )->name('admins.updateRole');
-});
+                // GHN — Tra cứu vận đơn
+                Route::get(
+                    '/{order}/tra-cuu',
+                    [OrderController::class, 'trackShipment']
+                )->name('shipment.track');
+
+
+                // GHN — In vận đơn
+                Route::get(
+                    '/{order}/in-van-don',
+                    [OrderController::class, 'printLabel']
+                )->name('shipment.print');
+
+
+                // GHN — Hủy vận đơn
+                Route::delete(
+                    '/{order}/huy-van-don',
+                    [OrderController::class, 'cancelShipment']
+                )->name('shipment.cancel');
+            });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Vận chuyển
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/van-chuyen',
+            fn () =>
+                (new PlaceholderController)
+                    ->index('Vận chuyển (GHN)')
+        )->name('shipments.index');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Đổi trả & Hoàn tiền
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/doi-tra',
+            fn () =>
+                (new PlaceholderController)
+                    ->index('Đổi trả & Hoàn tiền')
+        )->name('refunds.index');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Module 5 — CRM & Marketing
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/khach-hang',
+            fn () =>
+                (new PlaceholderController)
+                    ->index('Khách hàng')
+        )->name('clients.index');
+
+
+        Route::get(
+            '/voucher',
+            fn () =>
+                (new PlaceholderController)
+                    ->index('Voucher')
+        )->name('vouchers.index');
+
+
+        Route::get(
+            '/banner',
+            fn () =>
+                (new PlaceholderController)
+                    ->index('Banner')
+        )->name('banners.index');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Phân quyền & Quản trị viên
+        |--------------------------------------------------------------------------
+        */
+
+        Route::resource(
+            'roles',
+            RoleController::class
+        )->except(['show']);
+
+
+        // Thêm quản trị viên
+        Route::get(
+            '/quan-tri-vien/them',
+            [AdminController::class, 'create']
+        )->name('admins.create');
+
+
+        // Lưu quản trị viên
+        Route::post(
+            '/quan-tri-vien',
+            [AdminController::class, 'store']
+        )->name('admins.store');
+
+
+        // Cập nhật vai trò quản trị viên
+        Route::patch(
+            '/quan-tri-vien/{admin}/vai-tro',
+            [AdminController::class, 'updateRole']
+        )->name('admins.updateRole');
+    });

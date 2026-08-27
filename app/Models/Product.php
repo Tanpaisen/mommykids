@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'category_id',
@@ -23,6 +24,11 @@ class Product extends Model
         'discount_percent',
         'stock',
         'is_active',
+
+        // Audit soft delete
+        'deleted_by',
+        'restored_by',
+        'restored_at',
     ];
 
     protected $casts = [
@@ -32,6 +38,9 @@ class Product extends Model
         'discount_percent' => 'integer',
         'stock' => 'integer',
         'images' => 'array',
+
+        'deleted_at' => 'datetime',
+        'restored_at' => 'datetime',
     ];
 
     public function category(): BelongsTo

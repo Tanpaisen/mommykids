@@ -73,13 +73,40 @@
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        onclick="openCreateCategoryModal()"
-                        class="btn-primary whitespace-nowrap"
-                    >
-                        + Thêm danh mục
-                    </button>
+                    <div class="flex items-center gap-3">
+
+                        <a
+                            href="{{ route('admin.categories.trash') }}"
+                            class="inline-flex items-center gap-2
+                                   px-4 py-2.5 rounded-xl
+                                   border border-admin-border
+                                   bg-white text-sm font-semibold text-ink
+                                   hover:border-coral hover:text-coral transition"
+                        >
+                            <span>🗑️</span>
+                            <span>Thùng rác</span>
+
+                            @if (($categoryTrashCount ?? 0) > 0)
+                                <span
+                                    class="inline-flex items-center justify-center
+                                           min-w-[22px] h-[22px] px-1.5
+                                           rounded-full bg-red-500
+                                           text-white text-xs font-bold"
+                                >
+                                    {{ $categoryTrashCount }}
+                                </span>
+                            @endif
+                        </a>
+
+                        <button
+                            type="button"
+                            onclick="openCreateCategoryModal()"
+                            class="btn-primary whitespace-nowrap"
+                        >
+                            + Thêm danh mục
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -498,15 +525,42 @@
                         </p>
                     </div>
 
-                    <a
-                        href="{{ route('admin.categories.index', [
-                            'tab' => 'tags',
-                            'create_tag' => 1
-                        ]) }}"
-                        class="btn-primary"
-                    >
-                        + Thêm thuộc tính
-                    </a>
+                    <div class="flex items-center gap-3">
+
+                        <a
+                            href="{{ route('admin.tags.trash') }}"
+                            class="inline-flex items-center gap-2
+                                   px-4 py-2.5 rounded-xl
+                                   border border-admin-border
+                                   bg-white text-sm font-semibold text-ink
+                                   hover:border-coral hover:text-coral transition"
+                        >
+                            <span>🗑️</span>
+                            <span>Thùng rác</span>
+
+                            @if (($tagTrashCount ?? 0) > 0)
+                                <span
+                                    class="inline-flex items-center justify-center
+                                           min-w-[22px] h-[22px] px-1.5
+                                           rounded-full bg-red-500
+                                           text-white text-xs font-bold"
+                                >
+                                    {{ $tagTrashCount }}
+                                </span>
+                            @endif
+                        </a>
+
+                        <a
+                            href="{{ route('admin.categories.index', [
+                                'tab' => 'tags',
+                                'create_tag' => 1
+                            ]) }}"
+                            class="btn-primary whitespace-nowrap"
+                        >
+                            + Thêm thuộc tính
+                        </a>
+
+                    </div>
 
                 </div>
 
