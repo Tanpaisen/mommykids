@@ -11,12 +11,14 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
+use App\Http\Controllers\CheckoutController;
 
 /*
 |--------------------------------------------------------------------------
 | Client Storefront Routes
 |--------------------------------------------------------------------------
 */
+
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/danh-muc/{category:slug}', [CategoryController::class, 'show'])->name('category.show');
 Route::get('/san-pham/{product:slug}', [ProductController::class, 'show'])->name('product.show');
@@ -27,7 +29,13 @@ Route::get('/thong-bao', [NotificationController::class, 'index'])
     ->middleware('auth')
     ->name('notifications.index');
 
-// Route Hồ sơ cá nhân, Hỗ trợ người dùng & Quy định chính sách (Đã cập nhật)
+
+/*
+|--------------------------------------------------------------------------
+| Profile Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware('auth')->group(function () {
     Route::get('/ho-so', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/ho-so', [ProfileController::class, 'update'])->name('profile.update');
@@ -35,50 +43,102 @@ Route::middleware('auth')->group(function () {
     Route::get('/quy-dinh-chinh-sach', [ProfileController::class, 'policy'])->name('profile.policy');
 });
 
+
 /*
 |--------------------------------------------------------------------------
-| Internal AJAX API Routes (Cart & OTP)
+| Cart & OTP API Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('api')->group(function () {
-    // Giỏ hàng
-    Route::post('/cart', [CartController::class, 'store'])->name('api.cart.store');
-    Route::patch('/cart/{cartItem}', [CartController::class, 'update'])->name('api.cart.update');
-    Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])->name('api.cart.destroy');
 
-    // Xác thực OTP AJAX
-    Route::post('/send-otp', [OtpController::class, 'sendOtp'])->name('api.send-otp');
-    Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->name('api.verify-otp');
+Route::prefix('api')->group(function () {
+
+    Route::post('/cart', [CartController::class, 'store'])
+        ->name('api.cart.store');
+
+    Route::patch('/cart/{cartItem}', [CartController::class, 'update'])
+        ->name('api.cart.update');
+
+    Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])
+        ->name('api.cart.destroy');
+
+
+    Route::post('/send-otp', [OtpController::class, 'sendOtp'])
+        ->name('api.send-otp');
+
+    Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])
+        ->name('api.verify-otp');
 });
 
+
 /*
 |--------------------------------------------------------------------------
-| Client Authentication Routes
+| Authentication
 |--------------------------------------------------------------------------
 */
+
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+
+    Route::get('/login', [AuthController::class, 'showLoginForm'])
+        ->name('login');
+
     Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])
+        ->name('register');
+
     Route::post('/register', [AuthController::class, 'register']);
 });
 
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->name('logout')
+    ->middleware('auth');
+
 
 /*
 |--------------------------------------------------------------------------
-| Admin Authentication Routes
+| Admin Authentication
 |--------------------------------------------------------------------------
 */
+
 Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
+
+    Route::get('/login', [AdminLoginController::class, 'showLoginForm'])
+        ->name('login');
+
     Route::post('/login', [AdminLoginController::class, 'login']);
-    Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
+
+    Route::post('/logout', [AdminLoginController::class, 'logout'])
+        ->name('logout');
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| Checkout
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/thanh-toan', [CheckoutController::class, 'index'])
+    ->name('checkout.index');
+
+Route::post('/thanh-toan', [CheckoutController::class, 'store'])
+    ->name('checkout.store');
+
+Route::get('/thanh-toan/qr', [CheckoutController::class, 'qr'])
+    ->name('checkout.qr');
+
+Route::post('/thanh-toan/xac-nhan-chuyen-khoan', [CheckoutController::class, 'confirmTransfer'])
+    ->name('checkout.confirm-transfer');
+
+Route::get('/thanh-toan/thanh-cong', [CheckoutController::class, 'success'])
+    ->name('checkout.success');
+
 
 /*
 |--------------------------------------------------------------------------
 | Admin Sub-routes
 |--------------------------------------------------------------------------
 */
+
 require __DIR__.'/admin.php';

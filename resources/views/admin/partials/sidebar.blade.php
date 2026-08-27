@@ -29,13 +29,13 @@
                 ['label' => 'Trung tâm Hỏi đáp', 'route' => 'admin.comments.index'],
             ],
         ],
-        [
+                [
             'label' => 'Đơn hàng & Dòng tiền',
             'icon' => '🚚',
             'can' => 'orders.view',
             'items' => [
-                ['label' => 'Đơn hàng', 'route' => 'admin.orders.index'],
-                ['label' => 'Vận chuyển (GHN)', 'route' => 'admin.shipments.index'],
+                ['label' => 'Đơn hàng',            'route' => 'admin.orders.index'],
+                ['label' => 'Vận chuyển (GHN)',     'route' => 'admin.shipments.index'],
                 ['label' => 'Đổi trả & Hoàn tiền', 'route' => 'admin.refunds.index'],
             ],
         ],
@@ -45,12 +45,22 @@
             'can' => 'crm.view',
             'items' => [
                 ['label' => 'Khách hàng', 'route' => 'admin.clients.index'],
-                ['label' => 'Voucher', 'route' => 'admin.vouchers.index'],
-                ['label' => 'Banner', 'route' => 'admin.banners.index'],
-                ['label' => 'Tài khoản & Phân quyền', 'route' => 'admin.roles.index', 'can' => 'roles.manage'],
+                ['label' => 'Voucher',    'route' => 'admin.vouchers.index'],
+                ['label' => 'Banner',     'route' => 'admin.banners.index'],
+            ],
+        ],
+        [
+            'label' => 'Hệ thống',
+            'icon' => '⚙️',
+            'can' => 'roles.manage',
+            'items' => [
+                ['label' => 'Tài khoản quản trị', 'route' => 'admin.admins.index'],
+                ['label' => 'Nhóm quyền',         'route' => 'admin.roles.index'],
+                ['label' => 'Phân quyền',         'route' => 'admin.permissions.index'],
             ],
         ],
     ];
+
 @endphp
 
 <aside id="admin-sidebar"
