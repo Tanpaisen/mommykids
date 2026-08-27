@@ -31,7 +31,7 @@
                 <span class="text-ink-soft">Tổng cộng</span>
                 <span class="font-display font-bold text-xl text-coral" id="mk-cart-total">{{ number_format($total) }}đ</span>
             </div>
-            <a href="{{ route('checkout.index') }}" class="btn-primary w-full mt-4">Tiến hành thanh toán</a>
+            <a href="#" class="btn-primary w-full mt-4">Tiến hành thanh toán</a>
         @endif
     </section>
 
