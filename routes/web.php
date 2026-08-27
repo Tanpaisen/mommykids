@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\CheckoutController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,4 +56,24 @@ Route::get('/ho-so', function () {
     return 'Hồ sơ — coming soon';
 })->middleware('auth')->name('profile.edit');
 
+Route::get('/thanh-toan', [CheckoutController::class, 'index'])
+    ->name('checkout.index');
+
+Route::post('/thanh-toan', [CheckoutController::class, 'store'])
+    ->name('checkout.store');
+
+Route::get('/thanh-toan', [CheckoutController::class, 'index'])
+    ->name('checkout.index');
+
+Route::post('/thanh-toan', [CheckoutController::class, 'store'])
+    ->name('checkout.store');
+
+Route::get('/thanh-toan/qr', [CheckoutController::class, 'qr'])
+    ->name('checkout.qr');
+
+Route::post('/thanh-toan/xac-nhan-chuyen-khoan', [CheckoutController::class, 'confirmTransfer'])
+    ->name('checkout.confirm-transfer');
+
+Route::get('/thanh-toan/thanh-cong', [CheckoutController::class, 'success'])
+    ->name('checkout.success');
 require __DIR__.'/admin.php';

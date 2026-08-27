@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\RoleController;
@@ -21,8 +22,15 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->group(function () {
 
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/', [DashboardController::class, 'index'])
         ->name('dashboard');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -38,6 +46,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         ->names('stages')
         ->except(['show']);
 
+
     // Danh mục
     Route::resource('danh-muc', CategoryController::class)
         ->parameters([
@@ -46,15 +55,23 @@ Route::prefix('admin')->name('admin.')->group(function () {
         ->names('categories')
         ->except(['show']);
 
+
     // Thuộc tính / Tag
-    Route::post('/danh-muc/tags', [TagController::class, 'store'])
-        ->name('tags.store');
+    Route::post(
+        '/danh-muc/tags',
+        [TagController::class, 'store']
+    )->name('tags.store');
 
-    Route::put('/danh-muc/tags/{tag}', [TagController::class, 'update'])
-        ->name('tags.update');
+    Route::put(
+        '/danh-muc/tags/{tag}',
+        [TagController::class, 'update']
+    )->name('tags.update');
 
-    Route::delete('/danh-muc/tags/{tag}', [TagController::class, 'destroy'])
-        ->name('tags.destroy');
+    Route::delete(
+        '/danh-muc/tags/{tag}',
+        [TagController::class, 'destroy']
+    )->name('tags.destroy');
+
 
     // Sản phẩm
     Route::resource('san-pham', ProductController::class)
@@ -88,16 +105,91 @@ Route::prefix('admin')->name('admin.')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get(
-        '/don-hang',
-        fn () => (new PlaceholderController)->index('Đơn hàng')
-    )->name('orders.index');
+    /*
+    |----------------------------------------------------------------------
+    | Đơn hàng
+    |----------------------------------------------------------------------
+    |
+    | Đây là phần mới từ master.
+    | Không dùng placeholder /don-hang cũ nữa.
+    |
+    */
 
+    Route::prefix('don-hang')
+        ->name('orders.')
+        ->group(function () {
+
+            // Danh sách đơn hàng
+            Route::get(
+                '/',
+                [OrderController::class, 'index']
+            )->name('index');
+
+
+            // Chi tiết đơn hàng
+            Route::get(
+                '/{order}',
+                [OrderController::class, 'show']
+            )->name('show');
+
+
+            // Cập nhật trạng thái
+            Route::patch(
+                '/{order}/status',
+                [OrderController::class, 'updateStatus']
+            )->name('status');
+
+
+            /*
+            |------------------------------------------------------------------
+            | GHN API
+            |------------------------------------------------------------------
+            */
+
+            // Tính phí vận chuyển
+            Route::post(
+                '/tinh-phi-ship',
+                [OrderController::class, 'calcFee']
+            )->name('calc-fee');
+
+
+            // Tạo vận đơn
+            Route::post(
+                '/{order}/tao-van-don',
+                [OrderController::class, 'createShipment']
+            )->name('shipment.create');
+
+
+            // Tra cứu vận đơn
+            Route::get(
+                '/{order}/tra-cuu',
+                [OrderController::class, 'trackShipment']
+            )->name('shipment.track');
+
+
+            // In vận đơn
+            Route::get(
+                '/{order}/in-van-don',
+                [OrderController::class, 'printLabel']
+            )->name('shipment.print');
+
+
+            // Hủy vận đơn
+            Route::delete(
+                '/{order}/huy-van-don',
+                [OrderController::class, 'cancelShipment']
+            )->name('shipment.cancel');
+        });
+
+
+    // Trang vận chuyển tổng quan
     Route::get(
         '/van-chuyen',
         fn () => (new PlaceholderController)->index('Vận chuyển (GHN)')
     )->name('shipments.index');
 
+
+    // Đổi trả & hoàn tiền
     Route::get(
         '/doi-tra',
         fn () => (new PlaceholderController)->index('Đổi trả & Hoàn tiền')
@@ -135,15 +227,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('roles', RoleController::class)
         ->except(['show']);
 
+
     Route::get(
         '/quan-tri-vien/them',
         [AdminController::class, 'create']
     )->name('admins.create');
 
+
     Route::post(
         '/quan-tri-vien',
         [AdminController::class, 'store']
     )->name('admins.store');
+
 
     Route::patch(
         '/quan-tri-vien/{admin}/vai-tro',
