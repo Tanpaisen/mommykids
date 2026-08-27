@@ -3,17 +3,15 @@
 @section('page_title', 'Chỉnh sửa sản phẩm')
 
 @section('page_subtitle')
-    Cập nhật thông tin sản phẩm "{{ $product->name }}"
+    Cập nhật thông tin "{{ $product->name }}"
 @endsection
 
 @section('page_actions')
     <a
         href="{{ route('admin.products.index') }}"
-        class="inline-flex items-center justify-center gap-2
-               px-4 py-2.5 rounded-xl
-               border border-admin-border
-               bg-white text-sm font-medium text-ink
-               hover:bg-admin-bg transition"
+        class="px-4 py-2.5 rounded-xl
+               border border-admin-border bg-white
+               text-sm text-ink hover:bg-admin-bg transition"
     >
         ← Quay lại
     </a>
@@ -22,18 +20,36 @@
 
 @section('content')
 
+@php
+    $selectedStageIds = collect(
+        old(
+            'stage_ids',
+            $product->stages->pluck('id')->all()
+        )
+    )->map(fn ($id) => (string) $id)->all();
+
+    $selectedTagIds = collect(
+        old(
+            'tag_ids',
+            $product->tags->pluck('id')->all()
+        )
+    )->map(fn ($id) => (string) $id)->all();
+@endphp
+
+
 <form
     action="{{ route('admin.products.update', $product) }}"
     method="POST"
+    enctype="multipart/form-data"
 >
     @csrf
     @method('PUT')
 
 
-    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,0.95fr)] gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-[1.55fr_0.95fr] gap-6">
 
         {{-- =========================================================
-            CỘT TRÁI
+            LEFT
         ========================================================== --}}
         <div class="space-y-6">
 
@@ -57,32 +73,24 @@
 
                 <div class="space-y-5">
 
-                    {{-- TÊN SẢN PHẨM --}}
+                    {{-- TÊN --}}
                     <div>
 
-                        <label
-                            for="productName"
-                            class="block mb-2 text-sm font-semibold text-ink"
-                        >
+                        <label class="block mb-2 text-sm font-semibold text-ink">
                             Tên sản phẩm
                             <span class="text-coral">*</span>
                         </label>
 
                         <input
-                            id="productName"
                             type="text"
                             name="name"
-                            value="{{ old('name', $product->name) }}"
                             required
-                            autocomplete="off"
+                            value="{{ old('name', $product->name) }}"
                             class="w-full
                                    border border-admin-border
-                                   rounded-xl
-                                   px-4 py-3
-                                   bg-white
-                                   text-ink
+                                   rounded-xl px-4 py-3
+                                   bg-white text-ink
                                    outline-none
-                                   transition
                                    focus:border-coral
                                    focus:ring-2
                                    focus:ring-coral/10"
@@ -97,32 +105,25 @@
                     </div>
 
 
-                    {{-- DANH MỤC + SLUG --}}
+                    {{-- CATEGORY + SLUG --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                        {{-- DANH MỤC --}}
+                        {{-- CATEGORY --}}
                         <div>
 
-                            <label
-                                for="categoryId"
-                                class="block mb-2 text-sm font-semibold text-ink"
-                            >
+                            <label class="block mb-2 text-sm font-semibold text-ink">
                                 Danh mục
                                 <span class="text-coral">*</span>
                             </label>
 
                             <select
-                                id="categoryId"
                                 name="category_id"
                                 required
                                 class="w-full
                                        border border-admin-border
-                                       rounded-xl
-                                       px-4 py-3
-                                       bg-white
-                                       text-ink
+                                       rounded-xl px-4 py-3
+                                       bg-white text-ink
                                        outline-none
-                                       transition
                                        focus:border-coral
                                        focus:ring-2
                                        focus:ring-coral/10"
@@ -136,7 +137,9 @@
                                             (string) old(
                                                 'category_id',
                                                 $product->category_id
-                                            ) === (string) $category->id
+                                            )
+                                            ===
+                                            (string) $category->id
                                         )
                                     >
                                         {{ $category->name }}
@@ -158,27 +161,19 @@
                         {{-- SLUG --}}
                         <div>
 
-                            <label
-                                for="productSlug"
-                                class="block mb-2 text-sm font-semibold text-ink"
-                            >
+                            <label class="block mb-2 text-sm font-semibold text-ink">
                                 Slug
                             </label>
 
                             <input
-                                id="productSlug"
                                 type="text"
                                 name="slug"
                                 value="{{ old('slug', $product->slug) }}"
-                                autocomplete="off"
                                 class="w-full
                                        border border-admin-border
-                                       rounded-xl
-                                       px-4 py-3
-                                       bg-white
-                                       text-ink
+                                       rounded-xl px-4 py-3
+                                       bg-white text-ink
                                        outline-none
-                                       transition
                                        focus:border-coral
                                        focus:ring-2
                                        focus:ring-coral/10"
@@ -195,69 +190,23 @@
                     </div>
 
 
-                    {{-- ICON --}}
+                    {{-- DESCRIPTION --}}
                     <div>
 
-                        <label
-                            for="productIcon"
-                            class="block mb-2 text-sm font-semibold text-ink"
-                        >
-                            Icon
-                        </label>
-
-                        <input
-                            id="productIcon"
-                            type="text"
-                            name="icon"
-                            value="{{ old('icon', $product->icon) }}"
-                            placeholder="Ví dụ: 🍼"
-                            maxlength="50"
-                            class="w-full
-                                   border border-admin-border
-                                   rounded-xl
-                                   px-4 py-3
-                                   bg-white
-                                   text-xl text-ink
-                                   outline-none
-                                   transition
-                                   focus:border-coral
-                                   focus:ring-2
-                                   focus:ring-coral/10"
-                        >
-
-                        @error('icon')
-                            <p class="mt-1.5 text-xs text-red-500">
-                                {{ $message }}
-                            </p>
-                        @enderror
-
-                    </div>
-
-
-                    {{-- MÔ TẢ --}}
-                    <div>
-
-                        <label
-                            for="productDescription"
-                            class="block mb-2 text-sm font-semibold text-ink"
-                        >
+                        <label class="block mb-2 text-sm font-semibold text-ink">
                             Mô tả
                         </label>
 
                         <textarea
-                            id="productDescription"
                             name="description"
                             rows="6"
                             placeholder="Nhập mô tả sản phẩm..."
                             class="w-full
                                    border border-admin-border
-                                   rounded-xl
-                                   px-4 py-3
-                                   bg-white
-                                   text-ink
+                                   rounded-xl px-4 py-3
+                                   bg-white text-ink
                                    outline-none
                                    resize-y
-                                   transition
                                    focus:border-coral
                                    focus:ring-2
                                    focus:ring-coral/10"
@@ -272,13 +221,11 @@
                     </div>
 
 
-                    {{-- TRẠNG THÁI --}}
+                    {{-- STATUS --}}
                     <div
                         class="flex items-center justify-between gap-4
                                border border-admin-border
-                               rounded-2xl
-                               px-4 py-4
-                               bg-white"
+                               rounded-xl px-4 py-4 bg-white"
                     >
 
                         <div>
@@ -294,11 +241,7 @@
                         </div>
 
 
-                        <label
-                            class="flex items-center gap-2
-                                   cursor-pointer
-                                   shrink-0"
-                        >
+                        <label class="flex items-center gap-2 cursor-pointer">
 
                             <input
                                 type="checkbox"
@@ -346,13 +289,10 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                    {{-- GIÁ BÁN --}}
+                    {{-- PRICE --}}
                     <div>
 
-                        <label
-                            for="productPrice"
-                            class="block mb-2 text-sm font-semibold text-ink"
-                        >
+                        <label class="block mb-2 text-sm font-semibold">
                             Giá bán
                             <span class="text-coral">*</span>
                         </label>
@@ -360,7 +300,6 @@
                         <div class="relative">
 
                             <input
-                                id="productPrice"
                                 type="number"
                                 name="price"
                                 min="0"
@@ -368,13 +307,9 @@
                                 value="{{ old('price', $product->price) }}"
                                 class="w-full
                                        border border-admin-border
-                                       rounded-xl
-                                       px-4 py-3 pr-12
-                                       bg-white
+                                       rounded-xl px-4 py-3 pr-12
                                        outline-none
-                                       focus:border-coral
-                                       focus:ring-2
-                                       focus:ring-coral/10"
+                                       focus:border-coral"
                             >
 
                             <span
@@ -396,34 +331,28 @@
                     </div>
 
 
-                    {{-- GIÁ CŨ --}}
+                    {{-- OLD PRICE --}}
                     <div>
 
-                        <label
-                            for="productOldPrice"
-                            class="block mb-2 text-sm font-semibold text-ink"
-                        >
+                        <label class="block mb-2 text-sm font-semibold">
                             Giá cũ
                         </label>
 
                         <div class="relative">
 
                             <input
-                                id="productOldPrice"
                                 type="number"
                                 name="old_price"
                                 min="0"
-                                value="{{ old('old_price', $product->old_price) }}"
-                                placeholder="Không bắt buộc"
+                                value="{{ old(
+                                    'old_price',
+                                    $product->old_price
+                                ) }}"
                                 class="w-full
                                        border border-admin-border
-                                       rounded-xl
-                                       px-4 py-3 pr-12
-                                       bg-white
+                                       rounded-xl px-4 py-3 pr-12
                                        outline-none
-                                       focus:border-coral
-                                       focus:ring-2
-                                       focus:ring-coral/10"
+                                       focus:border-coral"
                             >
 
                             <span
@@ -436,29 +365,19 @@
 
                         </div>
 
-                        @error('old_price')
-                            <p class="mt-1.5 text-xs text-red-500">
-                                {{ $message }}
-                            </p>
-                        @enderror
-
                     </div>
 
 
-                    {{-- GIẢM GIÁ --}}
+                    {{-- DISCOUNT --}}
                     <div>
 
-                        <label
-                            for="productDiscount"
-                            class="block mb-2 text-sm font-semibold text-ink"
-                        >
+                        <label class="block mb-2 text-sm font-semibold">
                             Giảm giá
                         </label>
 
                         <div class="relative">
 
                             <input
-                                id="productDiscount"
                                 type="number"
                                 name="discount_percent"
                                 min="0"
@@ -467,16 +386,11 @@
                                     'discount_percent',
                                     $product->discount_percent
                                 ) }}"
-                                placeholder="0"
                                 class="w-full
                                        border border-admin-border
-                                       rounded-xl
-                                       px-4 py-3 pr-12
-                                       bg-white
+                                       rounded-xl px-4 py-3 pr-12
                                        outline-none
-                                       focus:border-coral
-                                       focus:ring-2
-                                       focus:ring-coral/10"
+                                       focus:border-coral"
                             >
 
                             <span
@@ -489,28 +403,18 @@
 
                         </div>
 
-                        @error('discount_percent')
-                            <p class="mt-1.5 text-xs text-red-500">
-                                {{ $message }}
-                            </p>
-                        @enderror
-
                     </div>
 
 
-                    {{-- TỒN KHO --}}
+                    {{-- STOCK --}}
                     <div>
 
-                        <label
-                            for="productStock"
-                            class="block mb-2 text-sm font-semibold text-ink"
-                        >
+                        <label class="block mb-2 text-sm font-semibold">
                             Tồn kho
                             <span class="text-coral">*</span>
                         </label>
 
                         <input
-                            id="productStock"
                             type="number"
                             name="stock"
                             min="0"
@@ -518,22 +422,284 @@
                             value="{{ old('stock', $product->stock) }}"
                             class="w-full
                                    border border-admin-border
-                                   rounded-xl
-                                   px-4 py-3
-                                   bg-white
+                                   rounded-xl px-4 py-3
                                    outline-none
-                                   focus:border-coral
-                                   focus:ring-2
-                                   focus:ring-coral/10"
+                                   focus:border-coral"
                         >
 
-                        @error('stock')
-                            <p class="mt-1.5 text-xs text-red-500">
-                                {{ $message }}
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- =====================================================
+                HÌNH ẢNH SẢN PHẨM
+            ====================================================== --}}
+            <div class="card">
+
+                <div class="border-b border-admin-border pb-4 mb-5">
+
+                    <h2 class="text-base font-semibold text-ink">
+                        Hình ảnh sản phẩm
+                    </h2>
+
+                    <p class="text-sm text-ink-soft mt-1">
+                        Quản lý ảnh đại diện và các ảnh chi tiết của sản phẩm.
+                    </p>
+
+                </div>
+
+
+                {{-- =================================================
+                    ẢNH ĐẠI DIỆN
+                ================================================== --}}
+                <div>
+
+                    <label class="block mb-3 text-sm font-semibold text-ink">
+                        Ảnh đại diện
+                    </label>
+
+
+                    <div class="flex flex-col sm:flex-row gap-5">
+
+                        {{-- CURRENT IMAGE --}}
+                        <div class="shrink-0">
+
+                            @if ($product->image)
+
+                                <div
+                                    class="w-40 h-40
+                                           rounded-2xl
+                                           border border-admin-border
+                                           overflow-hidden
+                                           bg-white
+                                           flex items-center justify-center"
+                                >
+
+                                    <img
+                                        src="{{ str_starts_with($product->image, 'http')
+                                            ? $product->image
+                                            : asset('storage/' . $product->image) }}"
+                                        alt="{{ $product->name }}"
+                                        class="w-full h-full object-contain"
+                                    >
+
+                                </div>
+
+                                <p class="text-xs text-ink-soft mt-2 text-center">
+                                    Ảnh hiện tại
+                                </p>
+
+                            @else
+
+                                <div
+                                    class="w-40 h-40
+                                           rounded-2xl
+                                           border-2 border-dashed
+                                           border-admin-border
+                                           bg-admin-bg
+                                           flex flex-col items-center
+                                           justify-center
+                                           text-ink-soft"
+                                >
+
+                                    <span class="text-4xl">
+                                        🖼️
+                                    </span>
+
+                                    <span class="text-xs mt-2">
+                                        Chưa có ảnh
+                                    </span>
+
+                                </div>
+
+                            @endif
+
+                        </div>
+
+
+                        {{-- UPLOAD --}}
+                        <div class="flex-1">
+
+                            <label class="block mb-2 text-sm font-medium text-ink">
+                                Chọn ảnh mới
+                            </label>
+
+                            <input
+                                type="file"
+                                name="image"
+                                accept="image/jpeg,image/png,image/webp"
+                                class="w-full
+                                       border border-admin-border
+                                       rounded-xl px-4 py-3
+                                       bg-white text-sm"
+                            >
+
+                            <p class="mt-2 text-xs text-ink-soft">
+                                Chấp nhận JPG, JPEG, PNG hoặc WEBP.
+                                Dung lượng tối đa 4MB.
                             </p>
-                        @enderror
+
+
+                            @error('image')
+                                <p class="mt-2 text-xs text-red-500">
+                                    {{ $message }}
+                                </p>
+                            @enderror
+
+
+                            @if ($product->image)
+
+                                <label
+                                    class="inline-flex items-center gap-2
+                                           mt-4 cursor-pointer
+                                           text-sm text-red-500"
+                                >
+
+                                    <input
+                                        type="checkbox"
+                                        name="remove_image"
+                                        value="1"
+                                        class="accent-red-500"
+                                    >
+
+                                    Xóa ảnh đại diện hiện tại
+
+                                </label>
+
+                            @endif
+
+                        </div>
 
                     </div>
+
+                </div>
+
+
+                {{-- =================================================
+                    GALLERY
+                ================================================== --}}
+                <div class="mt-7 pt-6 border-t border-admin-border">
+
+                    <label class="block mb-3 text-sm font-semibold text-ink">
+                        Ảnh chi tiết
+                    </label>
+
+
+                    @if (!empty($product->images))
+
+                        <div
+                            class="grid grid-cols-2
+                                   sm:grid-cols-3
+                                   md:grid-cols-4
+                                   gap-4 mb-5"
+                        >
+
+                            @foreach ($product->images as $image)
+
+                                <div
+                                    class="rounded-xl
+                                           border border-admin-border
+                                           bg-white p-2"
+                                >
+
+                                    <div
+                                        class="w-full h-28
+                                               rounded-lg overflow-hidden
+                                               bg-admin-bg"
+                                    >
+
+                                        <img
+                                            src="{{ str_starts_with($image, 'http')
+                                                ? $image
+                                                : asset('storage/' . $image) }}"
+                                            alt=""
+                                            class="w-full h-full object-cover"
+                                        >
+
+                                    </div>
+
+
+                                    <label
+                                        class="flex items-center gap-2
+                                               mt-2
+                                               text-xs text-red-500
+                                               cursor-pointer"
+                                    >
+
+                                        <input
+                                            type="checkbox"
+                                            name="remove_gallery[]"
+                                            value="{{ $image }}"
+                                            class="accent-red-500"
+                                        >
+
+                                        Xóa ảnh này
+
+                                    </label>
+
+                                </div>
+
+                            @endforeach
+
+                        </div>
+
+                    @else
+
+                        <div
+                            class="rounded-xl
+                                   border border-dashed
+                                   border-admin-border
+                                   bg-admin-bg/40
+                                   px-4 py-6
+                                   text-center mb-4"
+                        >
+
+                            <span class="text-2xl">
+                                🖼️
+                            </span>
+
+                            <p class="text-sm text-ink-soft mt-2">
+                                Chưa có ảnh chi tiết.
+                            </p>
+
+                        </div>
+
+                    @endif
+
+
+                    <label class="block mb-2 text-sm font-medium">
+                        Thêm ảnh chi tiết
+                    </label>
+
+                    <input
+                        type="file"
+                        name="images[]"
+                        multiple
+                        accept="image/jpeg,image/png,image/webp"
+                        class="w-full
+                               border border-admin-border
+                               rounded-xl px-4 py-3
+                               bg-white text-sm"
+                    >
+
+                    <p class="mt-2 text-xs text-ink-soft">
+                        Có thể chọn nhiều ảnh cùng lúc, tối đa 8 ảnh.
+                    </p>
+
+                    @error('images')
+                        <p class="mt-2 text-xs text-red-500">
+                            {{ $message }}
+                        </p>
+                    @enderror
+
+                    @error('images.*')
+                        <p class="mt-2 text-xs text-red-500">
+                            {{ $message }}
+                        </p>
+                    @enderror
 
                 </div>
 
@@ -544,29 +710,12 @@
 
 
         {{-- =========================================================
-            CỘT PHẢI
+            RIGHT
         ========================================================== --}}
         <div class="space-y-6">
 
-            @php
-                $selectedStageIds = collect(
-                    old(
-                        'stage_ids',
-                        $product->stages->pluck('id')->all()
-                    )
-                )->map(fn ($id) => (string) $id)->all();
-
-                $selectedTagIds = collect(
-                    old(
-                        'tag_ids',
-                        $product->tags->pluck('id')->all()
-                    )
-                )->map(fn ($id) => (string) $id)->all();
-            @endphp
-
-
             {{-- =====================================================
-                GIAI ĐOẠN
+                STAGES
             ====================================================== --}}
             <div class="card">
 
@@ -584,11 +733,9 @@
 
 
                 <div
-                    class="mt-4
-                           space-y-2
-                           max-h-[360px]
-                           overflow-y-auto
-                           pr-1"
+                    class="mt-4 space-y-2
+                           max-h-[380px]
+                           overflow-y-auto pr-1"
                 >
 
                     @forelse ($stages as $stage)
@@ -596,11 +743,9 @@
                         <label
                             class="flex items-start gap-3
                                    border border-admin-border
-                                   rounded-xl
-                                   px-4 py-3
+                                   rounded-xl px-4 py-3
                                    bg-white
                                    cursor-pointer
-                                   transition
                                    hover:border-coral/40
                                    hover:bg-coral-light/20"
                         >
@@ -618,56 +763,26 @@
                                 )
                                 class="mt-1
                                        w-4 h-4
-                                       accent-coral
-                                       shrink-0"
+                                       accent-coral"
                             >
 
-
-                            <div class="min-w-0">
+                            <div>
 
                                 <p class="text-sm font-semibold text-ink">
 
-                                    @if (!empty($stage->icon))
-                                        <span class="mr-1">
-                                            {{ $stage->icon }}
-                                        </span>
-                                    @endif
-
+                                    {{ $stage->icon }}
                                     {{ $stage->name }}
 
                                 </p>
 
+                                <p class="text-xs text-ink-soft mt-1">
 
-                                @if (
-                                    $stage->age_from !== null ||
-                                    $stage->age_to !== null
-                                )
+                                    {{ $stage->age_from }}
+                                    -
+                                    {{ $stage->age_to }}
+                                    tháng
 
-                                    <p class="text-xs text-ink-soft mt-1">
-
-                                        @if (
-                                            $stage->age_from !== null &&
-                                            $stage->age_to !== null
-                                        )
-
-                                            {{ $stage->age_from }}
-                                            -
-                                            {{ $stage->age_to }}
-                                            tháng
-
-                                        @elseif ($stage->age_from !== null)
-
-                                            Từ {{ $stage->age_from }} tháng
-
-                                        @else
-
-                                            Đến {{ $stage->age_to }} tháng
-
-                                        @endif
-
-                                    </p>
-
-                                @endif
+                                </p>
 
                             </div>
 
@@ -675,22 +790,9 @@
 
                     @empty
 
-                        <div
-                            class="rounded-xl
-                                   border border-dashed border-admin-border
-                                   px-4 py-8
-                                   text-center"
-                        >
-
-                            <div class="text-2xl mb-2">
-                                👶
-                            </div>
-
-                            <p class="text-sm font-medium text-ink">
-                                Chưa có giai đoạn
-                            </p>
-
-                        </div>
+                        <p class="text-sm text-ink-soft">
+                            Chưa có giai đoạn.
+                        </p>
 
                     @endforelse
 
@@ -700,7 +802,7 @@
 
 
             {{-- =====================================================
-                THUỘC TÍNH / TAG
+                TAGS
             ====================================================== --}}
             <div class="card">
 
@@ -711,30 +813,28 @@
                     </h2>
 
                     <p class="text-sm text-ink-soft mt-1">
-                        Gắn các thuộc tính phù hợp với sản phẩm.
+                        Gắn thuộc tính và thương hiệu cho sản phẩm.
                     </p>
 
                 </div>
 
 
                 <div
-                    class="mt-4
-                           space-y-2
-                           max-h-[420px]
-                           overflow-y-auto
-                           pr-1"
+                    class="mt-4 space-y-2
+                           max-h-[440px]
+                           overflow-y-auto pr-1"
                 >
 
                     @forelse ($tags as $tag)
 
                         <label
-                            class="flex items-center justify-between gap-4
+                            class="flex items-center
+                                   justify-between gap-4
                                    border border-admin-border
                                    rounded-xl
                                    px-4 py-3
                                    bg-white
                                    cursor-pointer
-                                   transition
                                    hover:border-coral/40
                                    hover:bg-coral-light/20"
                         >
@@ -752,9 +852,7 @@
                                             true
                                         )
                                     )
-                                    class="w-4 h-4
-                                           accent-coral
-                                           shrink-0"
+                                    class="w-4 h-4 accent-coral"
                                 >
 
                                 <span class="text-sm font-medium text-ink truncate">
@@ -769,7 +867,6 @@
                                 <span
                                     class="shrink-0
                                            text-[11px]
-                                           font-medium
                                            text-blue-600
                                            bg-blue-50
                                            rounded-full
@@ -783,7 +880,6 @@
                                 <span
                                     class="shrink-0
                                            text-[11px]
-                                           font-medium
                                            text-amber-600
                                            bg-amber-50
                                            rounded-full
@@ -797,7 +893,6 @@
                                 <span
                                     class="shrink-0
                                            text-[11px]
-                                           font-medium
                                            text-purple-600
                                            bg-purple-50
                                            rounded-full
@@ -806,42 +901,15 @@
                                     Giai đoạn
                                 </span>
 
-                            @else
-
-                                <span
-                                    class="shrink-0
-                                           text-[11px]
-                                           font-medium
-                                           text-gray-600
-                                           bg-gray-100
-                                           rounded-full
-                                           px-2.5 py-1"
-                                >
-                                    {{ ucfirst($tag->type) }}
-                                </span>
-
                             @endif
 
                         </label>
 
                     @empty
 
-                        <div
-                            class="rounded-xl
-                                   border border-dashed border-admin-border
-                                   px-4 py-8
-                                   text-center"
-                        >
-
-                            <div class="text-2xl mb-2">
-                                🏷️
-                            </div>
-
-                            <p class="text-sm font-medium text-ink">
-                                Chưa có thuộc tính
-                            </p>
-
-                        </div>
+                        <p class="text-sm text-ink-soft">
+                            Chưa có thuộc tính.
+                        </p>
 
                     @endforelse
 
@@ -860,15 +928,12 @@
                     <button
                         type="submit"
                         class="w-full
-                               inline-flex items-center justify-center gap-2
-                               px-5 py-3
+                               bg-coral text-white
                                rounded-xl
-                               bg-coral
-                               text-white
-                               text-sm font-semibold
-                               shadow-sm
-                               transition
-                               hover:opacity-90"
+                               px-5 py-3
+                               font-semibold
+                               hover:opacity-90
+                               transition"
                     >
                         ✓ Lưu thay đổi
                     </button>
@@ -877,14 +942,13 @@
                     <a
                         href="{{ route('admin.products.index') }}"
                         class="w-full
-                               inline-flex items-center justify-center
-                               px-5 py-3
-                               rounded-xl
+                               text-center
                                border border-admin-border
-                               bg-white
-                               text-sm font-medium text-ink
-                               transition
-                               hover:bg-admin-bg"
+                               rounded-xl
+                               px-5 py-3
+                               text-ink
+                               hover:bg-admin-bg
+                               transition"
                     >
                         Hủy
                     </a>

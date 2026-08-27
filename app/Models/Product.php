@@ -17,7 +17,6 @@ class Product extends Model
         'slug',
         'description',
         'image',
-        'icon',
         'images',
         'price',
         'old_price',
@@ -76,8 +75,7 @@ class Product extends Model
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'image' => $this->image
-                ?: 'https://via.placeholder.com/300?text=' . urlencode($this->name),
+            'image' => $this->image,
             'price' => $this->price,
             'old_price' => $this->old_price,
             'discount' => $this->discount_percent,

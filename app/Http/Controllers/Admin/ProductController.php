@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Stage;
 use App\Models\Tag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
@@ -18,7 +19,7 @@ class ProductController extends Controller
             ->with('category');
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', '%' . $search . '%')
@@ -30,14 +31,12 @@ class ProductController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        if ($request->filled('status')) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            }
+        if ($request->status === 'active') {
+            $query->where('is_active', true);
+        }
 
-            if ($request->status === 'inactive') {
-                $query->where('is_active', false);
-            }
+        if ($request->status === 'inactive') {
+            $query->where('is_active', false);
         }
 
         if ($request->boolean('low_stock')) {
@@ -46,9 +45,8 @@ class ProductController extends Controller
 
         $products = $query
             ->orderBy('id', 'asc')
-            ->paginate(10);
-
-        $products->appends($request->query());
+            ->paginate(10)
+            ->withQueryString();
 
         $categories = Category::orderBy('sort_order')
             ->orderBy('name')
@@ -83,106 +81,62 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'category_id' => [
-                'required',
-                'exists:categories,id',
-            ],
+        $validated = $request->validate(
+            $this->rules(),
+            $this->messages()
+        );
 
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
+        $validated['slug'] = $this->makeSlug(
+            $validated['slug'] ?? null,
+            $validated['name']
+        );
 
-            'slug' => [
-                'nullable',
-                'string',
-                'max:255',
-                'unique:products,slug',
-            ],
-
-            'description' => [
-                'nullable',
-                'string',
-            ],
-
-            'icon' => [
-                'nullable',
-                'string',
-                'max:50',
-            ],
-
-            'price' => [
-                'required',
-                'integer',
-                'min:0',
-            ],
-
-            'old_price' => [
-                'nullable',
-                'integer',
-                'min:0',
-            ],
-
-            'discount_percent' => [
-                'nullable',
-                'integer',
-                'min:0',
-                'max:100',
-            ],
-
-            'stock' => [
-                'required',
-                'integer',
-                'min:0',
-            ],
-
-            'is_active' => [
-                'nullable',
-            ],
-
-            'stage_ids' => [
-                'nullable',
-                'array',
-            ],
-
-            'stage_ids.*' => [
-                'exists:stages,id',
-            ],
-
-            'tag_ids' => [
-                'nullable',
-                'array',
-            ],
-
-            'tag_ids.*' => [
-                'exists:tags,id',
-            ],
-        ], [
-            'category_id.required' => 'Vui lòng chọn danh mục.',
-            'category_id.exists' => 'Danh mục không hợp lệ.',
-            'name.required' => 'Vui lòng nhập tên sản phẩm.',
-            'slug.unique' => 'Slug sản phẩm đã tồn tại.',
-            'icon.max' => 'Icon không được vượt quá 50 ký tự.',
-            'price.required' => 'Vui lòng nhập giá sản phẩm.',
-            'price.integer' => 'Giá sản phẩm phải là số.',
-            'price.min' => 'Giá sản phẩm không được nhỏ hơn 0.',
-            'old_price.integer' => 'Giá cũ phải là số.',
-            'old_price.min' => 'Giá cũ không được nhỏ hơn 0.',
-            'discount_percent.integer' => 'Phần trăm giảm phải là số nguyên.',
-            'discount_percent.min' => 'Phần trăm giảm không được nhỏ hơn 0.',
-            'discount_percent.max' => 'Phần trăm giảm không được lớn hơn 100.',
-            'stock.required' => 'Vui lòng nhập số lượng tồn kho.',
-            'stock.integer' => 'Tồn kho phải là số nguyên.',
-            'stock.min' => 'Tồn kho không được nhỏ hơn 0.',
-        ]);
-
-        $validated['slug'] = !empty($validated['slug'])
-            ? Str::slug($validated['slug'])
-            : Str::slug($validated['name']);
+        /*
+         * Trường hợp người dùng để slug rỗng nhưng slug tự sinh
+         * lại trùng với sản phẩm khác.
+         */
+        if (
+            Product::where('slug', $validated['slug'])->exists()
+        ) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'slug' => 'Slug sản phẩm đã tồn tại.',
+                ]);
+        }
 
         $validated['is_active'] = $request->boolean('is_active');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ảnh đại diện
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request
+                ->file('image')
+                ->store('products/main', 'public');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Gallery
+        |--------------------------------------------------------------------------
+        */
+
+        $gallery = [];
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $gallery[] = $file->store(
+                    'products/gallery',
+                    'public'
+                );
+            }
+        }
+
+        $validated['images'] = $gallery;
 
         unset(
             $validated['stage_ids'],
@@ -232,9 +186,175 @@ class ProductController extends Controller
         ));
     }
 
-    public function update(Request $request, Product $product)
+    public function update(
+        Request $request,
+        Product $product
+    ) {
+        $rules = $this->rules();
+
+        $rules['slug'] = [
+            'nullable',
+            'string',
+            'max:255',
+            'unique:products,slug,' . $product->id,
+        ];
+
+        $validated = $request->validate(
+            $rules,
+            $this->messages()
+        );
+
+        $validated['slug'] = $this->makeSlug(
+            $validated['slug'] ?? null,
+            $validated['name']
+        );
+
+        $slugExists = Product::query()
+            ->where('slug', $validated['slug'])
+            ->where('id', '!=', $product->id)
+            ->exists();
+
+        if ($slugExists) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'slug' => 'Slug sản phẩm đã tồn tại.',
+                ]);
+        }
+
+        $validated['is_active'] = $request->boolean('is_active');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Xóa ảnh đại diện hiện tại nếu admin yêu cầu
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->boolean('remove_image')) {
+            $this->deleteLocalImage($product->image);
+            $validated['image'] = null;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Thay ảnh đại diện
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->hasFile('image')) {
+
+            $this->deleteLocalImage($product->image);
+
+            $validated['image'] = $request
+                ->file('image')
+                ->store('products/main', 'public');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Gallery hiện tại
+        |--------------------------------------------------------------------------
+        */
+
+        $gallery = $product->images ?? [];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Xóa ảnh gallery được chọn
+        |--------------------------------------------------------------------------
+        */
+
+        $removeGallery = $request->input(
+            'remove_gallery',
+            []
+        );
+
+        if (is_array($removeGallery)) {
+
+            foreach ($removeGallery as $imageToRemove) {
+
+                if (in_array($imageToRemove, $gallery, true)) {
+                    $this->deleteLocalImage($imageToRemove);
+                }
+            }
+
+            $gallery = array_values(
+                array_filter(
+                    $gallery,
+                    fn ($image) =>
+                        !in_array(
+                            $image,
+                            $removeGallery,
+                            true
+                        )
+                )
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Thêm ảnh gallery mới
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->hasFile('images')) {
+
+            foreach ($request->file('images') as $file) {
+
+                $gallery[] = $file->store(
+                    'products/gallery',
+                    'public'
+                );
+            }
+        }
+
+        $validated['images'] = $gallery;
+
+        unset(
+            $validated['stage_ids'],
+            $validated['tag_ids']
+        );
+
+        $product->update($validated);
+
+        $product->stages()->sync(
+            $request->input('stage_ids', [])
+        );
+
+        $product->tags()->sync(
+            $request->input('tag_ids', [])
+        );
+
+        return redirect()
+            ->route('admin.products.index')
+            ->with('success', 'Cập nhật sản phẩm thành công.');
+    }
+
+    public function destroy(Product $product)
     {
-        $validated = $request->validate([
+        $this->deleteLocalImage($product->image);
+
+        foreach ($product->images ?? [] as $image) {
+            $this->deleteLocalImage($image);
+        }
+
+        /*
+         * Với belongsToMany, detach trước cho rõ ràng.
+         * Nếu pivot đã có cascade thì thao tác này vẫn an toàn.
+         */
+        $product->stages()->detach();
+        $product->tags()->detach();
+
+        $product->delete();
+
+        return redirect()
+            ->route('admin.products.index')
+            ->with('success', 'Xóa sản phẩm thành công.');
+    }
+
+    private function rules(): array
+    {
+        return [
             'category_id' => [
                 'required',
                 'exists:categories,id',
@@ -250,18 +370,12 @@ class ProductController extends Controller
                 'nullable',
                 'string',
                 'max:255',
-                'unique:products,slug,' . $product->id,
+                'unique:products,slug',
             ],
 
             'description' => [
                 'nullable',
                 'string',
-            ],
-
-            'icon' => [
-                'nullable',
-                'string',
-                'max:50',
             ],
 
             'price' => [
@@ -293,6 +407,47 @@ class ProductController extends Controller
                 'nullable',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Ảnh
+            |--------------------------------------------------------------------------
+            */
+
+            'image' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:4096',
+            ],
+
+            'images' => [
+                'nullable',
+                'array',
+                'max:8',
+            ],
+
+            'images.*' => [
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:4096',
+            ],
+
+            'remove_image' => [
+                'nullable',
+                'boolean',
+            ],
+
+            'remove_gallery' => [
+                'nullable',
+                'array',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Stage
+            |--------------------------------------------------------------------------
+            */
+
             'stage_ids' => [
                 'nullable',
                 'array',
@@ -302,6 +457,12 @@ class ProductController extends Controller
                 'exists:stages,id',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Tag
+            |--------------------------------------------------------------------------
+            */
+
             'tag_ids' => [
                 'nullable',
                 'array',
@@ -310,57 +471,104 @@ class ProductController extends Controller
             'tag_ids.*' => [
                 'exists:tags,id',
             ],
-        ], [
-            'category_id.required' => 'Vui lòng chọn danh mục.',
-            'category_id.exists' => 'Danh mục không hợp lệ.',
-            'name.required' => 'Vui lòng nhập tên sản phẩm.',
-            'slug.unique' => 'Slug sản phẩm đã tồn tại.',
-            'icon.max' => 'Icon không được vượt quá 50 ký tự.',
-            'price.required' => 'Vui lòng nhập giá sản phẩm.',
-            'price.integer' => 'Giá sản phẩm phải là số.',
-            'price.min' => 'Giá sản phẩm không được nhỏ hơn 0.',
-            'old_price.integer' => 'Giá cũ phải là số.',
-            'old_price.min' => 'Giá cũ không được nhỏ hơn 0.',
-            'discount_percent.integer' => 'Phần trăm giảm phải là số nguyên.',
-            'discount_percent.min' => 'Phần trăm giảm không được nhỏ hơn 0.',
-            'discount_percent.max' => 'Phần trăm giảm không được lớn hơn 100.',
-            'stock.required' => 'Vui lòng nhập số lượng tồn kho.',
-            'stock.integer' => 'Tồn kho phải là số nguyên.',
-            'stock.min' => 'Tồn kho không được nhỏ hơn 0.',
-        ]);
-
-        $validated['slug'] = !empty($validated['slug'])
-            ? Str::slug($validated['slug'])
-            : Str::slug($validated['name']);
-
-        $validated['is_active'] = $request->boolean('is_active');
-
-        unset(
-            $validated['stage_ids'],
-            $validated['tag_ids']
-        );
-
-        $product->update($validated);
-
-        $product->stages()->sync(
-            $request->input('stage_ids', [])
-        );
-
-        $product->tags()->sync(
-            $request->input('tag_ids', [])
-        );
-
-        return redirect()
-            ->route('admin.products.index')
-            ->with('success', 'Cập nhật sản phẩm thành công.');
+        ];
     }
 
-    public function destroy(Product $product)
+    private function messages(): array
     {
-        $product->delete();
+        return [
+            'category_id.required' =>
+                'Vui lòng chọn danh mục.',
 
-        return redirect()
-            ->route('admin.products.index')
-            ->with('success', 'Xóa sản phẩm thành công.');
+            'category_id.exists' =>
+                'Danh mục không hợp lệ.',
+
+            'name.required' =>
+                'Vui lòng nhập tên sản phẩm.',
+
+            'slug.unique' =>
+                'Slug sản phẩm đã tồn tại.',
+
+            'price.required' =>
+                'Vui lòng nhập giá sản phẩm.',
+
+            'price.integer' =>
+                'Giá sản phẩm phải là số.',
+
+            'price.min' =>
+                'Giá sản phẩm không được nhỏ hơn 0.',
+
+            'old_price.integer' =>
+                'Giá cũ phải là số.',
+
+            'discount_percent.integer' =>
+                'Phần trăm giảm phải là số nguyên.',
+
+            'discount_percent.min' =>
+                'Phần trăm giảm không được nhỏ hơn 0.',
+
+            'discount_percent.max' =>
+                'Phần trăm giảm không được lớn hơn 100.',
+
+            'stock.required' =>
+                'Vui lòng nhập tồn kho.',
+
+            'stock.integer' =>
+                'Tồn kho phải là số nguyên.',
+
+            'stock.min' =>
+                'Tồn kho không được nhỏ hơn 0.',
+
+            'image.image' =>
+                'Ảnh đại diện không hợp lệ.',
+
+            'image.mimes' =>
+                'Ảnh đại diện chỉ nhận JPG, JPEG, PNG hoặc WEBP.',
+
+            'image.max' =>
+                'Ảnh đại diện không được lớn hơn 4MB.',
+
+            'images.max' =>
+                'Chỉ được tải tối đa 8 ảnh chi tiết.',
+
+            'images.*.image' =>
+                'Một ảnh chi tiết không hợp lệ.',
+
+            'images.*.mimes' =>
+                'Ảnh chi tiết chỉ nhận JPG, JPEG, PNG hoặc WEBP.',
+
+            'images.*.max' =>
+                'Mỗi ảnh chi tiết không được lớn hơn 4MB.',
+        ];
+    }
+
+    private function makeSlug(
+        ?string $slug,
+        string $name
+    ): string {
+        return Str::slug(
+            filled($slug)
+                ? $slug
+                : $name
+        );
+    }
+
+    private function deleteLocalImage(
+        ?string $image
+    ): void {
+        if (!$image) {
+            return;
+        }
+
+        if (
+            Str::startsWith(
+                $image,
+                ['http://', 'https://']
+            )
+        ) {
+            return;
+        }
+
+        Storage::disk('public')->delete($image);
     }
 }
