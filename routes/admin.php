@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PlaceholderController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\StageController;
 use App\Http\Controllers\Admin\TagController;
@@ -56,10 +57,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         ->name('tags.destroy');
 
     // Sản phẩm
-    Route::get(
-        '/san-pham',
-        fn () => (new PlaceholderController)->index('Sản phẩm')
-    )->name('products.index');
+    Route::resource('san-pham', ProductController::class)
+        ->parameters([
+            'san-pham' => 'product',
+        ])
+        ->names('products')
+        ->except(['show']);
 
 
     /*
