@@ -24,7 +24,6 @@
 
             {{-- Search --}}
             <div class="xl:col-span-2">
-
                 <input
                     type="text"
                     name="search"
@@ -34,26 +33,21 @@
                            px-4 py-2.5 text-sm text-ink
                            outline-none focus:border-coral"
                 >
-
             </div>
-
 
             {{-- Category --}}
             <div>
-
                 <select
                     name="category_id"
                     class="w-full border border-admin-border rounded-xl
                            px-4 py-2.5 text-sm text-ink
                            outline-none focus:border-coral"
                 >
-
                     <option value="">
                         Tất cả danh mục
                     </option>
 
                     @foreach ($categories as $category)
-
                         <option
                             value="{{ $category->id }}"
                             @selected(
@@ -64,24 +58,18 @@
                         >
                             {{ $category->name }}
                         </option>
-
                     @endforeach
-
                 </select>
-
             </div>
-
 
             {{-- Status --}}
             <div>
-
                 <select
                     name="status"
                     class="w-full border border-admin-border rounded-xl
                            px-4 py-2.5 text-sm text-ink
                            outline-none focus:border-coral"
                 >
-
                     <option value="">
                         Tất cả trạng thái
                     </option>
@@ -99,11 +87,8 @@
                     >
                         Đã ẩn
                     </option>
-
                 </select>
-
             </div>
-
 
             {{-- Low stock + filter --}}
             <div class="flex gap-2">
@@ -115,7 +100,6 @@
                            cursor-pointer whitespace-nowrap
                            hover:bg-admin-bg transition"
                 >
-
                     <input
                         type="checkbox"
                         name="low_stock"
@@ -125,9 +109,7 @@
                     >
 
                     Tồn kho thấp
-
                 </label>
-
 
                 <button
                     type="submit"
@@ -143,29 +125,23 @@
 
         </form>
 
-
         @if (
             request()->filled('search')
             || request()->filled('category_id')
             || request()->filled('status')
             || request()->boolean('low_stock')
         )
-
             <div class="mt-3">
-
                 <a
                     href="{{ route('admin.products.index') }}"
                     class="text-sm text-ink-soft hover:text-coral transition"
                 >
                     ↻ Làm mới bộ lọc
                 </a>
-
             </div>
-
         @endif
 
     </div>
-
 
 
     {{-- =====================================================
@@ -181,7 +157,6 @@
                     class="bg-admin-bg text-ink-soft
                            text-xs uppercase tracking-wide"
                 >
-
                     <tr>
 
                         <th class="text-left px-5 py-3 font-semibold w-16">
@@ -213,9 +188,7 @@
                         </th>
 
                     </tr>
-
                 </thead>
-
 
                 <tbody class="divide-y divide-admin-border">
 
@@ -225,9 +198,7 @@
 
                             {{-- STT --}}
                             <td class="px-5 py-4 text-ink-soft">
-
                                 {{ $products->firstItem() + $loop->index }}
-
                             </td>
 
 
@@ -236,14 +207,13 @@
 
                                 <div class="flex items-center gap-3">
 
+                                    {{-- Image / Icon --}}
                                     <div
                                         class="w-14 h-14 rounded-xl
-                                               bg-admin-bg
-                                               border border-admin-border
+                                               bg-admin-bg border border-admin-border
                                                flex items-center justify-center
                                                shrink-0 overflow-hidden"
                                     >
-
                                         @if ($product->image)
 
                                             <img
@@ -264,7 +234,7 @@
                                                        items-center justify-center
                                                        text-2xl"
                                             >
-                                                📦
+                                                {{ $product->icon ?: '📦' }}
                                             </span>
 
                                         @else
@@ -274,11 +244,10 @@
                                                        flex items-center justify-center
                                                        text-2xl"
                                             >
-                                                📦
+                                                {{ $product->icon ?: '📦' }}
                                             </span>
 
                                         @endif
-
                                     </div>
 
 
@@ -339,7 +308,6 @@
                                     {{ number_format($product->price, 0, ',', '.') }}đ
                                 </p>
 
-
                                 @if ($product->old_price)
 
                                     <p
@@ -350,7 +318,6 @@
                                     </p>
 
                                 @endif
-
 
                                 @if ($product->discount_percent)
 
@@ -412,14 +379,12 @@
                                                text-green-600
                                                whitespace-nowrap"
                                     >
-
                                         <span
                                             class="w-2 h-2 rounded-full
                                                    bg-green-500"
                                         ></span>
 
                                         Đang bán
-
                                     </span>
 
                                 @else
@@ -432,14 +397,12 @@
                                                text-gray-500
                                                whitespace-nowrap"
                                     >
-
                                         <span
                                             class="w-2 h-2 rounded-full
                                                    bg-gray-400"
                                         ></span>
 
                                         Đã ẩn
-
                                     </span>
 
                                 @endif
@@ -463,7 +426,6 @@
                                         Sửa
                                     </a>
 
-
                                     <button
                                         type="button"
                                         data-action="{{ route('admin.products.destroy', $product) }}"
@@ -485,7 +447,6 @@
                     @empty
 
                         <tr>
-
                             <td colspan="7" class="px-5 py-20 text-center">
 
                                 <div
@@ -509,17 +470,12 @@
                                         || request()->filled('status')
                                         || request()->boolean('low_stock')
                                     )
-
                                         Hãy thử thay đổi bộ lọc tìm kiếm.
-
                                     @else
-
                                         Hãy tạo sản phẩm đầu tiên.
-
                                     @endif
 
                                 </p>
-
 
                                 @if (
                                     request()->filled('search')
@@ -551,7 +507,6 @@
                                 @endif
 
                             </td>
-
                         </tr>
 
                     @endforelse
@@ -561,7 +516,6 @@
             </table>
 
         </div>
-
 
 
         {{-- =====================================================
@@ -659,7 +613,6 @@
                         @endif
 
 
-
                         {{-- FIRST PAGE --}}
                         @if ($startPage > 1)
 
@@ -695,7 +648,6 @@
                             @endif
 
                         @endif
-
 
 
                         {{-- PAGE WINDOW --}}
@@ -740,7 +692,6 @@
                         @endfor
 
 
-
                         {{-- LAST PAGE --}}
                         @if ($endPage < $lastPage)
 
@@ -755,7 +706,6 @@
                                 </span>
 
                             @endif
-
 
                             <a
                                 href="{{ route(
@@ -776,7 +726,6 @@
                             </a>
 
                         @endif
-
 
 
                         {{-- NEXT --}}
@@ -824,7 +773,6 @@
         @endif
 
     </div>
-
 
 
     {{-- =====================================================
@@ -927,7 +875,6 @@
     </div>
 
 @endsection
-
 
 
 @push('scripts')

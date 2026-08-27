@@ -8,7 +8,6 @@ use App\Models\Product;
 use App\Models\Stage;
 use App\Models\Tag;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
@@ -18,7 +17,6 @@ class ProductController extends Controller
         $query = Product::query()
             ->with('category');
 
-        // Tìm kiếm theo tên hoặc slug
         if ($request->filled('search')) {
             $search = $request->search;
 
@@ -28,12 +26,10 @@ class ProductController extends Controller
             });
         }
 
-        // Lọc theo danh mục
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
 
-        // Lọc trạng thái
         if ($request->filled('status')) {
             if ($request->status === 'active') {
                 $query->where('is_active', true);
@@ -44,17 +40,14 @@ class ProductController extends Controller
             }
         }
 
-        // Lọc tồn kho thấp
         if ($request->boolean('low_stock')) {
             $query->where('stock', '<=', 10);
         }
 
-        // Sắp xếp ID tăng dần
         $products = $query
             ->orderBy('id', 'asc')
             ->paginate(10);
 
-        // Giữ nguyên điều kiện lọc khi chuyển trang
         $products->appends($request->query());
 
         $categories = Category::orderBy('sort_order')
@@ -114,6 +107,12 @@ class ProductController extends Controller
                 'string',
             ],
 
+            'icon' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
             'price' => [
                 'required',
                 'integer',
@@ -143,23 +142,6 @@ class ProductController extends Controller
                 'nullable',
             ],
 
-            'image' => [
-                'nullable',
-                'image',
-                'max:2048',
-            ],
-
-            'images' => [
-                'nullable',
-                'array',
-                'max:8',
-            ],
-
-            'images.*' => [
-                'image',
-                'max:2048',
-            ],
-
             'stage_ids' => [
                 'nullable',
                 'array',
@@ -180,32 +162,20 @@ class ProductController extends Controller
         ], [
             'category_id.required' => 'Vui lòng chọn danh mục.',
             'category_id.exists' => 'Danh mục không hợp lệ.',
-
             'name.required' => 'Vui lòng nhập tên sản phẩm.',
-
             'slug.unique' => 'Slug sản phẩm đã tồn tại.',
-
+            'icon.max' => 'Icon không được vượt quá 50 ký tự.',
             'price.required' => 'Vui lòng nhập giá sản phẩm.',
             'price.integer' => 'Giá sản phẩm phải là số.',
             'price.min' => 'Giá sản phẩm không được nhỏ hơn 0.',
-
             'old_price.integer' => 'Giá cũ phải là số.',
             'old_price.min' => 'Giá cũ không được nhỏ hơn 0.',
-
             'discount_percent.integer' => 'Phần trăm giảm phải là số nguyên.',
             'discount_percent.min' => 'Phần trăm giảm không được nhỏ hơn 0.',
             'discount_percent.max' => 'Phần trăm giảm không được lớn hơn 100.',
-
             'stock.required' => 'Vui lòng nhập số lượng tồn kho.',
             'stock.integer' => 'Tồn kho phải là số nguyên.',
             'stock.min' => 'Tồn kho không được nhỏ hơn 0.',
-
-            'image.image' => 'Ảnh đại diện không hợp lệ.',
-            'image.max' => 'Ảnh đại diện không được vượt quá 2MB.',
-
-            'images.max' => 'Chỉ được upload tối đa 8 ảnh.',
-            'images.*.image' => 'Một trong các ảnh tải lên không hợp lệ.',
-            'images.*.max' => 'Mỗi ảnh không được vượt quá 2MB.',
         ]);
 
         $validated['slug'] = !empty($validated['slug'])
@@ -213,24 +183,6 @@ class ProductController extends Controller
             : Str::slug($validated['name']);
 
         $validated['is_active'] = $request->boolean('is_active');
-
-        // Upload ảnh đại diện
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')
-                ->store('products/main', 'public');
-        }
-
-        // Upload nhiều ảnh chi tiết
-        $galleryImages = [];
-
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $galleryImages[] = $file
-                    ->store('products/gallery', 'public');
-            }
-        }
-
-        $validated['images'] = $galleryImages;
 
         unset(
             $validated['stage_ids'],
@@ -306,6 +258,12 @@ class ProductController extends Controller
                 'string',
             ],
 
+            'icon' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
             'price' => [
                 'required',
                 'integer',
@@ -335,23 +293,6 @@ class ProductController extends Controller
                 'nullable',
             ],
 
-            'image' => [
-                'nullable',
-                'image',
-                'max:2048',
-            ],
-
-            'images' => [
-                'nullable',
-                'array',
-                'max:8',
-            ],
-
-            'images.*' => [
-                'image',
-                'max:2048',
-            ],
-
             'stage_ids' => [
                 'nullable',
                 'array',
@@ -369,6 +310,23 @@ class ProductController extends Controller
             'tag_ids.*' => [
                 'exists:tags,id',
             ],
+        ], [
+            'category_id.required' => 'Vui lòng chọn danh mục.',
+            'category_id.exists' => 'Danh mục không hợp lệ.',
+            'name.required' => 'Vui lòng nhập tên sản phẩm.',
+            'slug.unique' => 'Slug sản phẩm đã tồn tại.',
+            'icon.max' => 'Icon không được vượt quá 50 ký tự.',
+            'price.required' => 'Vui lòng nhập giá sản phẩm.',
+            'price.integer' => 'Giá sản phẩm phải là số.',
+            'price.min' => 'Giá sản phẩm không được nhỏ hơn 0.',
+            'old_price.integer' => 'Giá cũ phải là số.',
+            'old_price.min' => 'Giá cũ không được nhỏ hơn 0.',
+            'discount_percent.integer' => 'Phần trăm giảm phải là số nguyên.',
+            'discount_percent.min' => 'Phần trăm giảm không được nhỏ hơn 0.',
+            'discount_percent.max' => 'Phần trăm giảm không được lớn hơn 100.',
+            'stock.required' => 'Vui lòng nhập số lượng tồn kho.',
+            'stock.integer' => 'Tồn kho phải là số nguyên.',
+            'stock.min' => 'Tồn kho không được nhỏ hơn 0.',
         ]);
 
         $validated['slug'] = !empty($validated['slug'])
@@ -376,36 +334,6 @@ class ProductController extends Controller
             : Str::slug($validated['name']);
 
         $validated['is_active'] = $request->boolean('is_active');
-
-        // Thay ảnh đại diện
-        if ($request->hasFile('image')) {
-
-            if (
-                $product->image
-                && !Str::startsWith($product->image, [
-                    'http://',
-                    'https://',
-                ])
-            ) {
-                Storage::disk('public')->delete($product->image);
-            }
-
-            $validated['image'] = $request->file('image')
-                ->store('products/main', 'public');
-        }
-
-        // Gallery hiện tại
-        $galleryImages = $product->images ?? [];
-
-        // Thêm ảnh gallery mới
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $galleryImages[] = $file
-                    ->store('products/gallery', 'public');
-            }
-        }
-
-        $validated['images'] = $galleryImages;
 
         unset(
             $validated['stage_ids'],
@@ -429,22 +357,6 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        // Xóa ảnh đại diện local
-        if (
-            $product->image
-            && !Str::startsWith($product->image, [
-                'http://',
-                'https://',
-            ])
-        ) {
-            Storage::disk('public')->delete($product->image);
-        }
-
-        // Xóa gallery local
-        foreach ($product->images ?? [] as $image) {
-            Storage::disk('public')->delete($image);
-        }
-
         $product->delete();
 
         return redirect()

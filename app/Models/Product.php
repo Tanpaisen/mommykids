@@ -17,6 +17,7 @@ class Product extends Model
         'slug',
         'description',
         'image',
+        'icon',
         'images',
         'price',
         'old_price',
@@ -70,10 +71,6 @@ class Product extends Model
         return 'slug';
     }
 
-    /**
-     * Shape expected by:
-     * resources/views/components/product-card.blade.php
-     */
     public function toCardArray(): array
     {
         return [

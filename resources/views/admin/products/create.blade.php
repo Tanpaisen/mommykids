@@ -21,25 +21,24 @@
         method="POST"
         enctype="multipart/form-data"
     >
-
         @csrf
 
         <div class="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-6">
 
-            {{-- LEFT --}}
             <div class="space-y-6">
 
-                {{-- THÔNG TIN CƠ BẢN --}}
                 <div class="card">
 
                     <div class="border-b border-admin-border pb-4 mb-5">
+
                         <h2 class="font-semibold text-ink">
                             Thông tin cơ bản
                         </h2>
 
                         <p class="text-sm text-ink-soft mt-1">
-                            Tên, danh mục, mô tả và trạng thái sản phẩm.
+                            Tên, danh mục, icon, mô tả và trạng thái sản phẩm.
                         </p>
+
                     </div>
 
 
@@ -57,7 +56,7 @@
                                 name="name"
                                 required
                                 value="{{ old('name') }}"
-                                placeholder="Ví dụ: Sữa Aptamil Profutura 800g"
+                                placeholder="Ví dụ: Sữa Aptamil Profutura 900g"
                                 class="w-full border border-admin-border
                                        rounded-xl px-4 py-2.5
                                        outline-none focus:border-coral"
@@ -106,12 +105,6 @@
 
                                 </select>
 
-                                @error('category_id')
-                                    <p class="mt-1.5 text-xs text-red-500">
-                                        {{ $message }}
-                                    </p>
-                                @enderror
-
                             </div>
 
 
@@ -131,13 +124,37 @@
                                            outline-none focus:border-coral"
                                 >
 
-                                @error('slug')
-                                    <p class="mt-1.5 text-xs text-red-500">
-                                        {{ $message }}
-                                    </p>
-                                @enderror
-
                             </div>
+
+                        </div>
+
+
+                        <div>
+
+                            <label class="block mb-2 text-sm font-semibold">
+                                Icon sản phẩm
+                            </label>
+
+                            <input
+                                type="text"
+                                name="icon"
+                                value="{{ old('icon') }}"
+                                placeholder="Ví dụ: 🍼"
+                                class="w-full border border-admin-border
+                                       rounded-xl px-4 py-2.5
+                                       text-2xl outline-none focus:border-coral"
+                            >
+
+                            <p class="mt-1.5 text-xs text-ink-soft">
+                                Icon được dùng khi sản phẩm chưa có ảnh hoặc ảnh không tải được.
+                                Ví dụ: 🍼 👶 🥣 🧴 🧸 🛒
+                            </p>
+
+                            @error('icon')
+                                <p class="mt-1.5 text-xs text-red-500">
+                                    {{ $message }}
+                                </p>
+                            @enderror
 
                         </div>
 
@@ -193,7 +210,6 @@
                 </div>
 
 
-                {{-- GIÁ & KHO --}}
                 <div class="card">
 
                     <div class="border-b border-admin-border pb-4 mb-5">
@@ -224,17 +240,10 @@
                                 required
                                 min="0"
                                 value="{{ old('price') }}"
-                                placeholder="0"
                                 class="w-full border border-admin-border
                                        rounded-xl px-4 py-2.5
                                        outline-none focus:border-coral"
                             >
-
-                            @error('price')
-                                <p class="mt-1.5 text-xs text-red-500">
-                                    {{ $message }}
-                                </p>
-                            @enderror
 
                         </div>
 
@@ -250,7 +259,6 @@
                                 name="old_price"
                                 min="0"
                                 value="{{ old('old_price') }}"
-                                placeholder="Không bắt buộc"
                                 class="w-full border border-admin-border
                                        rounded-xl px-4 py-2.5
                                        outline-none focus:border-coral"
@@ -271,7 +279,6 @@
                                 min="0"
                                 max="100"
                                 value="{{ old('discount_percent') }}"
-                                placeholder="0"
                                 class="w-full border border-admin-border
                                        rounded-xl px-4 py-2.5
                                        outline-none focus:border-coral"
@@ -298,12 +305,6 @@
                                        outline-none focus:border-coral"
                             >
 
-                            @error('stock')
-                                <p class="mt-1.5 text-xs text-red-500">
-                                    {{ $message }}
-                                </p>
-                            @enderror
-
                         </div>
 
                     </div>
@@ -311,7 +312,6 @@
                 </div>
 
 
-                {{-- ẢNH --}}
                 <div class="card">
 
                     <div class="border-b border-admin-border pb-4 mb-5">
@@ -342,10 +342,6 @@
                                 class="w-full border border-admin-border
                                        rounded-xl px-4 py-2.5 text-sm"
                             >
-
-                            <p class="mt-1 text-xs text-ink-soft">
-                                Tối đa 2MB.
-                            </p>
 
                         </div>
 
@@ -378,11 +374,8 @@
             </div>
 
 
-
-            {{-- RIGHT --}}
             <div class="space-y-6">
 
-                {{-- GIAI ĐOẠN --}}
                 <div class="card">
 
                     <h2 class="font-semibold text-ink">
@@ -440,7 +433,6 @@
                 </div>
 
 
-                {{-- TAG --}}
                 <div class="card">
 
                     <h2 class="font-semibold text-ink">
@@ -515,7 +507,6 @@
                 </div>
 
 
-                {{-- ACTION --}}
                 <div class="card">
 
                     <div class="flex flex-col gap-3">

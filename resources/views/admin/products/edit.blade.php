@@ -1,72 +1,152 @@
 @extends('admin.layouts.app')
 
 @section('page_title', 'Chỉnh sửa sản phẩm')
-@section('page_subtitle', 'Cập nhật thông tin "' . $product->name . '"')
+
+@section('page_subtitle')
+    Cập nhật thông tin sản phẩm "{{ $product->name }}"
+@endsection
 
 @section('page_actions')
     <a
         href="{{ route('admin.products.index') }}"
-        class="px-4 py-2 rounded-xl
+        class="inline-flex items-center justify-center gap-2
+               px-4 py-2.5 rounded-xl
                border border-admin-border
-               text-sm text-ink hover:bg-admin-bg transition"
+               bg-white text-sm font-medium text-ink
+               hover:bg-admin-bg transition"
     >
         ← Quay lại
     </a>
 @endsection
 
+
 @section('content')
 
-    <form
-        action="{{ route('admin.products.update', $product) }}"
-        method="POST"
-        enctype="multipart/form-data"
-    >
-
-        @csrf
-        @method('PUT')
+<form
+    action="{{ route('admin.products.update', $product) }}"
+    method="POST"
+>
+    @csrf
+    @method('PUT')
 
 
-        <div class="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,0.95fr)] gap-6">
 
-            {{-- LEFT --}}
-            <div class="space-y-6">
+        {{-- =========================================================
+            CỘT TRÁI
+        ========================================================== --}}
+        <div class="space-y-6">
 
-                {{-- THÔNG TIN --}}
-                <div class="card">
+            {{-- =====================================================
+                THÔNG TIN CƠ BẢN
+            ====================================================== --}}
+            <div class="card">
 
-                    <div class="border-b border-admin-border pb-4 mb-5">
+                <div class="border-b border-admin-border pb-4 mb-5">
 
-                        <h2 class="font-semibold text-ink">
-                            Thông tin cơ bản
-                        </h2>
+                    <h2 class="text-base font-semibold text-ink">
+                        Thông tin cơ bản
+                    </h2>
 
-                        <p class="text-sm text-ink-soft mt-1">
-                            Cập nhật nội dung và trạng thái sản phẩm.
-                        </p>
+                    <p class="text-sm text-ink-soft mt-1">
+                        Cập nhật thông tin và trạng thái sản phẩm.
+                    </p>
+
+                </div>
+
+
+                <div class="space-y-5">
+
+                    {{-- TÊN SẢN PHẨM --}}
+                    <div>
+
+                        <label
+                            for="productName"
+                            class="block mb-2 text-sm font-semibold text-ink"
+                        >
+                            Tên sản phẩm
+                            <span class="text-coral">*</span>
+                        </label>
+
+                        <input
+                            id="productName"
+                            type="text"
+                            name="name"
+                            value="{{ old('name', $product->name) }}"
+                            required
+                            autocomplete="off"
+                            class="w-full
+                                   border border-admin-border
+                                   rounded-xl
+                                   px-4 py-3
+                                   bg-white
+                                   text-ink
+                                   outline-none
+                                   transition
+                                   focus:border-coral
+                                   focus:ring-2
+                                   focus:ring-coral/10"
+                        >
+
+                        @error('name')
+                            <p class="mt-1.5 text-xs text-red-500">
+                                {{ $message }}
+                            </p>
+                        @enderror
 
                     </div>
 
 
-                    <div class="space-y-5">
+                    {{-- DANH MỤC + SLUG --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
+                        {{-- DANH MỤC --}}
                         <div>
 
-                            <label class="block mb-2 text-sm font-semibold">
-                                Tên sản phẩm
+                            <label
+                                for="categoryId"
+                                class="block mb-2 text-sm font-semibold text-ink"
+                            >
+                                Danh mục
                                 <span class="text-coral">*</span>
                             </label>
 
-                            <input
-                                type="text"
-                                name="name"
+                            <select
+                                id="categoryId"
+                                name="category_id"
                                 required
-                                value="{{ old('name', $product->name) }}"
-                                class="w-full border border-admin-border
-                                       rounded-xl px-4 py-2.5
-                                       outline-none focus:border-coral"
+                                class="w-full
+                                       border border-admin-border
+                                       rounded-xl
+                                       px-4 py-3
+                                       bg-white
+                                       text-ink
+                                       outline-none
+                                       transition
+                                       focus:border-coral
+                                       focus:ring-2
+                                       focus:ring-coral/10"
                             >
 
-                            @error('name')
+                                @foreach ($categories as $category)
+
+                                    <option
+                                        value="{{ $category->id }}"
+                                        @selected(
+                                            (string) old(
+                                                'category_id',
+                                                $product->category_id
+                                            ) === (string) $category->id
+                                        )
+                                    >
+                                        {{ $category->name }}
+                                    </option>
+
+                                @endforeach
+
+                            </select>
+
+                            @error('category_id')
                                 <p class="mt-1.5 text-xs text-red-500">
                                     {{ $message }}
                                 </p>
@@ -75,320 +155,169 @@
                         </div>
 
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {{-- SLUG --}}
+                        <div>
 
-                            <div>
+                            <label
+                                for="productSlug"
+                                class="block mb-2 text-sm font-semibold text-ink"
+                            >
+                                Slug
+                            </label>
 
-                                <label class="block mb-2 text-sm font-semibold">
-                                    Danh mục
-                                    <span class="text-coral">*</span>
-                                </label>
+                            <input
+                                id="productSlug"
+                                type="text"
+                                name="slug"
+                                value="{{ old('slug', $product->slug) }}"
+                                autocomplete="off"
+                                class="w-full
+                                       border border-admin-border
+                                       rounded-xl
+                                       px-4 py-3
+                                       bg-white
+                                       text-ink
+                                       outline-none
+                                       transition
+                                       focus:border-coral
+                                       focus:ring-2
+                                       focus:ring-coral/10"
+                            >
 
-                                <select
-                                    name="category_id"
-                                    required
-                                    class="w-full border border-admin-border
-                                           rounded-xl px-4 py-2.5
-                                           outline-none focus:border-coral"
-                                >
-
-                                    @foreach ($categories as $category)
-
-                                        <option
-                                            value="{{ $category->id }}"
-                                            @selected(
-                                                (string) old('category_id', $product->category_id)
-                                                ===
-                                                (string) $category->id
-                                            )
-                                        >
-                                            {{ $category->name }}
-                                        </option>
-
-                                    @endforeach
-
-                                </select>
-
-                            </div>
-
-
-                            <div>
-
-                                <label class="block mb-2 text-sm font-semibold">
-                                    Slug
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="slug"
-                                    value="{{ old('slug', $product->slug) }}"
-                                    class="w-full border border-admin-border
-                                           rounded-xl px-4 py-2.5
-                                           outline-none focus:border-coral"
-                                >
-
-                                @error('slug')
-                                    <p class="mt-1.5 text-xs text-red-500">
-                                        {{ $message }}
-                                    </p>
-                                @enderror
-
-                            </div>
+                            @error('slug')
+                                <p class="mt-1.5 text-xs text-red-500">
+                                    {{ $message }}
+                                </p>
+                            @enderror
 
                         </div>
 
+                    </div>
+
+
+                    {{-- ICON --}}
+                    <div>
+
+                        <label
+                            for="productIcon"
+                            class="block mb-2 text-sm font-semibold text-ink"
+                        >
+                            Icon
+                        </label>
+
+                        <input
+                            id="productIcon"
+                            type="text"
+                            name="icon"
+                            value="{{ old('icon', $product->icon) }}"
+                            placeholder="Ví dụ: 🍼"
+                            maxlength="50"
+                            class="w-full
+                                   border border-admin-border
+                                   rounded-xl
+                                   px-4 py-3
+                                   bg-white
+                                   text-xl text-ink
+                                   outline-none
+                                   transition
+                                   focus:border-coral
+                                   focus:ring-2
+                                   focus:ring-coral/10"
+                        >
+
+                        @error('icon')
+                            <p class="mt-1.5 text-xs text-red-500">
+                                {{ $message }}
+                            </p>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- MÔ TẢ --}}
+                    <div>
+
+                        <label
+                            for="productDescription"
+                            class="block mb-2 text-sm font-semibold text-ink"
+                        >
+                            Mô tả
+                        </label>
+
+                        <textarea
+                            id="productDescription"
+                            name="description"
+                            rows="6"
+                            placeholder="Nhập mô tả sản phẩm..."
+                            class="w-full
+                                   border border-admin-border
+                                   rounded-xl
+                                   px-4 py-3
+                                   bg-white
+                                   text-ink
+                                   outline-none
+                                   resize-y
+                                   transition
+                                   focus:border-coral
+                                   focus:ring-2
+                                   focus:ring-coral/10"
+                        >{{ old('description', $product->description) }}</textarea>
+
+                        @error('description')
+                            <p class="mt-1.5 text-xs text-red-500">
+                                {{ $message }}
+                            </p>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- TRẠNG THÁI --}}
+                    <div
+                        class="flex items-center justify-between gap-4
+                               border border-admin-border
+                               rounded-2xl
+                               px-4 py-4
+                               bg-white"
+                    >
 
                         <div>
 
-                            <label class="block mb-2 text-sm font-semibold">
-                                Mô tả
-                            </label>
+                            <p class="text-sm font-semibold text-ink">
+                                Trạng thái sản phẩm
+                            </p>
 
-                            <textarea
-                                name="description"
-                                rows="6"
-                                class="w-full border border-admin-border
-                                       rounded-xl px-4 py-3
-                                       outline-none focus:border-coral"
-                            >{{ old('description', $product->description) }}</textarea>
+                            <p class="text-xs text-ink-soft mt-1">
+                                Cho phép sản phẩm hiển thị phía khách hàng.
+                            </p>
 
                         </div>
 
 
                         <label
-                            class="flex items-center justify-between
-                                   border border-admin-border rounded-xl
-                                   px-4 py-3 cursor-pointer"
+                            class="flex items-center gap-2
+                                   cursor-pointer
+                                   shrink-0"
                         >
-
-                            <div>
-
-                                <p class="text-sm font-semibold">
-                                    Đang bán
-                                </p>
-
-                                <p class="text-xs text-ink-soft mt-1">
-                                    Cho phép sản phẩm hiển thị phía khách hàng.
-                                </p>
-
-                            </div>
 
                             <input
                                 type="checkbox"
                                 name="is_active"
                                 value="1"
-                                @checked(old('is_active', $product->is_active))
+                                @checked(
+                                    old(
+                                        'is_active',
+                                        $product->is_active
+                                    )
+                                )
                                 class="w-5 h-5 accent-coral"
                             >
 
+                            <span class="text-sm font-medium text-ink">
+                                Đang bán
+                            </span>
+
                         </label>
-
-                    </div>
-
-                </div>
-
-
-                {{-- PRICE --}}
-                <div class="card">
-
-                    <div class="border-b border-admin-border pb-4 mb-5">
-
-                        <h2 class="font-semibold text-ink">
-                            Giá & Tồn kho
-                        </h2>
-
-                        <p class="text-sm text-ink-soft mt-1">
-                            Cập nhật giá và số lượng còn lại.
-                        </p>
-
-                    </div>
-
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                        <div>
-
-                            <label class="block mb-2 text-sm font-semibold">
-                                Giá bán
-                                <span class="text-coral">*</span>
-                            </label>
-
-                            <input
-                                type="number"
-                                name="price"
-                                min="0"
-                                required
-                                value="{{ old('price', $product->price) }}"
-                                class="w-full border border-admin-border
-                                       rounded-xl px-4 py-2.5
-                                       outline-none focus:border-coral"
-                            >
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block mb-2 text-sm font-semibold">
-                                Giá cũ
-                            </label>
-
-                            <input
-                                type="number"
-                                name="old_price"
-                                min="0"
-                                value="{{ old('old_price', $product->old_price) }}"
-                                class="w-full border border-admin-border
-                                       rounded-xl px-4 py-2.5
-                                       outline-none focus:border-coral"
-                            >
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block mb-2 text-sm font-semibold">
-                                Giảm giá %
-                            </label>
-
-                            <input
-                                type="number"
-                                name="discount_percent"
-                                min="0"
-                                max="100"
-                                value="{{ old('discount_percent', $product->discount_percent) }}"
-                                class="w-full border border-admin-border
-                                       rounded-xl px-4 py-2.5
-                                       outline-none focus:border-coral"
-                            >
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block mb-2 text-sm font-semibold">
-                                Tồn kho
-                                <span class="text-coral">*</span>
-                            </label>
-
-                            <input
-                                type="number"
-                                name="stock"
-                                min="0"
-                                required
-                                value="{{ old('stock', $product->stock) }}"
-                                class="w-full border border-admin-border
-                                       rounded-xl px-4 py-2.5
-                                       outline-none focus:border-coral"
-                            >
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                {{-- IMAGE --}}
-                <div class="card">
-
-                    <div class="border-b border-admin-border pb-4 mb-5">
-
-                        <h2 class="font-semibold text-ink">
-                            Hình ảnh
-                        </h2>
-
-                        <p class="text-sm text-ink-soft mt-1">
-                            Thay ảnh đại diện hoặc thêm ảnh chi tiết.
-                        </p>
-
-                    </div>
-
-
-                    {{-- Main --}}
-                    <div>
-
-                        <label class="block mb-2 text-sm font-semibold">
-                            Ảnh đại diện hiện tại
-                        </label>
-
-                        @if ($product->image)
-
-                            <img
-                                src="{{ str_starts_with($product->image, 'http') ? $product->image : asset('storage/' . $product->image) }}"
-                                alt="{{ $product->name }}"
-                                class="w-32 h-32 object-cover
-                                       rounded-xl border border-admin-border mb-3"
-                            >
-
-                        @else
-
-                            <p class="text-sm text-ink-soft mb-3">
-                                Chưa có ảnh đại diện.
-                            </p>
-
-                        @endif
-
-
-                        <input
-                            type="file"
-                            name="image"
-                            accept="image/*"
-                            class="w-full border border-admin-border
-                                   rounded-xl px-4 py-2.5 text-sm"
-                        >
-
-                    </div>
-
-
-                    {{-- Gallery --}}
-                    <div class="mt-6">
-
-                        <label class="block mb-3 text-sm font-semibold">
-                            Ảnh chi tiết hiện tại
-                        </label>
-
-
-                        @if (!empty($product->images))
-
-                            <div class="flex flex-wrap gap-3 mb-4">
-
-                                @foreach ($product->images as $image)
-
-                                    <img
-                                        src="{{ asset('storage/' . $image) }}"
-                                        alt="{{ $product->name }}"
-                                        class="w-20 h-20 object-cover
-                                               rounded-xl border border-admin-border"
-                                    >
-
-                                @endforeach
-
-                            </div>
-
-                        @else
-
-                            <p class="text-sm text-ink-soft mb-3">
-                                Chưa có ảnh chi tiết.
-                            </p>
-
-                        @endif
-
-
-                        <input
-                            type="file"
-                            name="images[]"
-                            multiple
-                            accept="image/*"
-                            class="w-full border border-admin-border
-                                   rounded-xl px-4 py-2.5 text-sm"
-                        >
-
-                        <p class="mt-1 text-xs text-ink-soft">
-                            Ảnh mới sẽ được thêm vào gallery hiện tại.
-                        </p>
 
                     </div>
 
@@ -397,167 +326,212 @@
             </div>
 
 
+            {{-- =====================================================
+                GIÁ & TỒN KHO
+            ====================================================== --}}
+            <div class="card">
 
-            {{-- RIGHT --}}
-            <div class="space-y-6">
+                <div class="border-b border-admin-border pb-4 mb-5">
 
-                {{-- STAGES --}}
-                <div class="card">
-
-                    <h2 class="font-semibold text-ink">
-                        Giai đoạn phù hợp
+                    <h2 class="text-base font-semibold text-ink">
+                        Giá & Tồn kho
                     </h2>
 
                     <p class="text-sm text-ink-soft mt-1">
-                        Chọn các giai đoạn phù hợp.
+                        Quản lý giá bán, khuyến mãi và số lượng tồn kho.
                     </p>
-
-
-                    @php
-                        $selectedStageIds = old(
-                            'stage_ids',
-                            $product->stages->pluck('id')->all()
-                        );
-                    @endphp
-
-
-                    <div class="mt-4 space-y-2 max-h-80 overflow-y-auto">
-
-                        @foreach ($stages as $stage)
-
-                            <label
-                                class="flex items-start gap-3
-                                       border border-admin-border
-                                       rounded-xl px-3 py-3 cursor-pointer
-                                       hover:bg-admin-bg"
-                            >
-
-                                <input
-                                    type="checkbox"
-                                    name="stage_ids[]"
-                                    value="{{ $stage->id }}"
-                                    @checked(in_array($stage->id, $selectedStageIds))
-                                    class="mt-1 accent-coral"
-                                >
-
-                                <div>
-
-                                    <p class="text-sm font-semibold text-ink">
-                                        {{ $stage->icon }} {{ $stage->name }}
-                                    </p>
-
-                                    <p class="text-xs text-ink-soft mt-1">
-                                        {{ $stage->age_from }} - {{ $stage->age_to }} tháng
-                                    </p>
-
-                                </div>
-
-                            </label>
-
-                        @endforeach
-
-                    </div>
 
                 </div>
 
 
-                {{-- TAGS --}}
-                <div class="card">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                    <h2 class="font-semibold text-ink">
-                        Thuộc tính / Tags
-                    </h2>
+                    {{-- GIÁ BÁN --}}
+                    <div>
 
-                    <p class="text-sm text-ink-soft mt-1">
-                        Gắn các thuộc tính phù hợp.
-                    </p>
+                        <label
+                            for="productPrice"
+                            class="block mb-2 text-sm font-semibold text-ink"
+                        >
+                            Giá bán
+                            <span class="text-coral">*</span>
+                        </label>
 
+                        <div class="relative">
 
-                    @php
-                        $selectedTagIds = old(
-                            'tag_ids',
-                            $product->tags->pluck('id')->all()
-                        );
-                    @endphp
-
-
-                    <div class="mt-4 space-y-2 max-h-96 overflow-y-auto">
-
-                        @foreach ($tags as $tag)
-
-                            <label
-                                class="flex items-center justify-between gap-3
+                            <input
+                                id="productPrice"
+                                type="number"
+                                name="price"
+                                min="0"
+                                required
+                                value="{{ old('price', $product->price) }}"
+                                class="w-full
                                        border border-admin-border
-                                       rounded-xl px-3 py-3 cursor-pointer
-                                       hover:bg-admin-bg"
+                                       rounded-xl
+                                       px-4 py-3 pr-12
+                                       bg-white
+                                       outline-none
+                                       focus:border-coral
+                                       focus:ring-2
+                                       focus:ring-coral/10"
                             >
 
-                                <div class="flex items-center gap-3">
+                            <span
+                                class="absolute right-4 top-1/2
+                                       -translate-y-1/2
+                                       text-sm text-ink-soft"
+                            >
+                                đ
+                            </span>
 
-                                    <input
-                                        type="checkbox"
-                                        name="tag_ids[]"
-                                        value="{{ $tag->id }}"
-                                        @checked(in_array($tag->id, $selectedTagIds))
-                                        class="accent-coral"
-                                    >
+                        </div>
 
-                                    <span class="text-sm font-medium">
-                                        {{ $tag->name }}
-                                    </span>
-
-                                </div>
-
-
-                                @if ($tag->type === 'attribute')
-
-                                    <span class="text-xs text-blue-600 bg-blue-50 rounded-full px-2 py-1">
-                                        Thuộc tính
-                                    </span>
-
-                                @elseif ($tag->type === 'stage')
-
-                                    <span class="text-xs text-purple-600 bg-purple-50 rounded-full px-2 py-1">
-                                        Giai đoạn
-                                    </span>
-
-                                @else
-
-                                    <span class="text-xs text-amber-600 bg-amber-50 rounded-full px-2 py-1">
-                                        Thương hiệu
-                                    </span>
-
-                                @endif
-
-                            </label>
-
-                        @endforeach
+                        @error('price')
+                            <p class="mt-1.5 text-xs text-red-500">
+                                {{ $message }}
+                            </p>
+                        @enderror
 
                     </div>
 
-                </div>
 
+                    {{-- GIÁ CŨ --}}
+                    <div>
 
-                {{-- ACTION --}}
-                <div class="card">
-
-                    <div class="flex flex-col gap-3">
-
-                        <button
-                            type="submit"
-                            class="btn-primary w-full"
+                        <label
+                            for="productOldPrice"
+                            class="block mb-2 text-sm font-semibold text-ink"
                         >
-                            Lưu thay đổi
-                        </button>
+                            Giá cũ
+                        </label>
 
-                        <a
-                            href="{{ route('admin.products.index') }}"
-                            class="w-full text-center px-5 py-2.5
-                                   rounded-xl border border-admin-border
-                                   text-sm text-ink hover:bg-admin-bg"
+                        <div class="relative">
+
+                            <input
+                                id="productOldPrice"
+                                type="number"
+                                name="old_price"
+                                min="0"
+                                value="{{ old('old_price', $product->old_price) }}"
+                                placeholder="Không bắt buộc"
+                                class="w-full
+                                       border border-admin-border
+                                       rounded-xl
+                                       px-4 py-3 pr-12
+                                       bg-white
+                                       outline-none
+                                       focus:border-coral
+                                       focus:ring-2
+                                       focus:ring-coral/10"
+                            >
+
+                            <span
+                                class="absolute right-4 top-1/2
+                                       -translate-y-1/2
+                                       text-sm text-ink-soft"
+                            >
+                                đ
+                            </span>
+
+                        </div>
+
+                        @error('old_price')
+                            <p class="mt-1.5 text-xs text-red-500">
+                                {{ $message }}
+                            </p>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- GIẢM GIÁ --}}
+                    <div>
+
+                        <label
+                            for="productDiscount"
+                            class="block mb-2 text-sm font-semibold text-ink"
                         >
-                            Hủy
-                        </a>
+                            Giảm giá
+                        </label>
+
+                        <div class="relative">
+
+                            <input
+                                id="productDiscount"
+                                type="number"
+                                name="discount_percent"
+                                min="0"
+                                max="100"
+                                value="{{ old(
+                                    'discount_percent',
+                                    $product->discount_percent
+                                ) }}"
+                                placeholder="0"
+                                class="w-full
+                                       border border-admin-border
+                                       rounded-xl
+                                       px-4 py-3 pr-12
+                                       bg-white
+                                       outline-none
+                                       focus:border-coral
+                                       focus:ring-2
+                                       focus:ring-coral/10"
+                            >
+
+                            <span
+                                class="absolute right-4 top-1/2
+                                       -translate-y-1/2
+                                       text-sm text-ink-soft"
+                            >
+                                %
+                            </span>
+
+                        </div>
+
+                        @error('discount_percent')
+                            <p class="mt-1.5 text-xs text-red-500">
+                                {{ $message }}
+                            </p>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- TỒN KHO --}}
+                    <div>
+
+                        <label
+                            for="productStock"
+                            class="block mb-2 text-sm font-semibold text-ink"
+                        >
+                            Tồn kho
+                            <span class="text-coral">*</span>
+                        </label>
+
+                        <input
+                            id="productStock"
+                            type="number"
+                            name="stock"
+                            min="0"
+                            required
+                            value="{{ old('stock', $product->stock) }}"
+                            class="w-full
+                                   border border-admin-border
+                                   rounded-xl
+                                   px-4 py-3
+                                   bg-white
+                                   outline-none
+                                   focus:border-coral
+                                   focus:ring-2
+                                   focus:ring-coral/10"
+                        >
+
+                        @error('stock')
+                            <p class="mt-1.5 text-xs text-red-500">
+                                {{ $message }}
+                            </p>
+                        @enderror
 
                     </div>
 
@@ -567,6 +541,362 @@
 
         </div>
 
-    </form>
+
+
+        {{-- =========================================================
+            CỘT PHẢI
+        ========================================================== --}}
+        <div class="space-y-6">
+
+            @php
+                $selectedStageIds = collect(
+                    old(
+                        'stage_ids',
+                        $product->stages->pluck('id')->all()
+                    )
+                )->map(fn ($id) => (string) $id)->all();
+
+                $selectedTagIds = collect(
+                    old(
+                        'tag_ids',
+                        $product->tags->pluck('id')->all()
+                    )
+                )->map(fn ($id) => (string) $id)->all();
+            @endphp
+
+
+            {{-- =====================================================
+                GIAI ĐOẠN
+            ====================================================== --}}
+            <div class="card">
+
+                <div class="border-b border-admin-border pb-4">
+
+                    <h2 class="text-base font-semibold text-ink">
+                        Giai đoạn phù hợp
+                    </h2>
+
+                    <p class="text-sm text-ink-soft mt-1">
+                        Chọn một hoặc nhiều giai đoạn phù hợp với sản phẩm.
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="mt-4
+                           space-y-2
+                           max-h-[360px]
+                           overflow-y-auto
+                           pr-1"
+                >
+
+                    @forelse ($stages as $stage)
+
+                        <label
+                            class="flex items-start gap-3
+                                   border border-admin-border
+                                   rounded-xl
+                                   px-4 py-3
+                                   bg-white
+                                   cursor-pointer
+                                   transition
+                                   hover:border-coral/40
+                                   hover:bg-coral-light/20"
+                        >
+
+                            <input
+                                type="checkbox"
+                                name="stage_ids[]"
+                                value="{{ $stage->id }}"
+                                @checked(
+                                    in_array(
+                                        (string) $stage->id,
+                                        $selectedStageIds,
+                                        true
+                                    )
+                                )
+                                class="mt-1
+                                       w-4 h-4
+                                       accent-coral
+                                       shrink-0"
+                            >
+
+
+                            <div class="min-w-0">
+
+                                <p class="text-sm font-semibold text-ink">
+
+                                    @if (!empty($stage->icon))
+                                        <span class="mr-1">
+                                            {{ $stage->icon }}
+                                        </span>
+                                    @endif
+
+                                    {{ $stage->name }}
+
+                                </p>
+
+
+                                @if (
+                                    $stage->age_from !== null ||
+                                    $stage->age_to !== null
+                                )
+
+                                    <p class="text-xs text-ink-soft mt-1">
+
+                                        @if (
+                                            $stage->age_from !== null &&
+                                            $stage->age_to !== null
+                                        )
+
+                                            {{ $stage->age_from }}
+                                            -
+                                            {{ $stage->age_to }}
+                                            tháng
+
+                                        @elseif ($stage->age_from !== null)
+
+                                            Từ {{ $stage->age_from }} tháng
+
+                                        @else
+
+                                            Đến {{ $stage->age_to }} tháng
+
+                                        @endif
+
+                                    </p>
+
+                                @endif
+
+                            </div>
+
+                        </label>
+
+                    @empty
+
+                        <div
+                            class="rounded-xl
+                                   border border-dashed border-admin-border
+                                   px-4 py-8
+                                   text-center"
+                        >
+
+                            <div class="text-2xl mb-2">
+                                👶
+                            </div>
+
+                            <p class="text-sm font-medium text-ink">
+                                Chưa có giai đoạn
+                            </p>
+
+                        </div>
+
+                    @endforelse
+
+                </div>
+
+            </div>
+
+
+            {{-- =====================================================
+                THUỘC TÍNH / TAG
+            ====================================================== --}}
+            <div class="card">
+
+                <div class="border-b border-admin-border pb-4">
+
+                    <h2 class="text-base font-semibold text-ink">
+                        Thuộc tính / Tags
+                    </h2>
+
+                    <p class="text-sm text-ink-soft mt-1">
+                        Gắn các thuộc tính phù hợp với sản phẩm.
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="mt-4
+                           space-y-2
+                           max-h-[420px]
+                           overflow-y-auto
+                           pr-1"
+                >
+
+                    @forelse ($tags as $tag)
+
+                        <label
+                            class="flex items-center justify-between gap-4
+                                   border border-admin-border
+                                   rounded-xl
+                                   px-4 py-3
+                                   bg-white
+                                   cursor-pointer
+                                   transition
+                                   hover:border-coral/40
+                                   hover:bg-coral-light/20"
+                        >
+
+                            <div class="flex items-center gap-3 min-w-0">
+
+                                <input
+                                    type="checkbox"
+                                    name="tag_ids[]"
+                                    value="{{ $tag->id }}"
+                                    @checked(
+                                        in_array(
+                                            (string) $tag->id,
+                                            $selectedTagIds,
+                                            true
+                                        )
+                                    )
+                                    class="w-4 h-4
+                                           accent-coral
+                                           shrink-0"
+                                >
+
+                                <span class="text-sm font-medium text-ink truncate">
+                                    {{ $tag->name }}
+                                </span>
+
+                            </div>
+
+
+                            @if ($tag->type === 'attribute')
+
+                                <span
+                                    class="shrink-0
+                                           text-[11px]
+                                           font-medium
+                                           text-blue-600
+                                           bg-blue-50
+                                           rounded-full
+                                           px-2.5 py-1"
+                                >
+                                    Thuộc tính
+                                </span>
+
+                            @elseif ($tag->type === 'brand')
+
+                                <span
+                                    class="shrink-0
+                                           text-[11px]
+                                           font-medium
+                                           text-amber-600
+                                           bg-amber-50
+                                           rounded-full
+                                           px-2.5 py-1"
+                                >
+                                    Thương hiệu
+                                </span>
+
+                            @elseif ($tag->type === 'stage')
+
+                                <span
+                                    class="shrink-0
+                                           text-[11px]
+                                           font-medium
+                                           text-purple-600
+                                           bg-purple-50
+                                           rounded-full
+                                           px-2.5 py-1"
+                                >
+                                    Giai đoạn
+                                </span>
+
+                            @else
+
+                                <span
+                                    class="shrink-0
+                                           text-[11px]
+                                           font-medium
+                                           text-gray-600
+                                           bg-gray-100
+                                           rounded-full
+                                           px-2.5 py-1"
+                                >
+                                    {{ ucfirst($tag->type) }}
+                                </span>
+
+                            @endif
+
+                        </label>
+
+                    @empty
+
+                        <div
+                            class="rounded-xl
+                                   border border-dashed border-admin-border
+                                   px-4 py-8
+                                   text-center"
+                        >
+
+                            <div class="text-2xl mb-2">
+                                🏷️
+                            </div>
+
+                            <p class="text-sm font-medium text-ink">
+                                Chưa có thuộc tính
+                            </p>
+
+                        </div>
+
+                    @endforelse
+
+                </div>
+
+            </div>
+
+
+            {{-- =====================================================
+                ACTION
+            ====================================================== --}}
+            <div class="card">
+
+                <div class="flex flex-col gap-3">
+
+                    <button
+                        type="submit"
+                        class="w-full
+                               inline-flex items-center justify-center gap-2
+                               px-5 py-3
+                               rounded-xl
+                               bg-coral
+                               text-white
+                               text-sm font-semibold
+                               shadow-sm
+                               transition
+                               hover:opacity-90"
+                    >
+                        ✓ Lưu thay đổi
+                    </button>
+
+
+                    <a
+                        href="{{ route('admin.products.index') }}"
+                        class="w-full
+                               inline-flex items-center justify-center
+                               px-5 py-3
+                               rounded-xl
+                               border border-admin-border
+                               bg-white
+                               text-sm font-medium text-ink
+                               transition
+                               hover:bg-admin-bg"
+                    >
+                        Hủy
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</form>
 
 @endsection
