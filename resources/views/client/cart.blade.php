@@ -31,7 +31,19 @@
                 <span class="text-ink-soft">Tổng cộng</span>
                 <span class="font-display font-bold text-xl text-coral" id="mk-cart-total">{{ number_format($total) }}đ</span>
             </div>
-            <a href="#" class="btn-primary w-full mt-4">Tiến hành thanh toán</a>
+
+            {{-- Kiểm tra trạng thái đăng nhập --}}
+            @auth
+                {{-- Khách đã đăng nhập: Chuyển hướng sang trang thanh toán --}}
+                <a href="{{ route('checkout.index') ?? '#' }}" class="btn-primary w-full mt-4 flex items-center justify-center">
+                    Tiến hành thanh toán
+                </a>
+            @else
+                {{-- Khách chưa đăng nhập: Bật Popup Đăng nhập/Đăng ký OTP --}}
+                <button type="button" onclick="openLoginModal()" class="btn-primary w-full mt-4 cursor-pointer">
+                    Tiến hành thanh toán
+                </button>
+            @endauth
         @endif
     </section>
 

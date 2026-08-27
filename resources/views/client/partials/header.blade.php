@@ -34,7 +34,7 @@
                        class="w-full h-11 pl-4 pr-11 rounded-pill border-2 border-coral-light focus:border-coral
                               outline-none text-sm placeholder:text-ink-soft/70">
                 <button type="submit" class="absolute right-1.5 top-1.5 w-8 h-8 rounded-full bg-coral text-white
-                                              flex items-center justify-center hover:bg-coral-dark">
+                                             flex items-center justify-center hover:bg-coral-dark">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5A6.5 6.5 0 114 10.5a6.5 6.5 0 0113 0z" />
                     </svg>
@@ -71,9 +71,22 @@
             <a href="#" class="hover:text-coral">Hotline: 1800 6886</a>
             <span class="ml-auto"></span>
             @auth
-                <a href="{{ route('profile.edit') ?? '#' }}" class="hover:text-coral">Xin chào, {{ auth()->user()->name }}</a>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('profile.edit') ?? '#' }}" class="hover:text-coral font-medium">
+                        Xin chào, {{ auth()->user()->name }}
+                    </a>
+                    <span class="text-ink-soft/40">|</span>
+                    <form method="POST" action="{{ route('logout') ?? '#' }}" class="inline">
+                        @csrf
+                        <button type="submit" class="hover:text-coral font-semibold text-coral cursor-pointer">
+                            Đăng xuất
+                        </button>
+                    </form>
+                </div>
             @else
-                <a href="{{ route('login') ?? '#' }}" class="hover:text-coral font-semibold text-coral">Đăng nhập / Đăng ký</a>
+                <button type="button" onclick="openLoginModal()" class="hover:text-coral font-semibold text-coral cursor-pointer">
+                    Đăng nhập / Đăng ký
+                </button>
             @endauth
         </div>
     </div>

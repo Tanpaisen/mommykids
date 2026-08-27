@@ -44,6 +44,9 @@
     {{-- Toast used by mkAddToCart() in resources/js/app.js --}}
     <div id="mk-toast" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-ink text-white text-sm px-4 py-2 rounded-pill shadow-pop"></div>
 
+    {{-- Modal Đăng nhập OTP Popup --}}
+    @include('components.auth-modal')
+
     @stack('scripts')
 </body>
 </html>
