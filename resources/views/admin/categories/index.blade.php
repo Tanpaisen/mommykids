@@ -231,26 +231,71 @@
 
                                     <div class="flex items-center gap-3">
 
+                                        @php
+                                            $categoryImageUrl = null;
+
+                                            if ($category->image) {
+                                                if (
+                                                    str_starts_with($category->image, 'http://')
+                                                    || str_starts_with($category->image, 'https://')
+                                                ) {
+                                                    $categoryImageUrl = $category->image;
+                                                } else {
+                                                    $categoryImageUrl = asset(
+                                                        'storage/' . ltrim(
+                                                            $category->image,
+                                                            '/'
+                                                        )
+                                                    );
+                                                }
+                                            }
+
+                                            $categoryFallback =
+                                                $category->icon
+                                                ?: strtoupper(
+                                                    mb_substr(
+                                                        $category->name,
+                                                        0,
+                                                        1
+                                                    )
+                                                );
+                                        @endphp
+
                                         <div
                                             class="w-11 h-11 rounded-xl bg-coral-light text-coral
                                                    flex items-center justify-center
                                                    text-lg shrink-0 overflow-hidden"
                                         >
-                                            @if ($category->image)
+                                            @if ($categoryImageUrl)
 
                                                 <img
-                                                    src="{{ asset('storage/' . $category->image) }}"
+                                                    src="{{ $categoryImageUrl }}"
                                                     alt="{{ $category->name }}"
-                                                    class="w-full h-full object-cover"
+                                                    class="w-full h-full object-contain p-1"
+                                                    onerror="
+                                                        this.style.display='none';
+                                                        this.nextElementSibling.style.display='flex';
+                                                    "
                                                 >
 
-                                            @elseif ($category->icon)
-
-                                                {{ $category->icon }}
+                                                <span
+                                                    style="display:none;"
+                                                    class="w-full h-full
+                                                           items-center justify-center
+                                                           text-lg"
+                                                >
+                                                    {{ $categoryFallback }}
+                                                </span>
 
                                             @else
 
-                                                {{ strtoupper(mb_substr($category->name, 0, 1)) }}
+                                                <span
+                                                    class="w-full h-full
+                                                           flex items-center justify-center
+                                                           text-lg"
+                                                >
+                                                    {{ $categoryFallback }}
+                                                </span>
 
                                             @endif
                                         </div>

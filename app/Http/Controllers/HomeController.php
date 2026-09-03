@@ -11,7 +11,7 @@ class HomeController extends Controller
     {
         // Each "section" on the homepage = one category + a few of its active products.
         $sections = Category::active()
-            ->with(['products' => fn ($q) => $q->active()->latest()->limit(6)])
+            ->with(['products' => fn ($q) => $q->active()->latest()->limit(10)])
             ->get()
             ->filter(fn (Category $cat) => $cat->products->isNotEmpty())
             ->map(fn (Category $cat) => [

@@ -7,63 +7,127 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Stage;
 use App\Models\Tag;
+use Cloudinary\Cloudinary;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class ProductController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Danh sách sản phẩm
+    |--------------------------------------------------------------------------
+    */
+
     public function index(Request $request)
     {
-        // SoftDeletes tự loại sản phẩm deleted_at != NULL.
+        /*
+         * Product sử dụng SoftDeletes nên Product::query()
+         * tự động loại các bản ghi deleted_at != NULL.
+         */
         $query = Product::query()
             ->with('category');
 
+        /*
+         * Tìm kiếm.
+         */
         if ($request->filled('search')) {
             $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('slug', 'like', '%' . $search . '%');
+                $q->where(
+                    'products.name',
+                    'like',
+                    '%' . $search . '%'
+                )
+                    ->orWhere(
+                        'products.slug',
+                        'like',
+                        '%' . $search . '%'
+                    );
             });
         }
 
+        /*
+         * Lọc danh mục.
+         */
         if ($request->filled('category_id')) {
             $query->where(
-                'category_id',
+                'products.category_id',
                 $request->category_id
             );
         }
 
+        /*
+         * Lọc trạng thái.
+         */
         if ($request->status === 'active') {
-            $query->where('is_active', true);
+            $query->where(
+                'products.is_active',
+                true
+            );
         }
 
         if ($request->status === 'inactive') {
-            $query->where('is_active', false);
+            $query->where(
+                'products.is_active',
+                false
+            );
         }
 
+        /*
+         * Sắp hết hàng.
+         */
         if ($request->boolean('low_stock')) {
-            $query->where('stock', '<=', 10);
+            $query->where(
+                'products.stock',
+                '<=',
+                10
+            );
         }
 
+        /*
+         * Phân trang.
+         */
         $products = $query
-            ->orderBy('id', 'asc')
-            ->paginate(10)
-            ->withQueryString();
-
+    ->join('categories', 'products.category_id', '=', 'categories.id')
+    ->select('products.*')
+    ->orderBy('categories.sort_order', 'asc')
+    ->orderBy('categories.name', 'asc')
+    ->orderBy('products.name', 'asc')
+    ->paginate(10)
+    ->withQueryString();
+        /*
+         * Danh mục cho filter.
+         */
         $categories = Category::orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
-        $trashCount = Product::onlyTrashed()->count();
+        /*
+         * Số sản phẩm trong thùng rác.
+         */
+        $trashCount = Product::onlyTrashed()
+            ->count();
 
-        return view('admin.products.index', compact(
-            'products',
-            'categories',
-            'trashCount'
-        ));
+        return view(
+            'admin.products.index',
+            compact(
+                'products',
+                'categories',
+                'trashCount'
+            )
+        );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Form thêm sản phẩm
+    |--------------------------------------------------------------------------
+    */
 
     public function create()
     {
@@ -79,12 +143,21 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.products.create', compact(
-            'categories',
-            'stages',
-            'tags'
-        ));
+        return view(
+            'admin.products.create',
+            compact(
+                'categories',
+                'stages',
+                'tags'
+            )
+        );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lưu sản phẩm mới
+    |--------------------------------------------------------------------------
+    */
 
     public function store(Request $request)
     {
@@ -93,48 +166,79 @@ class ProductController extends Controller
             $this->messages()
         );
 
+        /*
+         * Tạo slug.
+         */
         $validated['slug'] = $this->makeSlug(
             $validated['slug'] ?? null,
             $validated['name']
         );
 
-        // Kiểm tra cả sản phẩm nằm trong thùng rác.
+        /*
+         * Kiểm tra slug cả trong thùng rác.
+         */
         if (
             Product::withTrashed()
-                ->where('slug', $validated['slug'])
+                ->where(
+                    'slug',
+                    $validated['slug']
+                )
                 ->exists()
         ) {
             return back()
                 ->withInput()
                 ->withErrors([
-                    'slug' => 'Slug sản phẩm đã tồn tại.',
+                    'slug' =>
+                        'Slug sản phẩm đã tồn tại.',
                 ]);
         }
 
+        /*
+         * Checkbox trạng thái.
+         */
         $validated['is_active'] =
             $request->boolean('is_active');
 
-        // Ảnh đại diện.
+        /*
+        |--------------------------------------------------------------------------
+        | Ảnh đại diện → Cloudinary
+        |--------------------------------------------------------------------------
+        */
+
         if ($request->hasFile('image')) {
-            $validated['image'] = $request
-                ->file('image')
-                ->store('products/main', 'public');
+            $validated['image'] =
+                $this->uploadToCloudinary(
+                    $request->file('image'),
+                    'mommykids/products/main'
+                );
         }
 
-        // Gallery.
+        /*
+        |--------------------------------------------------------------------------
+        | Gallery → Cloudinary
+        |--------------------------------------------------------------------------
+        */
+
         $gallery = [];
 
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $gallery[] = $file->store(
-                    'products/gallery',
-                    'public'
-                );
+            foreach (
+                $request->file('images')
+                as $file
+            ) {
+                $gallery[] =
+                    $this->uploadToCloudinary(
+                        $file,
+                        'mommykids/products/gallery'
+                    );
             }
         }
 
         $validated['images'] = $gallery;
 
+        /*
+         * Không đưa các field phụ vào Product::create().
+         */
         unset(
             $validated['stage_ids'],
             $validated['tag_ids'],
@@ -142,20 +246,46 @@ class ProductController extends Controller
             $validated['remove_gallery']
         );
 
-        $product = Product::create($validated);
-
-        $product->stages()->sync(
-            $request->input('stage_ids', [])
+        /*
+         * Tạo sản phẩm.
+         */
+        $product = Product::create(
+            $validated
         );
 
+        /*
+         * Đồng bộ stage.
+         */
+        $product->stages()->sync(
+            $request->input(
+                'stage_ids',
+                []
+            )
+        );
+
+        /*
+         * Đồng bộ tag.
+         */
         $product->tags()->sync(
-            $request->input('tag_ids', [])
+            $request->input(
+                'tag_ids',
+                []
+            )
         );
 
         return redirect()
             ->route('admin.products.index')
-            ->with('success', 'Thêm sản phẩm thành công.');
+            ->with(
+                'success',
+                'Thêm sản phẩm thành công.'
+            );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Form sửa sản phẩm
+    |--------------------------------------------------------------------------
+    */
 
     public function edit(Product $product)
     {
@@ -177,13 +307,22 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.products.edit', compact(
-            'product',
-            'categories',
-            'stages',
-            'tags'
-        ));
+        return view(
+            'admin.products.edit',
+            compact(
+                'product',
+                'categories',
+                'stages',
+                'tags'
+            )
+        );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cập nhật sản phẩm
+    |--------------------------------------------------------------------------
+    */
 
     public function update(
         Request $request,
@@ -191,6 +330,10 @@ class ProductController extends Controller
     ) {
         $rules = $this->rules();
 
+        /*
+         * Slug update sẽ tự kiểm tra riêng
+         * cả sản phẩm đã soft delete.
+         */
         $rules['slug'] = [
             'nullable',
             'string',
@@ -202,25 +345,44 @@ class ProductController extends Controller
             $this->messages()
         );
 
-        $validated['slug'] = $this->makeSlug(
-            $validated['slug'] ?? null,
-            $validated['name']
-        );
+        /*
+         * Chuẩn hóa slug.
+         */
+        $validated['slug'] =
+            $this->makeSlug(
+                $validated['slug'] ?? null,
+                $validated['name']
+            );
 
-        // Kiểm tra cả sản phẩm đã xóa mềm.
-        $slugExists = Product::withTrashed()
-            ->where('slug', $validated['slug'])
-            ->where('id', '!=', $product->id)
-            ->exists();
+        /*
+         * Không cho trùng slug với sản phẩm khác,
+         * kể cả sản phẩm đang trong thùng rác.
+         */
+        $slugExists =
+            Product::withTrashed()
+                ->where(
+                    'slug',
+                    $validated['slug']
+                )
+                ->where(
+                    'id',
+                    '!=',
+                    $product->id
+                )
+                ->exists();
 
         if ($slugExists) {
             return back()
                 ->withInput()
                 ->withErrors([
-                    'slug' => 'Slug sản phẩm đã tồn tại.',
+                    'slug' =>
+                        'Slug sản phẩm đã tồn tại.',
                 ]);
         }
 
+        /*
+         * Checkbox trạng thái.
+         */
         $validated['is_active'] =
             $request->boolean('is_active');
 
@@ -230,18 +392,45 @@ class ProductController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if ($request->boolean('remove_image')) {
-            $this->deleteLocalImage($product->image);
+        /*
+         * Người dùng chủ động xóa ảnh.
+         */
+        if (
+            $request->boolean('remove_image')
+        ) {
+            $this->deleteStoredImage(
+                $product->image
+            );
 
             $validated['image'] = null;
         }
 
+        /*
+         * Upload ảnh mới.
+         *
+         * Upload Cloudinary thành công trước,
+         * sau đó mới xóa ảnh cũ để tránh mất ảnh
+         * nếu upload thất bại.
+         */
         if ($request->hasFile('image')) {
-            $this->deleteLocalImage($product->image);
+            $newImage =
+                $this->uploadToCloudinary(
+                    $request->file('image'),
+                    'mommykids/products/main'
+                );
 
-            $validated['image'] = $request
-                ->file('image')
-                ->store('products/main', 'public');
+            /*
+             * Xóa ảnh cũ.
+             */
+            $this->deleteStoredImage(
+                $product->image
+            );
+
+            /*
+             * Lưu URL Cloudinary mới.
+             */
+            $validated['image'] =
+                $newImage;
         }
 
         /*
@@ -250,15 +439,29 @@ class ProductController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $gallery = $product->images ?? [];
+        $gallery =
+            $product->images ?? [];
 
-        $removeGallery = $request->input(
-            'remove_gallery',
-            []
-        );
+        /*
+         * Danh sách ảnh muốn xóa.
+         */
+        $removeGallery =
+            $request->input(
+                'remove_gallery',
+                []
+            );
 
-        if (is_array($removeGallery)) {
-            foreach ($removeGallery as $imageToRemove) {
+        if (
+            is_array($removeGallery)
+        ) {
+            foreach (
+                $removeGallery
+                as $imageToRemove
+            ) {
+                /*
+                 * Chỉ xóa nếu ảnh thực sự nằm
+                 * trong gallery sản phẩm.
+                 */
                 if (
                     in_array(
                         $imageToRemove,
@@ -266,12 +469,15 @@ class ProductController extends Controller
                         true
                     )
                 ) {
-                    $this->deleteLocalImage(
+                    $this->deleteStoredImage(
                         $imageToRemove
                     );
                 }
             }
 
+            /*
+             * Loại ảnh đã xóa khỏi array.
+             */
             $gallery = array_values(
                 array_filter(
                     $gallery,
@@ -285,17 +491,30 @@ class ProductController extends Controller
             );
         }
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $gallery[] = $file->store(
-                    'products/gallery',
-                    'public'
-                );
+        /*
+         * Upload thêm gallery mới.
+         */
+        if (
+            $request->hasFile('images')
+        ) {
+            foreach (
+                $request->file('images')
+                as $file
+            ) {
+                $gallery[] =
+                    $this->uploadToCloudinary(
+                        $file,
+                        'mommykids/products/gallery'
+                    );
             }
         }
 
-        $validated['images'] = $gallery;
+        $validated['images'] =
+            $gallery;
 
+        /*
+         * Xóa field không thuộc products.
+         */
         unset(
             $validated['stage_ids'],
             $validated['tag_ids'],
@@ -303,14 +522,31 @@ class ProductController extends Controller
             $validated['remove_gallery']
         );
 
-        $product->update($validated);
-
-        $product->stages()->sync(
-            $request->input('stage_ids', [])
+        /*
+         * Update database.
+         */
+        $product->update(
+            $validated
         );
 
+        /*
+         * Đồng bộ stage.
+         */
+        $product->stages()->sync(
+            $request->input(
+                'stage_ids',
+                []
+            )
+        );
+
+        /*
+         * Đồng bộ tag.
+         */
         $product->tags()->sync(
-            $request->input('tag_ids', [])
+            $request->input(
+                'tag_ids',
+                []
+            )
         );
 
         return redirect()
@@ -327,28 +563,35 @@ class ProductController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function destroy(Product $product)
-    {
+    public function destroy(
+        Product $product
+    ) {
         /*
-         * Lưu người thực hiện.
+         * Lưu ID người thực hiện.
          *
-         * Hiện middleware auth admin của project đang tắt,
-         * nên khi chưa đăng nhập giá trị có thể là NULL.
+         * Hiện project của bạn vẫn đang dùng
+         * auth web ở một số khu vực admin,
+         * nên auth()->id() sẽ lấy user hiện tại.
          */
         $product->update([
-            'deleted_by' => auth()->id(),
+            'deleted_by' =>
+                auth()->id(),
 
-            // Xóa lần nữa sau khi đã từng restore thì reset.
+            /*
+             * Nếu sản phẩm từng được restore,
+             * xóa lần nữa thì reset thông tin restore.
+             */
             'restored_by' => null,
             'restored_at' => null,
         ]);
 
         /*
-         * Chỉ cập nhật deleted_at.
+         * Soft delete:
          *
-         * KHÔNG xóa ảnh.
-         * KHÔNG detach Stage.
-         * KHÔNG detach Tag.
+         * - chỉ set deleted_at
+         * - không xóa ảnh
+         * - không detach Stage
+         * - không detach Tag
          */
         $product->delete();
 
@@ -366,28 +609,46 @@ class ProductController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function trash(Request $request)
-    {
-        $query = Product::onlyTrashed()
-            ->with('category');
+    public function trash(
+        Request $request
+    ) {
+        /*
+         * Chỉ lấy sản phẩm đã soft delete.
+         */
+        $query =
+            Product::onlyTrashed()
+                ->with('category');
 
-        if ($request->filled('search')) {
-            $search = trim($request->search);
-
-            $query->where(function ($q) use ($search) {
-                $q->where(
-                    'name',
-                    'like',
-                    '%' . $search . '%'
-                )
-                ->orWhere(
-                    'slug',
-                    'like',
-                    '%' . $search . '%'
+        /*
+         * Search.
+         */
+        if (
+            $request->filled('search')
+        ) {
+            $search =
+                trim(
+                    $request->search
                 );
-            });
+
+            $query->where(
+                function ($q) use ($search) {
+                    $q->where(
+                        'name',
+                        'like',
+                        '%' . $search . '%'
+                    )
+                        ->orWhere(
+                            'slug',
+                            'like',
+                            '%' . $search . '%'
+                        );
+                }
+            );
         }
 
+        /*
+         * Mới xóa hiện trước.
+         */
         $products = $query
             ->orderByDesc('deleted_at')
             ->paginate(10)
@@ -405,28 +666,36 @@ class ProductController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function restore(string $id)
-    {
-        $product = Product::onlyTrashed()
-            ->findOrFail($id);
+    public function restore(
+        string $id
+    ) {
+        $product =
+            Product::onlyTrashed()
+                ->findOrFail($id);
 
         /*
-         * Laravel sẽ đưa deleted_at về NULL.
+         * Laravel đưa deleted_at về NULL.
          */
         $product->restore();
 
         /*
-         * Ghi lại lịch sử khôi phục.
+         * Ghi lịch sử restore.
          *
-         * deleted_by vẫn giữ nguyên để biết trước đó ai xóa.
+         * deleted_by vẫn giữ nguyên để biết
+         * trước đó ai đã xóa sản phẩm.
          */
         $product->update([
-            'restored_by' => auth()->id(),
-            'restored_at' => now(),
+            'restored_by' =>
+                auth()->id(),
+
+            'restored_at' =>
+                now(),
         ]);
 
         return redirect()
-            ->route('admin.products.trash')
+            ->route(
+                'admin.products.trash'
+            )
             ->with(
                 'success',
                 'Khôi phục sản phẩm thành công.'
@@ -439,35 +708,53 @@ class ProductController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function forceDelete(string $id)
-    {
-        $product = Product::onlyTrashed()
-            ->findOrFail($id);
+    public function forceDelete(
+        string $id
+    ) {
+        $product =
+            Product::onlyTrashed()
+                ->findOrFail($id);
 
         /*
-         * Chỉ lúc xóa vĩnh viễn mới xóa file ảnh.
+         * Xóa ảnh đại diện.
+         *
+         * Nếu là Cloudinary → xóa Cloudinary.
+         * Nếu là local cũ → xóa storage.
          */
-        $this->deleteLocalImage(
+        $this->deleteStoredImage(
             $product->image
         );
 
-        foreach ($product->images ?? [] as $image) {
-            $this->deleteLocalImage($image);
+        /*
+         * Xóa gallery.
+         */
+        foreach (
+            $product->images ?? []
+            as $image
+        ) {
+            $this->deleteStoredImage(
+                $image
+            );
         }
 
         /*
          * Xóa quan hệ pivot.
          */
-        $product->stages()->detach();
-        $product->tags()->detach();
+        $product->stages()
+            ->detach();
+
+        $product->tags()
+            ->detach();
 
         /*
-         * Xóa thật khỏi database.
+         * Xóa thật khỏi DB.
          */
         $product->forceDelete();
 
         return redirect()
-            ->route('admin.products.trash')
+            ->route(
+                'admin.products.trash'
+            )
             ->with(
                 'success',
                 'Đã xóa vĩnh viễn sản phẩm.'
@@ -483,40 +770,61 @@ class ProductController extends Controller
     private function rules(): array
     {
         return [
+            /*
+             * Category.
+             */
             'category_id' => [
                 'required',
                 'exists:categories,id',
             ],
 
+            /*
+             * Tên.
+             */
             'name' => [
                 'required',
                 'string',
                 'max:255',
             ],
 
+            /*
+             * Slug.
+             */
             'slug' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
 
+            /*
+             * Mô tả.
+             */
             'description' => [
                 'nullable',
                 'string',
             ],
 
+            /*
+             * Giá.
+             */
             'price' => [
                 'required',
                 'integer',
                 'min:0',
             ],
 
+            /*
+             * Giá cũ.
+             */
             'old_price' => [
                 'nullable',
                 'integer',
                 'min:0',
             ],
 
+            /*
+             * Giảm giá.
+             */
             'discount_percent' => [
                 'nullable',
                 'integer',
@@ -524,18 +832,29 @@ class ProductController extends Controller
                 'max:100',
             ],
 
+            /*
+             * Tồn kho.
+             */
             'stock' => [
                 'required',
                 'integer',
                 'min:0',
             ],
 
+            /*
+             * Status.
+             */
             'is_active' => [
                 'nullable',
                 'boolean',
             ],
 
-            // Ảnh đại diện.
+            /*
+            |--------------------------------------------------------------------------
+            | Ảnh đại diện
+            |--------------------------------------------------------------------------
+            */
+
             'image' => [
                 'nullable',
                 'image',
@@ -543,7 +862,12 @@ class ProductController extends Controller
                 'max:4096',
             ],
 
-            // Gallery.
+            /*
+            |--------------------------------------------------------------------------
+            | Gallery
+            |--------------------------------------------------------------------------
+            */
+
             'images' => [
                 'nullable',
                 'array',
@@ -556,17 +880,28 @@ class ProductController extends Controller
                 'max:4096',
             ],
 
+            /*
+             * Remove main image.
+             */
             'remove_image' => [
                 'nullable',
                 'boolean',
             ],
 
+            /*
+             * Remove gallery.
+             */
             'remove_gallery' => [
                 'nullable',
                 'array',
             ],
 
-            // Stage.
+            /*
+            |--------------------------------------------------------------------------
+            | Stage
+            |--------------------------------------------------------------------------
+            */
+
             'stage_ids' => [
                 'nullable',
                 'array',
@@ -576,7 +911,12 @@ class ProductController extends Controller
                 'exists:stages,id',
             ],
 
-            // Tag.
+            /*
+            |--------------------------------------------------------------------------
+            | Tag
+            |--------------------------------------------------------------------------
+            */
+
             'tag_ids' => [
                 'nullable',
                 'array',
@@ -587,6 +927,12 @@ class ProductController extends Controller
             ],
         ];
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validation messages
+    |--------------------------------------------------------------------------
+    */
 
     private function messages(): array
     {
@@ -656,6 +1002,12 @@ class ProductController extends Controller
         ];
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Tạo slug
+    |--------------------------------------------------------------------------
+    */
+
     private function makeSlug(
         ?string $slug,
         string $name
@@ -669,18 +1021,191 @@ class ProductController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | Xóa ảnh local
+    | Tạo Cloudinary instance
     |--------------------------------------------------------------------------
     */
 
-    private function deleteLocalImage(
+    private function cloudinary(): Cloudinary
+    {
+        /*
+         * config/cloudinary.php:
+         *
+         * 'cloud_url' => env('CLOUDINARY_URL')
+         */
+        $cloudUrl =
+            config(
+                'cloudinary.cloud_url'
+            );
+
+        if (!$cloudUrl) {
+            throw new RuntimeException(
+                'CLOUDINARY_URL chưa được cấu hình. '
+                . 'Kiểm tra file .env và config/cloudinary.php.'
+            );
+        }
+
+        return new Cloudinary(
+            $cloudUrl
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Upload Cloudinary
+    |--------------------------------------------------------------------------
+    */
+
+    private function uploadToCloudinary(
+        UploadedFile $file,
+        string $folder
+    ): string {
+        /*
+         * QUAN TRỌNG:
+         *
+         * Cloudinary PHP SDK 2.x:
+         *
+         * ĐÚNG:
+         * ->uploadApi()
+         *
+         * SAI:
+         * ->uploadApi
+         */
+
+        $result =
+            $this->cloudinary()
+                ->uploadApi()
+                ->upload(
+                    $file->getRealPath(),
+                    [
+                        /*
+                         * Folder trên Cloudinary.
+                         */
+                        'folder' =>
+                            $folder,
+
+                        /*
+                         * Chỉ image.
+                         */
+                        'resource_type' =>
+                            'image',
+
+                        /*
+                         * Giữ tên file gốc.
+                         */
+                        'use_filename' =>
+                            true,
+
+                        /*
+                         * Thêm phần unique tránh trùng tên.
+                         */
+                        'unique_filename' =>
+                            true,
+
+                        /*
+                         * Không ghi đè asset cũ.
+                         */
+                        'overwrite' =>
+                            false,
+                    ]
+                );
+
+        /*
+         * Cloudinary trả HTTPS URL.
+         */
+        $url =
+            $result['secure_url']
+            ?? null;
+
+        if (!$url) {
+            throw new RuntimeException(
+                'Cloudinary upload thành công '
+                . 'nhưng không trả về secure_url.'
+            );
+        }
+
+        return $url;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Xóa ảnh
+    |--------------------------------------------------------------------------
+    |
+    | Hỗ trợ đồng thời:
+    |
+    | 1. Ảnh Cloudinary mới
+    | 2. Ảnh local Laravel cũ
+    | 3. URL ngoài không thuộc Cloudinary
+    |
+    */
+
+    private function deleteStoredImage(
         ?string $image
     ): void {
         if (!$image) {
             return;
         }
 
-        // Không xóa URL ảnh bên ngoài.
+        /*
+        |--------------------------------------------------------------------------
+        | Cloudinary
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $this->isCloudinaryUrl(
+                $image
+            )
+        ) {
+            $publicId =
+                $this
+                    ->extractCloudinaryPublicId(
+                        $image
+                    );
+
+            if (!$publicId) {
+                return;
+            }
+
+            try {
+                /*
+                 * QUAN TRỌNG:
+                 *
+                 * phải dùng uploadApi()
+                 * chứ không phải uploadApi.
+                 */
+                $this->cloudinary()
+                    ->uploadApi()
+                    ->destroy(
+                        $publicId,
+                        [
+                            'resource_type' =>
+                                'image',
+
+                            /*
+                             * Làm CDN xóa cache ảnh.
+                             */
+                            'invalidate' =>
+                                true,
+                        ]
+                    );
+            } catch (\Throwable $e) {
+                /*
+                 * Không làm hỏng thao tác database
+                 * chỉ vì Cloudinary xóa asset lỗi.
+                 */
+                report($e);
+            }
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | URL ngoài
+        |--------------------------------------------------------------------------
+        */
+
         if (
             Str::startsWith(
                 $image,
@@ -690,9 +1215,163 @@ class ProductController extends Controller
                 ]
             )
         ) {
+            /*
+             * Không tự xóa tài nguyên
+             * của website/service khác.
+             */
             return;
         }
 
-        Storage::disk('public')->delete($image);
+        /*
+        |--------------------------------------------------------------------------
+        | Ảnh local cũ
+        |--------------------------------------------------------------------------
+        |
+        | Ví dụ:
+        |
+        | products/main/abc.jpg
+        |
+        */
+
+        Storage::disk('public')
+            ->delete(
+                $image
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Kiểm tra URL Cloudinary
+    |--------------------------------------------------------------------------
+    */
+
+    private function isCloudinaryUrl(
+        string $url
+    ): bool {
+        $host =
+            parse_url(
+                $url,
+                PHP_URL_HOST
+            );
+
+        if (!is_string($host)) {
+            return false;
+        }
+
+        return
+            $host ===
+                'res.cloudinary.com'
+            ||
+            Str::endsWith(
+                $host,
+                '.cloudinary.com'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lấy Cloudinary public_id từ URL
+    |--------------------------------------------------------------------------
+    |
+    | Ví dụ:
+    |
+    | https://res.cloudinary.com/xxx/image/upload/
+    | v1234567890/mommykids/products/main/meiji_abc.jpg
+    |
+    | Sẽ lấy:
+    |
+    | mommykids/products/main/meiji_abc
+    |
+    */
+
+    private function extractCloudinaryPublicId(
+        string $url
+    ): ?string {
+        $path =
+            parse_url(
+                $url,
+                PHP_URL_PATH
+            );
+
+        if (!is_string($path)) {
+            return null;
+        }
+
+        /*
+         * Tìm phần /image/upload/.
+         */
+        $marker =
+            '/image/upload/';
+
+        $position =
+            strpos(
+                $path,
+                $marker
+            );
+
+        if ($position === false) {
+            return null;
+        }
+
+        /*
+         * Lấy phần sau /image/upload/.
+         */
+        $relativePath =
+            substr(
+                $path,
+                $position
+                + strlen($marker)
+            );
+
+        /*
+         * Bỏ Cloudinary version.
+         *
+         * Ví dụ:
+         *
+         * v1756300000/...
+         *
+         * =>
+         *
+         * mommykids/...
+         */
+        $relativePath =
+            preg_replace(
+                '#^v\d+/#',
+                '',
+                $relativePath
+            );
+
+        if (!$relativePath) {
+            return null;
+        }
+
+        /*
+         * Bỏ phần mở rộng file:
+         *
+         * .jpg
+         * .jpeg
+         * .png
+         * .webp
+         */
+        $publicId =
+            preg_replace(
+                '/\.[^\.\/]+$/',
+                '',
+                $relativePath
+            );
+
+        if (!$publicId) {
+            return null;
+        }
+
+        /*
+         * Decode ký tự URL.
+         */
+        return rawurldecode(
+            ltrim(
+                $publicId,
+                '/'
+            )
+        );
     }
 }
