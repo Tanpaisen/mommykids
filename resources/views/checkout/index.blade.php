@@ -3,6 +3,23 @@
 @section('title', 'Thanh toán - MommyKids')
 
 @section('content')
+
+@php
+    $resolveImage = function (?string $image) {
+        if (!$image) {
+            return null;
+        }
+
+        if (
+            str_starts_with($image, 'http://') ||
+            str_starts_with($image, 'https://')
+        ) {
+            return $image;
+        }
+
+        return asset('storage/' . ltrim($image, '/'));
+    };
+@endphp
 <div class="mk-checkout-page">
     <div class="mk-checkout-wrap">
         <a href="{{ route('cart.index') }}" class="mk-back">← Quay lại giỏ hàng</a>
@@ -117,14 +134,58 @@
                     <h2>Đơn hàng của bạn</h2>
 
                     @foreach($items as $item)
-                        <div class="mk-product">
-                            <img src="{{ $item->product->image ?: 'https://via.placeholder.com/80' }}" alt="{{ $item->product->name }}">
-                            <div>
-                                <strong>{{ $item->product->name }}</strong>
-                                <small>{{ number_format($item->product->price) }}đ × {{ $item->quantity }}</small>
+                        @php
+                            $product = $item->product;
+                            $imageUrl = $product
+                                ? $resolveImage($product->image)
+                                : null;
+                        @endphp
+
+                        @if($product)
+                            <div class="mk-product">
+                                <div class="mk-product-image">
+                                    @if($imageUrl)
+                                        <img
+                                            src="{{ $imageUrl }}"
+                                            alt="{{ $product->name }}"
+                                            loading="lazy"
+                                            onerror="
+                                                this.style.display='none';
+                                                this.nextElementSibling.style.display='flex';
+                                            "
+                                        >
+
+                                        <div
+                                            class="mk-image-fallback"
+                                            style="display:none;"
+                                        >
+                                            🖼️
+                                        </div>
+                                    @else
+                                        <div class="mk-image-fallback">
+                                            🖼️
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <div>
+                                    <strong>{{ $product->name }}</strong>
+                                    <small>
+                                        {{ number_format($product->price, 0, ',', '.') }}đ
+                                        × {{ $item->quantity }}
+                                    </small>
+                                </div>
+
+                                <b>
+                                    {{ number_format(
+                                        $product->price * $item->quantity,
+                                        0,
+                                        ',',
+                                        '.'
+                                    ) }}đ
+                                </b>
                             </div>
-                            <b>{{ number_format($item->product->price * $item->quantity) }}đ</b>
-                        </div>
+                        @endif
                     @endforeach
 
                     <hr>
@@ -169,7 +230,9 @@
 .mk-payment-icon{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#ffecef}
 .mk-payment-option strong{display:block}.mk-payment-option small{display:block;color:#81777d;margin-top:3px}
 .mk-summary{position:sticky;top:100px}.mk-product{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:8px 0 18px}
-.mk-product img{width:64px;height:64px;border-radius:12px;object-fit:cover;background:#fff0f2}.mk-product small{display:block;color:#8b8287;margin-top:4px}.mk-product>b{color:#ff5f76;white-space:nowrap}
+.mk-product-image{position:relative;width:64px;height:64px;border-radius:12px;overflow:hidden;background:#fff0f2;flex-shrink:0}
+.mk-product-image img{width:100%;height:100%;object-fit:contain;background:#fff;padding:3px;box-sizing:border-box}
+.mk-image-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#fff0f2;font-size:22px}.mk-product small{display:block;color:#8b8287;margin-top:4px}.mk-product>b{color:#ff5f76;white-space:nowrap}
 .mk-card hr{border:0;border-top:1px solid #f0e4e6;margin:18px 0}.mk-row{display:flex;justify-content:space-between;margin:12px 0}.mk-total{font-size:18px}.mk-total strong{color:#ff5f76;font-size:24px}
 .mk-primary{width:100%;border:0;border-radius:28px;background:#ff536e;color:#fff;font-weight:700;padding:15px;margin-top:18px;cursor:pointer}
 .mk-alert{padding:14px 16px;border-radius:12px;margin:0 0 18px}.mk-alert-error{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}.mk-alert ul{margin:8px 0 0 18px}

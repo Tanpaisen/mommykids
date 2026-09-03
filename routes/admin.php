@@ -45,7 +45,32 @@ Route::prefix('admin')
 
         /*
         |--------------------------------------------------------------------------
-        | Giai đoạn của bé
+        | GIAI ĐOẠN — THÙNG RÁC
+        |--------------------------------------------------------------------------
+        */
+
+        // Danh sách giai đoạn đã xóa mềm
+        Route::get(
+            '/giai-doan-thung-rac',
+            [StageController::class, 'trash']
+        )->name('stages.trash');
+
+        // Khôi phục giai đoạn
+        Route::patch(
+            '/giai-doan-thung-rac/{id}/khoi-phuc',
+            [StageController::class, 'restore']
+        )->name('stages.restore');
+
+        // Xóa vĩnh viễn giai đoạn
+        Route::delete(
+            '/giai-doan-thung-rac/{id}',
+            [StageController::class, 'forceDelete']
+        )->name('stages.forceDelete');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | GIAI ĐOẠN — CRUD
         |--------------------------------------------------------------------------
         */
 

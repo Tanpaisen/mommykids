@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Tag;
+use Cloudinary\Cloudinary;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class CategoryController extends Controller
 {
@@ -51,7 +54,6 @@ class CategoryController extends Controller
             )
             ->withQueryString();
 
-
         /*
         |--------------------------------------------------------------------------
         | Tag
@@ -87,7 +89,6 @@ class CategoryController extends Controller
             )
             ->withQueryString();
 
-
         /*
         |--------------------------------------------------------------------------
         | Số lượng thùng rác riêng
@@ -100,7 +101,6 @@ class CategoryController extends Controller
         $tagTrashCount =
             Tag::onlyTrashed()->count();
 
-
         return view(
             'admin.categories.index',
             compact(
@@ -111,7 +111,6 @@ class CategoryController extends Controller
             )
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -125,7 +124,6 @@ class CategoryController extends Controller
             'admin.categories.create'
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -158,6 +156,7 @@ class CategoryController extends Controller
                 'image' => [
                     'nullable',
                     'image',
+                    'mimes:jpg,jpeg,png,webp',
                     'max:2048',
                 ],
 
@@ -171,22 +170,7 @@ class CategoryController extends Controller
                     'nullable',
                 ],
             ],
-            [
-                'name.required' =>
-                    'Vui lòng nhập tên danh mục.',
-
-                'image.image' =>
-                    'Ảnh tải lên không hợp lệ.',
-
-                'image.max' =>
-                    'Ảnh không được vượt quá 2MB.',
-
-                'sort_order.integer' =>
-                    'Thứ tự hiển thị phải là số nguyên.',
-
-                'sort_order.min' =>
-                    'Thứ tự hiển thị không được nhỏ hơn 0.',
-            ]
+            $this->messages()
         );
 
         $validated['slug'] = $this->makeSlug(
@@ -219,12 +203,17 @@ class CategoryController extends Controller
         $validated['is_active'] =
             $request->boolean('is_active');
 
+        /*
+        |--------------------------------------------------------------------------
+        | Upload ảnh/icon danh mục lên Cloudinary
+        |--------------------------------------------------------------------------
+        */
+
         if ($request->hasFile('image')) {
-            $validated['image'] = $request
-                ->file('image')
-                ->store(
-                    'categories',
-                    'public'
+            $validated['image'] =
+                $this->uploadToCloudinary(
+                    $request->file('image'),
+                    'mommykids/categories'
                 );
         }
 
@@ -237,7 +226,6 @@ class CategoryController extends Controller
                 'Thêm danh mục thành công.'
             );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -252,7 +240,6 @@ class CategoryController extends Controller
             compact('category')
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -287,7 +274,13 @@ class CategoryController extends Controller
                 'image' => [
                     'nullable',
                     'image',
+                    'mimes:jpg,jpeg,png,webp',
                     'max:2048',
+                ],
+
+                'remove_image' => [
+                    'nullable',
+                    'boolean',
                 ],
 
                 'sort_order' => [
@@ -300,22 +293,7 @@ class CategoryController extends Controller
                     'nullable',
                 ],
             ],
-            [
-                'name.required' =>
-                    'Vui lòng nhập tên danh mục.',
-
-                'image.image' =>
-                    'Ảnh tải lên không hợp lệ.',
-
-                'image.max' =>
-                    'Ảnh không được vượt quá 2MB.',
-
-                'sort_order.integer' =>
-                    'Thứ tự hiển thị phải là số nguyên.',
-
-                'sort_order.min' =>
-                    'Thứ tự hiển thị không được nhỏ hơn 0.',
-            ]
+            $this->messages()
         );
 
         $validated['slug'] = $this->makeSlug(
@@ -355,22 +333,49 @@ class CategoryController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Thay ảnh
+        | Ảnh/Icon danh mục
+        |--------------------------------------------------------------------------
+        |
+        | Nếu upload ảnh mới:
+        | 1. Upload ảnh mới lên Cloudinary trước
+        | 2. Thành công mới xóa ảnh cũ
+        | 3. Lưu URL mới vào database
+        |
+        | Nếu chỉ chọn "xóa ảnh":
+        | - xóa ảnh cũ
+        | - image = NULL
         |--------------------------------------------------------------------------
         */
 
         if ($request->hasFile('image')) {
-            $this->deleteLocalImage(
+            $newImage =
+                $this->uploadToCloudinary(
+                    $request->file('image'),
+                    'mommykids/categories'
+                );
+
+            $this->deleteStoredImage(
                 $category->image
             );
 
-            $validated['image'] = $request
-                ->file('image')
-                ->store(
-                    'categories',
-                    'public'
-                );
+            $validated['image'] =
+                $newImage;
+        } elseif (
+            $request->boolean('remove_image')
+        ) {
+            $this->deleteStoredImage(
+                $category->image
+            );
+
+            $validated['image'] = null;
         }
+
+        /*
+         * remove_image không phải cột trong bảng categories.
+         */
+        unset(
+            $validated['remove_image']
+        );
 
         $category->update($validated);
 
@@ -381,7 +386,6 @@ class CategoryController extends Controller
                 'Cập nhật danh mục thành công.'
             );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -421,7 +425,6 @@ class CategoryController extends Controller
                 'Danh mục đã được chuyển vào thùng rác.'
             );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -465,7 +468,6 @@ class CategoryController extends Controller
             compact('categories')
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -516,7 +518,6 @@ class CategoryController extends Controller
             );
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | Xóa vĩnh viễn danh mục
@@ -548,9 +549,12 @@ class CategoryController extends Controller
         }
 
         /*
-         * Lúc này mới xóa ảnh thật.
+         * Xóa ảnh thật khi force delete.
+         *
+         * - Cloudinary -> xóa Cloudinary
+         * - local cũ -> xóa storage
          */
-        $this->deleteLocalImage(
+        $this->deleteStoredImage(
             $category->image
         );
 
@@ -566,10 +570,38 @@ class CategoryController extends Controller
             );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Validation messages
+    |--------------------------------------------------------------------------
+    */
+
+    private function messages(): array
+    {
+        return [
+            'name.required' =>
+                'Vui lòng nhập tên danh mục.',
+
+            'image.image' =>
+                'Ảnh tải lên không hợp lệ.',
+
+            'image.mimes' =>
+                'Ảnh chỉ nhận JPG, JPEG, PNG hoặc WEBP.',
+
+            'image.max' =>
+                'Ảnh không được vượt quá 2MB.',
+
+            'sort_order.integer' =>
+                'Thứ tự hiển thị phải là số nguyên.',
+
+            'sort_order.min' =>
+                'Thứ tự hiển thị không được nhỏ hơn 0.',
+        ];
+    }
 
     /*
     |--------------------------------------------------------------------------
-    | Helpers
+    | Tạo slug
     |--------------------------------------------------------------------------
     */
 
@@ -584,12 +616,147 @@ class CategoryController extends Controller
         );
     }
 
-    private function deleteLocalImage(
+    /*
+    |--------------------------------------------------------------------------
+    | Cloudinary instance
+    |--------------------------------------------------------------------------
+    */
+
+    private function cloudinary(): Cloudinary
+    {
+        $cloudUrl =
+            config(
+                'cloudinary.cloud_url'
+            );
+
+        if (!$cloudUrl) {
+            throw new RuntimeException(
+                'CLOUDINARY_URL chưa được cấu hình. '
+                . 'Kiểm tra file .env và config/cloudinary.php.'
+            );
+        }
+
+        return new Cloudinary(
+            $cloudUrl
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Upload ảnh lên Cloudinary
+    |--------------------------------------------------------------------------
+    */
+
+    private function uploadToCloudinary(
+        UploadedFile $file,
+        string $folder
+    ): string {
+        $result =
+            $this->cloudinary()
+                ->uploadApi()
+                ->upload(
+                    $file->getRealPath(),
+                    [
+                        'folder' =>
+                            $folder,
+
+                        'resource_type' =>
+                            'image',
+
+                        'use_filename' =>
+                            true,
+
+                        'unique_filename' =>
+                            true,
+
+                        'overwrite' =>
+                            false,
+                    ]
+                );
+
+        $url =
+            $result['secure_url']
+            ?? null;
+
+        if (!$url) {
+            throw new RuntimeException(
+                'Cloudinary upload thành công '
+                . 'nhưng không trả về secure_url.'
+            );
+        }
+
+        return $url;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Xóa ảnh
+    |--------------------------------------------------------------------------
+    |
+    | Hỗ trợ:
+    | 1. Cloudinary mới
+    | 2. Local Laravel cũ
+    | 3. URL ngoài
+    |--------------------------------------------------------------------------
+    */
+
+    private function deleteStoredImage(
         ?string $image
     ): void {
         if (!$image) {
             return;
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Cloudinary
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $this->isCloudinaryUrl(
+                $image
+            )
+        ) {
+            $publicId =
+                $this
+                    ->extractCloudinaryPublicId(
+                        $image
+                    );
+
+            if (!$publicId) {
+                return;
+            }
+
+            try {
+                $this->cloudinary()
+                    ->uploadApi()
+                    ->destroy(
+                        $publicId,
+                        [
+                            'resource_type' =>
+                                'image',
+
+                            'invalidate' =>
+                                true,
+                        ]
+                    );
+            } catch (\Throwable $e) {
+                /*
+                 * Không làm hỏng thao tác DB
+                 * chỉ vì Cloudinary xóa asset lỗi.
+                 */
+                report($e);
+            }
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | URL ngoài
+        |--------------------------------------------------------------------------
+        */
 
         if (
             Str::startsWith(
@@ -603,7 +770,121 @@ class CategoryController extends Controller
             return;
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Local cũ
+        |--------------------------------------------------------------------------
+        */
+
         Storage::disk('public')
-            ->delete($image);
+            ->delete(
+                $image
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Kiểm tra URL Cloudinary
+    |--------------------------------------------------------------------------
+    */
+
+    private function isCloudinaryUrl(
+        string $url
+    ): bool {
+        $host =
+            parse_url(
+                $url,
+                PHP_URL_HOST
+            );
+
+        if (!is_string($host)) {
+            return false;
+        }
+
+        return
+            $host ===
+                'res.cloudinary.com'
+            ||
+            Str::endsWith(
+                $host,
+                '.cloudinary.com'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lấy public_id từ URL Cloudinary
+    |--------------------------------------------------------------------------
+    */
+
+    private function extractCloudinaryPublicId(
+        string $url
+    ): ?string {
+        $path =
+            parse_url(
+                $url,
+                PHP_URL_PATH
+            );
+
+        if (!is_string($path)) {
+            return null;
+        }
+
+        $marker =
+            '/image/upload/';
+
+        $position =
+            strpos(
+                $path,
+                $marker
+            );
+
+        if ($position === false) {
+            return null;
+        }
+
+        $relativePath =
+            substr(
+                $path,
+                $position
+                + strlen($marker)
+            );
+
+        /*
+         * Bỏ version Cloudinary:
+         * v1234567890/...
+         */
+        $relativePath =
+            preg_replace(
+                '#^v\d+/#',
+                '',
+                $relativePath
+            );
+
+        if (!$relativePath) {
+            return null;
+        }
+
+        /*
+         * Bỏ extension:
+         * .jpg / .png / .webp...
+         */
+        $publicId =
+            preg_replace(
+                '/\.[^\.\/]+$/',
+                '',
+                $relativePath
+            );
+
+        if (!$publicId) {
+            return null;
+        }
+
+        return rawurldecode(
+            ltrim(
+                $publicId,
+                '/'
+            )
+        );
     }
 }
