@@ -8,17 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Xóa bảng cũ
+        Schema::dropIfExists('cart_items');
+
+        // Tạo lại bảng mới
         Schema::create('cart_items', function (Blueprint $table) {
-            $table->ulid('id')->primary();
-            
-            // Cho phép user_id nullable để khách vãng lai cũng có thể thêm vào giỏ
-            $table->foreignUlid('user_id')->nullable()->constrained()->cascadeOnDelete();
-            
-            // Bổ sung cột session_id
-            $table->string('session_id')->nullable()->index();
-            
+
+            $table->id();
+            $table->foreignId('cart_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->integer('quantity');
+            $table->unsignedInteger('quantity')->default(1);
+            $table->unsignedBigInteger('price')->default(0);
             $table->timestamps();
         });
     }
