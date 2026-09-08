@@ -8,9 +8,9 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('orders', function (Blueprint $table) {
-            $table->id();
+            $table->ulid('id')->primary();
             $table->string('code')->unique(); // ORD-20240001
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUlid('user_id')->nullable()->constrained()->nullOnDelete();
 
             // Người nhận
             $table->string('recipient_name');
@@ -46,8 +46,8 @@ return new class extends Migration {
         });
 
         Schema::create('order_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('order_id')->constrained()->cascadeOnDelete();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
             $table->string('product_name');      // snapshot tên lúc mua
             $table->string('product_sku')->nullable();
@@ -58,8 +58,8 @@ return new class extends Migration {
         });
 
         Schema::create('shipments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('order_id')->unique()->constrained()->cascadeOnDelete();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('order_id')->unique()->constrained()->cascadeOnDelete();
 
             // GHN
             $table->string('ghn_order_code')->nullable();    // mã vận đơn GHN

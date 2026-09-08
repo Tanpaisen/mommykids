@@ -13,6 +13,7 @@ return new class extends Migration
 
         // Tạo lại bảng mới
         Schema::create('cart_items', function (Blueprint $table) {
+
             $table->id();
             $table->foreignId('cart_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
