@@ -5,18 +5,21 @@ use App\Http\Controllers\Auth\AuthController;
 
 /*
 |--------------------------------------------------------------------------
-| Client OTP Authentication Routes (Popup Mode)
+| Client Authentication Routes (OTP Popup Mode)
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('guest')->group(function () {
-    // Khi bị middleware 'auth' chặn ở /thanh-toan hoặc /ho-so, Laravel sẽ gọi route này
+
+    // Route tên 'login' bắt buộc phải có để Middleware 'auth' không bị lỗi.
+    // Khi người dùng chưa đăng nhập cố vào /ho-so hay /thanh-toan, Laravel sẽ đẩy về trang chủ và mở Popup.
     Route::get('/login', function () {
         return redirect()->route('home', ['open_login' => 1]);
     })->name('login');
+
 });
 
-// Đăng xuất
+// Đăng xuất tài khoản Client
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');

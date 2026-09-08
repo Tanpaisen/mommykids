@@ -9,11 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cart_items', function (Blueprint $table) {
-            $table->id();
-            $table->string('session_id')->nullable()->index();   // guest cart
-            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete(); // logged-in cart
+            $table->ulid('id')->primary();
+            
+            // Cho phép user_id nullable để khách vãng lai cũng có thể thêm vào giỏ
+            $table->foreignUlid('user_id')->nullable()->constrained()->cascadeOnDelete();
+            
+            // Bổ sung cột session_id
+            $table->string('session_id')->nullable()->index();
+            
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->unsignedInteger('quantity')->default(1);
+            $table->integer('quantity');
             $table->timestamps();
         });
     }
