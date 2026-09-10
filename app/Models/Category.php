@@ -11,6 +11,14 @@ class Category extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function booted(): void
+    {
+        $clearCache = fn () => \Illuminate\Support\Facades\Cache::forget('categories_sidebar');
+        
+        static::saved($clearCache);
+        static::deleted($clearCache);
+    }
+
     protected $fillable = [
         'name',
         'slug',

@@ -85,7 +85,7 @@
                 </div>
             @else
                 <button type="button" onclick="openLoginModal()" class="hover:text-coral font-semibold text-coral cursor-pointer">
-                    Đăng nhập / Đăng ký
+                    Đăng nhập ngay
                 </button>
             @endauth
         </div>
