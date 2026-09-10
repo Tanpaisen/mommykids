@@ -308,40 +308,16 @@
         </div>
 
 
-        {{-- CHECKOUT --}}
-        @auth
-
-            <a
-                href="{{ route('checkout.index') }}"
-                class="btn-primary
-                       w-full
-                       mt-4
-                       text-center"
-            >
-                Tiến hành thanh toán
-            </a>
-
-        @else
-
-            <button
-                type="button"
-                onclick="
-                    if (typeof window.mkOpenLoginModal === 'function') {
-                        window.mkOpenLoginModal();
-                    } else if (typeof window.openLoginModal === 'function') {
-                        window.openLoginModal();
-                    } else {
-                        window.location.href='{{ route('login') }}';
-                    }
-                "
-                class="btn-primary
-                       w-full
-                       mt-4"
-            >
-                Đăng nhập để thanh toán
-            </button>
-
-        @endauth
+        {{-- CHECKOUT - TẠM THỜI KHÔNG YÊU CẦU ĐĂNG NHẬP --}}
+<a
+    href="{{ route('checkout.index') }}"
+    class="btn-primary
+           w-full
+           mt-4
+           text-center"
+>
+    Tiến hành thanh toán
+</a>
 
     @endif
 

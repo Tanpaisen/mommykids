@@ -50,21 +50,33 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 | Checkout Routes
 |--------------------------------------------------------------------------
+| TẠM THỜI KHÔNG YÊU CẦU ĐĂNG NHẬP ĐỂ TEST THANH TOÁN
 */
 
-Route::middleware('auth')->group(function () {
-    Route::get('/thanh-toan', [CheckoutController::class, 'index'])->name('checkout.index');
-    Route::post('/thanh-toan', [CheckoutController::class, 'store'])->name('checkout.store');
-    Route::get('/thanh-toan/qr', [CheckoutController::class, 'qr'])->name('checkout.qr');
-    Route::post('/thanh-toan/xac-nhan-chuyen-khoan', [CheckoutController::class, 'confirmTransfer'])->name('checkout.confirm-transfer');
-    Route::get('/thanh-toan/thanh-cong', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/thanh-toan', [CheckoutController::class, 'index'])
+    ->name('checkout.index');
 
-    // GHN Checkout API
-    Route::get('/checkout/districts', [CheckoutController::class, 'districts'])->name('checkout.districts');
-    Route::get('/checkout/wards', [CheckoutController::class, 'wards'])->name('checkout.wards');
-    Route::post('/checkout/shipping-fee', [CheckoutController::class, 'calculateShippingFee'])->name('checkout.shipping-fee');
-});
+Route::post('/thanh-toan', [CheckoutController::class, 'store'])
+    ->name('checkout.store');
 
+Route::get('/thanh-toan/qr', [CheckoutController::class, 'qr'])
+    ->name('checkout.qr');
+
+Route::post('/thanh-toan/xac-nhan-chuyen-khoan', [CheckoutController::class, 'confirmTransfer'])
+    ->name('checkout.confirm-transfer');
+
+Route::get('/thanh-toan/thanh-cong', [CheckoutController::class, 'success'])
+    ->name('checkout.success');
+
+// GHN Checkout API
+Route::get('/checkout/districts', [CheckoutController::class, 'districts'])
+    ->name('checkout.districts');
+
+Route::get('/checkout/wards', [CheckoutController::class, 'wards'])
+    ->name('checkout.wards');
+
+Route::post('/checkout/shipping-fee', [CheckoutController::class, 'calculateShippingFee'])
+    ->name('checkout.shipping-fee');
 
 /*
 |--------------------------------------------------------------------------
@@ -82,6 +94,12 @@ Route::prefix('api')->group(function () {
     Route::post('/send-otp', [OtpController::class, 'sendOtp'])->name('api.send-otp');
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->name('api.verify-otp');
 });
+
+Route::post('/api/sepay/webhook', [CheckoutController::class, 'sepayWebhook'])
+    ->name('sepay.webhook');
+
+Route::get('/thanh-toan/trang-thai/{code}', [CheckoutController::class, 'paymentStatus'])
+    ->name('checkout.payment-status');
 
 
 /*
