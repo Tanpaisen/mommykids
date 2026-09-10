@@ -21,7 +21,7 @@ class CartService
         if (Auth::check()) {
             return Cart::firstOrCreate(
                 ['user_id' => Auth::id(), 'status' => 'active'],
-                ['uuid' => Str::uuid()]
+                ['uuid' => (string) Str::uuid()]
             );
         }
 
@@ -37,7 +37,7 @@ class CartService
         }
 
         $cart = Cart::create([
-            'uuid'    => Str::uuid(),
+            'uuid'    => (string) Str::uuid(),
             'user_id' => null,
             'status'  => 'active',
         ]);
@@ -100,7 +100,7 @@ class CartService
     }
 
     // ── Cập nhật số lượng ───────────────────────────────────────
-    public function updateQuantity(int $cartItemId, int $quantity): void
+    public function updateQuantity(string|int $cartItemId, int $quantity): void
     {
         $item = $this->getCart()
             ->items()
@@ -116,7 +116,7 @@ class CartService
     }
 
     // ── Xóa item ────────────────────────────────────────────────
-    public function remove(int $cartItemId): void
+    public function remove(string|int $cartItemId): void
     {
         $this->getCart()
             ->items()
@@ -125,7 +125,7 @@ class CartService
     }
 
     // ── Merge giỏ guest vào user sau login ──────────────────────
-    public function mergeGuestCart(int $userId): void
+    public function mergeGuestCart(string|int $userId): void
     {
         $uuid = Cookie::get(self::COOKIE_NAME);
         if (!$uuid) return;
@@ -139,7 +139,7 @@ class CartService
 
         $userCart = Cart::firstOrCreate(
             ['user_id' => $userId, 'status' => 'active'],
-            ['uuid' => Str::uuid()]
+            ['uuid' => (string) Str::uuid()]
         );
 
         foreach ($guestCart->items as $guestItem) {
