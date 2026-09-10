@@ -19,18 +19,21 @@ use App\Http\Controllers\CheckoutController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/danh-muc/{category:slug}', [CategoryController::class, 'show'])->name('category.show');
+Route::get('/danh-muc/{category:slug}', [CategoryController::class, 'show'])
+    ->name('category.show');
 
-Route::get('/san-pham/{product:slug}', [ProductController::class, 'show'])->name('product.show');
+Route::get('/san-pham/{product:slug}', [ProductController::class, 'show'])
+    ->name('product.show');
 
-Route::get('/tim-kiem', [SearchController::class, 'index'])->name('search');
+Route::get('/tim-kiem', [SearchController::class, 'index'])
+    ->name('search');
 
-Route::get('/gio-hang', [CartController::class, 'index'])->name('cart.index');
+Route::get('/gio-hang', [CartController::class, 'index'])
+    ->name('cart.index');
 
 Route::get('/thong-bao', [NotificationController::class, 'index'])
     ->middleware('auth')
     ->name('notifications.index');
-
 
 /*
 |--------------------------------------------------------------------------
@@ -39,18 +42,24 @@ Route::get('/thong-bao', [NotificationController::class, 'index'])
 */
 
 Route::middleware('auth')->group(function () {
-    Route::get('/ho-so', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::post('/ho-so', [ProfileController::class, 'update'])->name('profile.update');
-    Route::get('/ho-tro-nguoi-dung', [ProfileController::class, 'support'])->name('profile.support');
-    Route::get('/quy-dinh-chinh-sach', [ProfileController::class, 'policy'])->name('profile.policy');
-});
+    Route::get('/ho-so', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
 
+    Route::post('/ho-so', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    Route::get('/ho-tro-nguoi-dung', [ProfileController::class, 'support'])
+        ->name('profile.support');
+
+    Route::get('/quy-dinh-chinh-sach', [ProfileController::class, 'policy'])
+        ->name('profile.policy');
+});
 
 /*
 |--------------------------------------------------------------------------
 | Checkout Routes
 |--------------------------------------------------------------------------
-| TẠM THỜI KHÔNG YÊU CẦU ĐĂNG NHẬP ĐỂ TEST THANH TOÁN
+| Tạm thời không yêu cầu đăng nhập để test thanh toán.
 */
 
 Route::get('/thanh-toan', [CheckoutController::class, 'index'])
@@ -62,21 +71,36 @@ Route::post('/thanh-toan', [CheckoutController::class, 'store'])
 Route::get('/thanh-toan/qr', [CheckoutController::class, 'qr'])
     ->name('checkout.qr');
 
-Route::post('/thanh-toan/xac-nhan-chuyen-khoan', [CheckoutController::class, 'confirmTransfer'])
-    ->name('checkout.confirm-transfer');
+Route::post(
+    '/thanh-toan/xac-nhan-chuyen-khoan',
+    [CheckoutController::class, 'confirmTransfer']
+)->name('checkout.confirm-transfer');
 
 Route::get('/thanh-toan/thanh-cong', [CheckoutController::class, 'success'])
     ->name('checkout.success');
 
-// GHN Checkout API
+Route::get(
+    '/thanh-toan/trang-thai/{code}',
+    [CheckoutController::class, 'paymentStatus']
+)->name('checkout.payment-status');
+
+/*
+|--------------------------------------------------------------------------
+| GHN Checkout API
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/checkout/districts', [CheckoutController::class, 'districts'])
     ->name('checkout.districts');
 
 Route::get('/checkout/wards', [CheckoutController::class, 'wards'])
     ->name('checkout.wards');
 
-Route::post('/checkout/shipping-fee', [CheckoutController::class, 'calculateShippingFee'])
-    ->name('checkout.shipping-fee');
+Route::post(
+    '/checkout/shipping-fee',
+    [CheckoutController::class, 'calculateShippingFee']
+)->name('checkout.shipping-fee');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -85,22 +109,21 @@ Route::post('/checkout/shipping-fee', [CheckoutController::class, 'calculateShip
 */
 
 Route::prefix('api')->group(function () {
-    // Cart API
-    Route::post('/cart', [CartController::class, 'store'])->name('api.cart.store');
-    Route::patch('/cart/{cartItem}', [CartController::class, 'update'])->name('api.cart.update');
-    Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])->name('api.cart.destroy');
+    Route::post('/cart', [CartController::class, 'store'])
+        ->name('api.cart.store');
 
-    // OTP API
-    Route::post('/send-otp', [OtpController::class, 'sendOtp'])->name('api.send-otp');
-    Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->name('api.verify-otp');
+    Route::patch('/cart/{cartItem}', [CartController::class, 'update'])
+        ->name('api.cart.update');
+
+    Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])
+        ->name('api.cart.destroy');
+
+    Route::post('/send-otp', [OtpController::class, 'sendOtp'])
+        ->name('api.send-otp');
+
+    Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])
+        ->name('api.verify-otp');
 });
-
-Route::post('/api/sepay/webhook', [CheckoutController::class, 'sepayWebhook'])
-    ->name('sepay.webhook');
-
-Route::get('/thanh-toan/trang-thai/{code}', [CheckoutController::class, 'paymentStatus'])
-    ->name('checkout.payment-status');
-
 
 /*
 |--------------------------------------------------------------------------
@@ -110,7 +133,6 @@ Route::get('/thanh-toan/trang-thai/{code}', [CheckoutController::class, 'payment
 
 require __DIR__ . '/auth/client.php';
 require __DIR__ . '/auth/admin.php';
-
 
 /*
 |--------------------------------------------------------------------------
