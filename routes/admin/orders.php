@@ -5,7 +5,7 @@ use App\Http\Controllers\Admin\PlaceholderController;
 
 Route::prefix('don-hang')->name('orders.')->group(function () {
     Route::get('/', [OrderController::class, 'index'])->name('index');
-    Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+    Route::get('/{order:code}', [OrderController::class, 'show'])->name('show');
     Route::patch('/{order}/status', [OrderController::class, 'updateStatus'])->name('status');
     Route::post('/tinh-phi-ship', [OrderController::class, 'calcFee'])->name('calc-fee');
 

@@ -55,4 +55,9 @@ class Order extends Model
             default      => ['text' => $this->status,   'color' => 'gray'],
         };
     }
+
+    public function getRouteKeyName(): string
+    {
+        return 'code';
+    }
 }
