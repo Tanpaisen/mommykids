@@ -842,6 +842,38 @@ class ProductController extends Controller
             ],
 
             /*
+             * Khối lượng sản phẩm (gram).
+             * Dùng để tính tổng khối lượng giỏ hàng và phí ship GHN.
+             */
+            'weight_grams' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            /*
+             * Kích thước đóng gói sản phẩm (cm).
+             * Dùng cùng khối lượng để tính phí vận chuyển GHN chính xác hơn.
+             */
+            'length_cm' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'width_cm' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            'height_cm' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
+
+            /*
              * Status.
              */
             'is_active' => [
@@ -978,6 +1010,42 @@ class ProductController extends Controller
 
             'stock.min' =>
                 'Tồn kho không được nhỏ hơn 0.',
+
+            'weight_grams.required' =>
+                'Vui lòng nhập khối lượng sản phẩm.',
+
+            'weight_grams.integer' =>
+                'Khối lượng sản phẩm phải là số nguyên.',
+
+            'weight_grams.min' =>
+                'Khối lượng sản phẩm phải lớn hơn 0 gram.',
+
+            'length_cm.required' =>
+                'Vui lòng nhập chiều dài sản phẩm.',
+
+            'length_cm.integer' =>
+                'Chiều dài sản phẩm phải là số nguyên.',
+
+            'length_cm.min' =>
+                'Chiều dài sản phẩm phải lớn hơn 0 cm.',
+
+            'width_cm.required' =>
+                'Vui lòng nhập chiều rộng sản phẩm.',
+
+            'width_cm.integer' =>
+                'Chiều rộng sản phẩm phải là số nguyên.',
+
+            'width_cm.min' =>
+                'Chiều rộng sản phẩm phải lớn hơn 0 cm.',
+
+            'height_cm.required' =>
+                'Vui lòng nhập chiều cao sản phẩm.',
+
+            'height_cm.integer' =>
+                'Chiều cao sản phẩm phải là số nguyên.',
+
+            'height_cm.min' =>
+                'Chiều cao sản phẩm phải lớn hơn 0 cm.',
 
             'image.image' =>
                 'Ảnh đại diện không hợp lệ.',

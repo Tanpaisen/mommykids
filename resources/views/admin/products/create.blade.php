@@ -307,6 +307,162 @@
 
                         </div>
 
+
+                        <div>
+
+                            <label class="block mb-2 text-sm font-semibold">
+                                Khối lượng sản phẩm
+                                <span class="text-coral">*</span>
+                            </label>
+
+                            <div class="relative">
+
+                                <input
+                                    type="number"
+                                    name="weight_grams"
+                                    required
+                                    min="1"
+                                    step="1"
+                                    value="{{ old('weight_grams') }}"
+                                    placeholder="Ví dụ: 900"
+                                    class="w-full border border-admin-border
+                                           rounded-xl px-4 py-2.5 pr-12
+                                           outline-none focus:border-coral"
+                                >
+
+                                <span
+                                    class="absolute right-4 top-1/2
+                                           -translate-y-1/2
+                                           text-sm text-ink-soft"
+                                >
+                                    g
+                                </span>
+
+                            </div>
+
+                            <p class="mt-1.5 text-xs text-ink-soft">
+                                Nhập theo gram, dùng để tính phí vận chuyển GHN.
+                            </p>
+
+                            @error('weight_grams')
+                                <p class="mt-1.5 text-xs text-red-500">
+                                    {{ $message }}
+                                </p>
+                            @enderror
+
+                        </div>
+
+                        <div class="md:col-span-2">
+
+                            <div class="mb-3">
+                                <p class="text-sm font-semibold text-ink">
+                                    Kích thước đóng gói
+                                    <span class="text-coral">*</span>
+                                </p>
+                                <p class="mt-1 text-xs text-ink-soft">
+                                    Nhập kích thước của 1 sản phẩm sau khi đóng gói, đơn vị centimet (cm).
+                                </p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+                                <div>
+                                    <label class="block mb-2 text-sm font-semibold">
+                                        Chiều dài
+                                        <span class="text-coral">*</span>
+                                    </label>
+
+                                    <div class="relative">
+                                        <input
+                                            type="number"
+                                            name="length_cm"
+                                            required
+                                            min="1"
+                                            step="1"
+                                            value="{{ old('length_cm') }}"
+                                            placeholder="Ví dụ: 13"
+                                            class="w-full border border-admin-border
+                                                   rounded-xl px-4 py-2.5 pr-12
+                                                   outline-none focus:border-coral"
+                                        >
+                                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-ink-soft">
+                                            cm
+                                        </span>
+                                    </div>
+
+                                    @error('length_cm')
+                                        <p class="mt-1.5 text-xs text-red-500">
+                                            {{ $message }}
+                                        </p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block mb-2 text-sm font-semibold">
+                                        Chiều rộng
+                                        <span class="text-coral">*</span>
+                                    </label>
+
+                                    <div class="relative">
+                                        <input
+                                            type="number"
+                                            name="width_cm"
+                                            required
+                                            min="1"
+                                            step="1"
+                                            value="{{ old('width_cm') }}"
+                                            placeholder="Ví dụ: 13"
+                                            class="w-full border border-admin-border
+                                                   rounded-xl px-4 py-2.5 pr-12
+                                                   outline-none focus:border-coral"
+                                        >
+                                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-ink-soft">
+                                            cm
+                                        </span>
+                                    </div>
+
+                                    @error('width_cm')
+                                        <p class="mt-1.5 text-xs text-red-500">
+                                            {{ $message }}
+                                        </p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block mb-2 text-sm font-semibold">
+                                        Chiều cao
+                                        <span class="text-coral">*</span>
+                                    </label>
+
+                                    <div class="relative">
+                                        <input
+                                            type="number"
+                                            name="height_cm"
+                                            required
+                                            min="1"
+                                            step="1"
+                                            value="{{ old('height_cm') }}"
+                                            placeholder="Ví dụ: 18"
+                                            class="w-full border border-admin-border
+                                                   rounded-xl px-4 py-2.5 pr-12
+                                                   outline-none focus:border-coral"
+                                        >
+                                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-ink-soft">
+                                            cm
+                                        </span>
+                                    </div>
+
+                                    @error('height_cm')
+                                        <p class="mt-1.5 text-xs text-red-500">
+                                            {{ $message }}
+                                        </p>
+                                    @enderror
+                                </div>
+
+                            </div>
+
+                        </div>
+
                     </div>
 
                 </div>

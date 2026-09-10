@@ -13,19 +13,69 @@ class CategoryController extends Controller
     {
         $query = $category->products()->active();
 
-        $selectedBrands = array_values(array_filter((array) $request->input('brand', [])));
-        $selectedAttributes = array_values(array_filter((array) $request->input('attribute', [])));
+        $selectedBrands = array_values(array_filter(
+            (array) $request->input('brand', [])
+        ));
 
-        $selectedStageIds = collect((array) $request->input('stage', []))
+        $selectedAttributes = array_values(array_filter(
+            (array) $request->input('attribute', [])
+        ));
+
+        $selectedStageIds = collect(
+            (array) $request->input('stage', [])
+        )
             ->filter(fn ($id) => is_numeric($id))
             ->map(fn ($id) => (int) $id)
             ->unique()
             ->values()
             ->all();
 
-        $price = $request->get('price');
+        /*
+        |--------------------------------------------------------------------------
+        | Khoảng giá cho slider
+        |--------------------------------------------------------------------------
+        | Mốc thấp nhất để 0đ giống cách hiển thị của các website e-commerce.
+        | Mốc cao nhất lấy từ sản phẩm active của chính danh mục hiện tại,
+        | sau đó làm tròn lên 100.000đ để thanh kéo dễ nhìn và không hard-code.
+        */
+        $priceFloor = 0;
 
-        // Riêng Sữa cho bé không hiển thị / áp dụng filter Thuộc tính.
+        $highestProductPrice = (int) (
+            $category
+                ->products()
+                ->active()
+                ->max('price') ?? 0
+        );
+
+        $priceCeiling = max(
+            100000,
+            (int) (ceil(max($highestProductPrice, 1) / 100000) * 100000)
+        );
+
+        $priceStep = 10000;
+
+        $minPrice = $request->filled('min_price')
+            && is_numeric($request->input('min_price'))
+                ? (int) $request->input('min_price')
+                : $priceFloor;
+
+        $maxPrice = $request->filled('max_price')
+            && is_numeric($request->input('max_price'))
+                ? (int) $request->input('max_price')
+                : $priceCeiling;
+
+        $minPrice = max($priceFloor, min($minPrice, $priceCeiling));
+        $maxPrice = max($priceFloor, min($maxPrice, $priceCeiling));
+
+        if ($minPrice > $maxPrice) {
+            [$minPrice, $maxPrice] = [$maxPrice, $minPrice];
+        }
+
+        $hasPriceFilter =
+            $minPrice > $priceFloor
+            || $maxPrice < $priceCeiling;
+
+        // Giữ nguyên logic hiện tại: riêng Sữa cho bé không hiển thị / áp dụng Thuộc tính.
         $hideAttributeFilter = $category->slug === 'sua-cho-be';
 
         if ($hideAttributeFilter) {
@@ -54,22 +104,12 @@ class CategoryController extends Controller
             });
         }
 
-        switch ($price) {
-            case 'under_300':
-                $query->where('price', '<', 300000);
-                break;
-            case '300_500':
-                $query->whereBetween('price', [300000, 500000]);
-                break;
-            case '500_800':
-                $query->whereBetween('price', [500000, 800000]);
-                break;
-            case 'over_800':
-                $query->where('price', '>', 800000);
-                break;
-            default:
-                $price = null;
-                break;
+        if ($minPrice > $priceFloor) {
+            $query->where('price', '>=', $minPrice);
+        }
+
+        if ($maxPrice < $priceCeiling) {
+            $query->where('price', '<=', $maxPrice);
         }
 
         $sort = $request->get('sort', 'default');
@@ -78,12 +118,15 @@ class CategoryController extends Controller
             case 'newest':
                 $query->latest();
                 break;
+
             case 'price_asc':
                 $query->orderBy('price', 'asc');
                 break;
+
             case 'price_desc':
                 $query->orderBy('price', 'desc');
                 break;
+
             default:
                 $sort = 'default';
                 $query->orderByDesc('created_at');
@@ -91,7 +134,6 @@ class CategoryController extends Controller
         }
 
         // 5 sản phẩm / hàng ở desktop, tối đa 3 hàng = 15 sản phẩm / trang.
-        // hasPages() bên Blade sẽ chỉ hiện phân trang khi có hơn 15 kết quả.
         $products = $query
             ->paginate(15)
             ->withQueryString()
@@ -109,6 +151,7 @@ class CategoryController extends Controller
             ->groupBy('type');
 
         $brandTags = $filterTags->get('brand', collect());
+
         $attributeTags = $hideAttributeFilter
             ? collect()
             : $filterTags->get('attribute', collect());
@@ -127,14 +170,23 @@ class CategoryController extends Controller
         return view('client.category', [
             'category' => $category,
             'products' => $products,
+
             'sort' => $sort,
-            'price' => $price,
+
             'selectedBrands' => $selectedBrands,
             'selectedAttributes' => $selectedAttributes,
             'selectedStageIds' => $selectedStageIds,
+
             'brandTags' => $brandTags,
             'attributeTags' => $attributeTags,
             'stages' => $stages,
+
+            'priceFloor' => $priceFloor,
+            'priceCeiling' => $priceCeiling,
+            'priceStep' => $priceStep,
+            'minPrice' => $minPrice,
+            'maxPrice' => $maxPrice,
+            'hasPriceFilter' => $hasPriceFilter,
         ]);
     }
 }

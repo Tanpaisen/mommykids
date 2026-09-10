@@ -23,6 +23,13 @@ class Product extends Model
         'old_price',
         'discount_percent',
         'stock',
+
+        // Thông tin đóng gói dùng để tính phí vận chuyển GHN
+        'weight_grams',
+        'length_cm',
+        'width_cm',
+        'height_cm',
+
         'is_active',
 
         // Audit soft delete
@@ -37,6 +44,12 @@ class Product extends Model
         'old_price' => 'integer',
         'discount_percent' => 'integer',
         'stock' => 'integer',
+
+        'weight_grams' => 'integer',
+        'length_cm' => 'integer',
+        'width_cm' => 'integer',
+        'height_cm' => 'integer',
+
         'images' => 'array',
 
         'deleted_at' => 'datetime',
