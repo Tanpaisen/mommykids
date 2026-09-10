@@ -9,6 +9,14 @@ class CartItem extends Model
 {
     protected $fillable = ['cart_id', 'product_id', 'quantity', 'price'];
 
+    protected static function booted(): void
+    {
+        $clearCache = fn (CartItem $item) => Cache::forget('cart_count_' . $item->cart_id);
+        
+        static::saved($clearCache);
+        static::deleted($clearCache);
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

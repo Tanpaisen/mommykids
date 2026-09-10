@@ -10,6 +10,14 @@ class Cart extends Model
 {
     protected $fillable = ['uuid', 'user_id', 'status'];
 
+    protected static function booted(): void
+    {
+        $clearCache = fn (Cart $cart) => Cache::forget('cart_count_' . $cart->id);
+        
+        static::saved($clearCache);
+        static::deleted($clearCache);
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(CartItem::class);
