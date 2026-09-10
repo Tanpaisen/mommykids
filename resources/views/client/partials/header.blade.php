@@ -37,7 +37,7 @@
                                              flex items-center justify-center hover:bg-coral-dark">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5A6.5 6.5 0 114 10.5a6.5 6.5 0 0113 0z" />
-</svg>
+                    </svg>
                 </button>
             </div>
         </form>
@@ -84,8 +84,8 @@
                     </form>
                 </div>
             @else
-<button type="button" onclick="openLoginModal()" class="hover:text-coral font-semibold text-coral cursor-pointer">
-                    Đăng nhập / Đăng ký
+                <button type="button" onclick="openLoginModal()" class="hover:text-coral font-semibold text-coral cursor-pointer">
+                    Đăng nhập ngay
                 </button>
             @endauth
         </div>

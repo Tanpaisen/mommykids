@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Mail\SendOtpMail;
+use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -92,7 +94,14 @@ class OtpController extends Controller
 
             // Đăng nhập hệ thống
             Auth::login($user);
-            
+
+            // Gộp giỏ hàng khách vãng lai vào tài khoản user
+            try {
+                app(CartService::class)->mergeGuestCart($user->id);
+            } catch (\Exception $e) {
+                Log::error('Lỗi gộp giỏ hàng post-login: ' . $e->getMessage());
+            }
+
             // Xóa OTP khỏi Cache
             Cache::forget('otp_' . $request->email);
 
