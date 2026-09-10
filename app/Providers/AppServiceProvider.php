@@ -6,28 +6,47 @@ use App\Models\Category;
 use App\Services\CartService;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use App\Services\GHNService;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * Register any application services.
+     */
     public function register(): void
     {
-        $this->app->singleton(GHNService::class);
+        //
     }
 
+    /**
+     * Bootstrap any application services.
+     */
     public function boot(): void
     {
-        // Sidebar + mobile drawer categories: available on every view that includes
-        // partials.sidebar or layouts.app, so no controller needs to pass it manually.
+        /*
+        |--------------------------------------------------------------------------
+        | Sidebar
+        |--------------------------------------------------------------------------
+        | Luôn truyền danh mục cho menu bên trái ở tất cả trang client.
+        */
+        View::composer('client.partials.sidebar', function ($view) {
+            $categories = Category::query()
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->get();
 
-        // Cart badge (header + floating mobile button) kept in sync everywhere.
-        View::composer('layouts.app', function ($view) {
-            $view->with('cartCount', app(CartService::class)->count());
+            $view->with('categories', $categories);
         });
 
-        View::composer(['client.partials.sidebar', 'client.layouts.app'], function ($view) {
-        $view->with('categories', Category::active()->get());
-    });
-        
+        /*
+        |--------------------------------------------------------------------------
+        | Cart badge
+        |--------------------------------------------------------------------------
+        | Luôn lấy số lượng giỏ hàng thật cho header.
+        */
+        View::composer('client.partials.header', function ($view) {
+            $cartService = app(CartService::class);
+
+            $view->with('cartCount', $cartService->count());
+        });
     }
 }

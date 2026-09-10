@@ -3,19 +3,98 @@
 @section('page_title', 'Sản phẩm')
 @section('page_subtitle', 'Quản lý sản phẩm, hình ảnh, giá và tồn kho')
 
-@section('page_actions')
-    <a
-        href="{{ route('admin.products.create') }}"
-        class="btn-primary"
-    >
-        + Thêm sản phẩm
-    </a>
-@endsection
-
 
 @section('content')
 
-{{-- FILTER --}}
+{{-- =====================================================
+    HEADER ACTIONS
+====================================================== --}}
+<div
+    class="flex flex-col sm:flex-row
+           sm:items-center sm:justify-between
+           gap-4 mb-5"
+>
+
+    <div>
+        <h2 class="text-lg font-semibold text-ink">
+            Danh sách sản phẩm
+        </h2>
+
+        <p class="text-sm text-ink-soft mt-1">
+            Quản lý các sản phẩm đang hoạt động trong hệ thống.
+        </p>
+    </div>
+
+
+    <div class="flex flex-wrap items-center gap-3">
+
+        {{-- THÙNG RÁC SẢN PHẨM --}}
+        <a
+            href="{{ route('admin.products.trash') }}"
+            class="inline-flex items-center gap-2
+                   h-11 px-4
+                   rounded-xl
+                   border border-admin-border
+                   bg-white
+                   text-sm font-medium text-ink
+                   hover:border-red-300
+                   hover:text-red-500
+                   transition"
+        >
+            <span class="text-base">
+                🗑️
+            </span>
+
+            <span>
+                Thùng rác
+            </span>
+
+            @if (($trashCount ?? 0) > 0)
+                <span
+                    class="inline-flex
+                           min-w-5 h-5
+                           items-center justify-center
+                           rounded-full
+                           bg-red-500
+                           px-1.5
+                           text-[11px]
+                           font-semibold
+                           text-white"
+                >
+                    {{ $trashCount }}
+                </span>
+            @endif
+        </a>
+
+
+        {{-- THÊM SẢN PHẨM --}}
+        <a
+            href="{{ route('admin.products.create') }}"
+            class="inline-flex items-center justify-center gap-2
+                   h-11 px-5
+                   rounded-xl
+                   bg-coral
+                   text-white
+                   text-sm font-semibold
+                   hover:opacity-90
+                   transition"
+        >
+            <span>+</span>
+
+            <span>
+                Thêm sản phẩm
+            </span>
+        </a>
+
+    </div>
+
+</div>
+
+
+
+{{-- =====================================================
+    FILTER
+====================================================== --}}
 <div class="card mb-5">
 
     <form
@@ -27,6 +106,7 @@
                gap-3"
     >
 
+        {{-- SEARCH --}}
         <input
             type="text"
             name="search"
@@ -34,22 +114,30 @@
             placeholder="Tìm theo tên hoặc slug sản phẩm..."
             class="border border-admin-border
                    rounded-xl px-4 py-3
-                   outline-none focus:border-coral"
+                   bg-white
+                   outline-none
+                   focus:border-coral
+                   focus:ring-2
+                   focus:ring-coral/10"
         >
 
 
+        {{-- CATEGORY --}}
         <select
             name="category_id"
             class="border border-admin-border
                    rounded-xl px-4 py-3
-                   outline-none focus:border-coral"
+                   bg-white
+                   outline-none
+                   focus:border-coral
+                   focus:ring-2
+                   focus:ring-coral/10"
         >
             <option value="">
                 Tất cả danh mục
             </option>
 
             @foreach ($categories as $category)
-
                 <option
                     value="{{ $category->id }}"
                     @selected(
@@ -60,16 +148,20 @@
                 >
                     {{ $category->name }}
                 </option>
-
             @endforeach
         </select>
 
 
+        {{-- STATUS --}}
         <select
             name="status"
             class="border border-admin-border
                    rounded-xl px-4 py-3
-                   outline-none focus:border-coral"
+                   bg-white
+                   outline-none
+                   focus:border-coral
+                   focus:ring-2
+                   focus:ring-coral/10"
         >
             <option value="">
                 Tất cả trạng thái
@@ -91,11 +183,14 @@
         </select>
 
 
+        {{-- LOW STOCK --}}
         <label
             class="flex items-center justify-center gap-2
                    border border-admin-border
                    rounded-xl px-4 py-3
-                   cursor-pointer whitespace-nowrap"
+                   bg-white
+                   cursor-pointer
+                   whitespace-nowrap"
         >
             <input
                 type="checkbox"
@@ -105,26 +200,60 @@
                 class="accent-coral"
             >
 
-            Tồn kho thấp
+            <span>
+                Tồn kho thấp
+            </span>
         </label>
 
 
+        {{-- FILTER BUTTON --}}
         <button
             type="submit"
-            class="bg-coral text-white
-                   rounded-xl px-6 py-3
-                   font-semibold"
+            class="bg-coral
+                   text-white
+                   rounded-xl
+                   px-6 py-3
+                   font-semibold
+                   hover:opacity-90
+                   transition"
         >
             Lọc
         </button>
 
     </form>
 
+
+    {{-- RESET FILTER --}}
+    @if (
+        request()->filled('search')
+        || request()->filled('category_id')
+        || request()->filled('status')
+        || request()->boolean('low_stock')
+    )
+
+        <div class="mt-3">
+
+            <a
+                href="{{ route('admin.products.index') }}"
+                class="inline-flex items-center gap-1
+                       text-sm text-ink-soft
+                       hover:text-coral
+                       transition"
+            >
+                ↻ Làm mới bộ lọc
+            </a>
+
+        </div>
+
+    @endif
+
 </div>
 
 
 
-{{-- TABLE --}}
+{{-- =====================================================
+    TABLE
+====================================================== --}}
 <div class="card overflow-hidden">
 
     <div class="overflow-x-auto">
@@ -136,8 +265,8 @@
                        text-xs uppercase
                        text-ink-soft"
             >
-
                 <tr>
+
                     <th class="text-left px-5 py-4">
                         STT
                     </th>
@@ -165,8 +294,8 @@
                     <th class="text-right px-5 py-4">
                         Thao tác
                     </th>
-                </tr>
 
+                </tr>
             </thead>
 
 
@@ -176,6 +305,7 @@
 
                     <tr class="hover:bg-admin-bg/40 transition">
 
+                        {{-- STT --}}
                         <td class="px-5 py-4 text-ink-soft">
                             {{ $products->firstItem() + $loop->index }}
                         </td>
@@ -186,6 +316,7 @@
 
                             <div class="flex items-center gap-4">
 
+                                {{-- IMAGE --}}
                                 <div
                                     class="w-16 h-16
                                            shrink-0
@@ -230,6 +361,7 @@
                                 </div>
 
 
+                                {{-- INFO --}}
                                 <div class="min-w-0">
 
                                     <p class="font-semibold text-ink">
@@ -238,7 +370,9 @@
 
                                     <p
                                         class="text-xs text-ink-soft
-                                               truncate max-w-[280px] mt-1"
+                                               truncate
+                                               max-w-[280px]
+                                               mt-1"
                                         title="{{ $product->slug }}"
                                     >
                                         {{ $product->slug }}
@@ -260,8 +394,10 @@
 
                             <span
                                 class="inline-flex
-                                       bg-admin-bg rounded-lg
-                                       px-2.5 py-1 text-xs"
+                                       bg-admin-bg
+                                       rounded-lg
+                                       px-2.5 py-1
+                                       text-xs"
                             >
                                 {{ $product->category?->name ?? 'Chưa phân loại' }}
                             </span>
@@ -281,11 +417,13 @@
                                 ) }}đ
                             </p>
 
+
                             @if ($product->old_price)
 
                                 <p
                                     class="text-xs text-ink-soft
-                                           line-through mt-1"
+                                           line-through
+                                           mt-1"
                                 >
                                     {{ number_format(
                                         $product->old_price,
@@ -297,10 +435,12 @@
 
                             @endif
 
+
                             @if ($product->discount_percent)
 
                                 <span
-                                    class="inline-flex mt-1
+                                    class="inline-flex
+                                           mt-1
                                            bg-red-50
                                            text-red-500
                                            rounded-full
@@ -319,7 +459,8 @@
                         <td class="px-5 py-4 text-center">
 
                             <span
-                                class="inline-flex min-w-10 h-9
+                                class="inline-flex
+                                       min-w-10 h-9
                                        items-center justify-center
                                        rounded-xl px-2
                                        {{ $product->stock <= 10
@@ -339,35 +480,47 @@
                             @if ($product->is_active)
 
                                 <span
-                                    class="inline-flex items-center gap-2
-                                           rounded-full bg-green-50
+                                    class="inline-flex
+                                           items-center gap-2
+                                           rounded-full
+                                           bg-green-50
                                            text-green-600
                                            px-3 py-1.5
-                                           text-xs font-semibold"
+                                           text-xs
+                                           font-semibold"
                                 >
+
                                     <span
                                         class="w-2 h-2
-                                               rounded-full bg-green-500"
+                                               rounded-full
+                                               bg-green-500"
                                     ></span>
 
                                     Đang bán
+
                                 </span>
 
                             @else
 
                                 <span
-                                    class="inline-flex items-center gap-2
-                                           rounded-full bg-gray-100
+                                    class="inline-flex
+                                           items-center gap-2
+                                           rounded-full
+                                           bg-gray-100
                                            text-gray-500
                                            px-3 py-1.5
-                                           text-xs font-semibold"
+                                           text-xs
+                                           font-semibold"
                                 >
+
                                     <span
                                         class="w-2 h-2
-                                               rounded-full bg-gray-400"
+                                               rounded-full
+                                               bg-gray-400"
                                     ></span>
 
                                     Đã ẩn
+
                                 </span>
 
                             @endif
@@ -380,6 +533,7 @@
 
                             <div class="flex justify-end gap-2">
 
+                                {{-- EDIT --}}
                                 <a
                                     href="{{ route(
                                         'admin.products.edit',
@@ -388,12 +542,16 @@
                                     class="px-4 py-2
                                            border border-admin-border
                                            rounded-lg
-                                           hover:border-coral"
+                                           text-ink
+                                           hover:border-coral
+                                           hover:text-coral
+                                           transition"
                                 >
                                     Sửa
                                 </a>
 
 
+                                {{-- SOFT DELETE --}}
                                 <button
                                     type="button"
                                     data-action="{{ route(
@@ -406,7 +564,8 @@
                                            bg-red-50
                                            text-red-500
                                            rounded-lg
-                                           hover:bg-red-100"
+                                           hover:bg-red-100
+                                           transition"
                                 >
                                     Xóa
                                 </button>
@@ -420,17 +579,26 @@
                 @empty
 
                     <tr>
-                        <td colspan="7" class="py-20 text-center">
+
+                        <td
+                            colspan="7"
+                            class="py-20 text-center"
+                        >
 
                             <div class="text-4xl">
                                 🛍️
                             </div>
 
-                            <p class="font-semibold mt-3">
+                            <p class="font-semibold mt-3 text-ink">
                                 Không tìm thấy sản phẩm
                             </p>
 
+                            <p class="text-sm text-ink-soft mt-1">
+                                Không có sản phẩm phù hợp với bộ lọc hiện tại.
+                            </p>
+
                         </td>
+
                     </tr>
 
                 @endforelse
@@ -443,7 +611,9 @@
 
 
 
-    {{-- PAGINATION --}}
+    {{-- =====================================================
+        PAGINATION
+    ====================================================== --}}
     @if ($products->total() > 0)
 
         <div
@@ -459,19 +629,19 @@
 
                 Hiển thị
 
-                <strong>
+                <strong class="text-ink">
                     {{ $products->firstItem() }}
                 </strong>
 
                 -
 
-                <strong>
+                <strong class="text-ink">
                     {{ $products->lastItem() }}
                 </strong>
 
                 trong
 
-                <strong>
+                <strong class="text-ink">
                     {{ $products->total() }}
                 </strong>
 
@@ -522,7 +692,9 @@
                                    border border-admin-border
                                    rounded-xl
                                    flex items-center justify-center
-                                   hover:border-coral"
+                                   hover:border-coral
+                                   hover:text-coral
+                                   transition"
                         >
                             ‹
                         </a>
@@ -530,7 +702,7 @@
                     @endif
 
 
-                    {{-- FIRST --}}
+                    {{-- FIRST PAGE --}}
                     @if ($start > 1)
 
                         <a
@@ -538,15 +710,20 @@
                             class="w-10 h-10
                                    border border-admin-border
                                    rounded-xl
-                                   flex items-center justify-center"
+                                   flex items-center justify-center
+                                   hover:border-coral
+                                   hover:text-coral
+                                   transition"
                         >
                             1
                         </a>
 
                         @if ($start > 2)
-                            <span class="px-2">
+
+                            <span class="px-2 text-ink-soft">
                                 ...
                             </span>
+
                         @endif
 
                     @endif
@@ -559,7 +736,8 @@
 
                             <span
                                 class="w-10 h-10
-                                       bg-coral text-white
+                                       bg-coral
+                                       text-white
                                        rounded-xl
                                        flex items-center justify-center
                                        font-semibold"
@@ -575,7 +753,9 @@
                                        border border-admin-border
                                        rounded-xl
                                        flex items-center justify-center
-                                       hover:border-coral"
+                                       hover:border-coral
+                                       hover:text-coral
+                                       transition"
                             >
                                 {{ $page }}
                             </a>
@@ -585,21 +765,27 @@
                     @endfor
 
 
-                    {{-- LAST --}}
+                    {{-- LAST PAGE --}}
                     @if ($end < $last)
 
                         @if ($end < $last - 1)
-                            <span class="px-2">
+
+                            <span class="px-2 text-ink-soft">
                                 ...
                             </span>
+
                         @endif
+
 
                         <a
                             href="{{ $products->url($last) }}"
                             class="w-10 h-10
                                    border border-admin-border
                                    rounded-xl
-                                   flex items-center justify-center"
+                                   flex items-center justify-center
+                                   hover:border-coral
+                                   hover:text-coral
+                                   transition"
                         >
                             {{ $last }}
                         </a>
@@ -616,7 +802,9 @@
                                    border border-admin-border
                                    rounded-xl
                                    flex items-center justify-center
-                                   hover:border-coral"
+                                   hover:border-coral
+                                   hover:text-coral
+                                   transition"
                         >
                             ›
                         </a>
@@ -647,35 +835,68 @@
 
 
 
-{{-- DELETE MODAL --}}
+{{-- =====================================================
+    SOFT DELETE MODAL
+====================================================== --}}
 <div
     id="deleteProductModal"
     class="fixed inset-0 z-50
            hidden items-center justify-center
            bg-black/40 px-4"
+    onclick="closeDeleteProductModalOnBackdrop(event)"
 >
 
     <div
         class="w-full max-w-md
-               bg-white rounded-2xl
-               shadow-2xl p-6"
+               bg-white
+               rounded-2xl
+               shadow-2xl
+               p-6"
+        onclick="event.stopPropagation()"
     >
 
-        <h3 class="text-lg font-semibold">
-            Xóa sản phẩm?
-        </h3>
+        <div class="flex items-start gap-4">
 
-        <p class="text-sm text-ink-soft mt-2">
-            Bạn có chắc muốn xóa
-            <strong
-                id="deleteProductName"
-                class="text-ink"
-            ></strong>?
-        </p>
+            <div
+                class="w-12 h-12
+                       shrink-0
+                       rounded-full
+                       bg-red-50
+                       text-red-500
+                       flex items-center justify-center
+                       text-xl"
+            >
+                🗑️
+            </div>
 
-        <p class="text-xs text-red-500 mt-2">
-            Thao tác này không thể hoàn tác.
-        </p>
+
+            <div class="flex-1">
+
+                <h3 class="text-lg font-semibold text-ink">
+                    Chuyển vào thùng rác?
+                </h3>
+
+                <p class="text-sm text-ink-soft mt-2 leading-6">
+
+                    Bạn có chắc muốn chuyển
+
+                    <strong
+                        id="deleteProductName"
+                        class="text-ink"
+                    ></strong>
+
+                    vào thùng rác?
+
+                </p>
+
+                <p class="text-xs text-ink-soft mt-2">
+                    Sản phẩm sẽ không còn hiển thị ở danh sách
+                    và phía khách hàng, nhưng vẫn có thể khôi phục sau này.
+                </p>
+
+            </div>
+
+        </div>
 
 
         <div class="flex justify-end gap-3 mt-6">
@@ -684,7 +905,11 @@
                 type="button"
                 onclick="closeDeleteProductModal()"
                 class="border border-admin-border
-                       rounded-xl px-4 py-2.5"
+                       rounded-xl
+                       px-4 py-2.5
+                       text-sm text-ink
+                       hover:bg-admin-bg
+                       transition"
             >
                 Hủy
             </button>
@@ -694,6 +919,7 @@
                 id="deleteProductForm"
                 method="POST"
             >
+
                 @csrf
                 @method('DELETE')
 
@@ -702,10 +928,14 @@
                     class="bg-red-500
                            text-white
                            rounded-xl
-                           px-4 py-2.5"
+                           px-4 py-2.5
+                           text-sm font-semibold
+                           hover:bg-red-600
+                           transition"
                 >
-                    Xóa sản phẩm
+                    Chuyển vào thùng rác
                 </button>
+
             </form>
 
         </div>
@@ -717,6 +947,7 @@
 @endsection
 
 
+
 @push('scripts')
 
 <script>
@@ -725,13 +956,20 @@
             'deleteProductModal'
         );
 
-        document.getElementById(
+        const form = document.getElementById(
             'deleteProductForm'
-        ).action = button.dataset.action;
+        );
 
-        document.getElementById(
+        const name = document.getElementById(
             'deleteProductName'
-        ).textContent = button.dataset.name;
+        );
+
+        if (!modal || !form || !name) {
+            return;
+        }
+
+        form.action = button.dataset.action;
+        name.textContent = button.dataset.name;
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -739,16 +977,40 @@
         document.body.style.overflow = 'hidden';
     }
 
+
     function closeDeleteProductModal() {
         const modal = document.getElementById(
             'deleteProductModal'
         );
+
+        if (!modal) {
+            return;
+        }
 
         modal.classList.add('hidden');
         modal.classList.remove('flex');
 
         document.body.style.overflow = '';
     }
+
+
+    function closeDeleteProductModalOnBackdrop(event) {
+        if (
+            event.target.id === 'deleteProductModal'
+        ) {
+            closeDeleteProductModal();
+        }
+    }
+
+
+    document.addEventListener(
+        'keydown',
+        function (event) {
+            if (event.key === 'Escape') {
+                closeDeleteProductModal();
+            }
+        }
+    );
 </script>
 
 @endpush

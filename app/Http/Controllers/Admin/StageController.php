@@ -13,7 +13,7 @@ class StageController extends Controller
         $query = Stage::query();
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', '%' . $search . '%')
@@ -37,7 +37,12 @@ class StageController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.stages.index', compact('stages'));
+        $trashCount = Stage::onlyTrashed()->count();
+
+        return view('admin.stages.index', compact(
+            'stages',
+            'trashCount'
+        ));
     }
 
     public function create()
@@ -116,10 +121,68 @@ class StageController extends Controller
 
     public function destroy(Stage $stage)
     {
+        $stage->update([
+            'deleted_by' => auth()->id(),
+            'restored_by' => null,
+            'restored_at' => null,
+        ]);
+
         $stage->delete();
 
         return redirect()
             ->route('admin.stages.index')
-            ->with('success', 'Xóa giai đoạn thành công.');
+            ->with('success', 'Giai đoạn đã được chuyển vào thùng rác.');
+    }
+
+    public function trash(Request $request)
+    {
+        $query = Stage::onlyTrashed();
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%');
+            });
+        }
+
+        $stages = $query
+            ->orderByDesc('deleted_at')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.stages.trash', compact('stages'));
+    }
+
+    public function restore(string $id)
+    {
+        $stage = Stage::onlyTrashed()
+            ->findOrFail($id);
+
+        $stage->restore();
+
+        $stage->update([
+            'restored_by' => auth()->id(),
+            'restored_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('admin.stages.trash')
+            ->with('success', 'Khôi phục giai đoạn thành công.');
+    }
+
+    public function forceDelete(string $id)
+    {
+        $stage = Stage::onlyTrashed()
+            ->findOrFail($id);
+
+        $stage->products()->detach();
+
+        $stage->forceDelete();
+
+        return redirect()
+            ->route('admin.stages.trash')
+            ->with('success', 'Đã xóa vĩnh viễn giai đoạn.');
     }
 }

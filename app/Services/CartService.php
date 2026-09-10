@@ -2,57 +2,110 @@
 
 namespace App\Services;
 
+use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Cookie;
 
 class CartService
 {
-    /** Scope query to the current visitor: logged-in user_id or guest session_id. */
-    protected function scoped()
+    const COOKIE_NAME = 'cart_uuid';
+    const COOKIE_DAYS = 30;
+
+    // ── Lấy hoặc tạo cart hiện tại ──────────────────────────────
+    public function getCart(): Cart
     {
-        return Auth::check()
-            ? CartItem::query()->where('user_id', Auth::id())
-            : CartItem::query()->where('session_id', Session::getId());
+        if (Auth::check()) {
+            return Cart::firstOrCreate(
+                ['user_id' => Auth::id(), 'status' => 'active'],
+                ['uuid' => Str::uuid()]
+            );
+        }
+
+        $uuid = Cookie::get(self::COOKIE_NAME);
+
+        if ($uuid) {
+            $cart = Cart::where('uuid', $uuid)
+                ->where('status', 'active')
+                ->whereNull('user_id')
+                ->first();
+
+            if ($cart) return $cart;
+        }
+
+        $cart = Cart::create([
+            'uuid'    => Str::uuid(),
+            'user_id' => null,
+            'status'  => 'active',
+        ]);
+
+        Cookie::queue(self::COOKIE_NAME, $cart->uuid, 60 * 24 * self::COOKIE_DAYS);
+
+        return $cart;
     }
 
+    // ── Danh sách sản phẩm hợp lệ trong giỏ ────────────────────
     public function items(): Collection
     {
-        return $this->scoped()->with('product.category')->get();
+        return $this->getCart()
+            ->items()
+            ->whereHas('product')
+            ->with('product.category')
+            ->get();
     }
 
+    // ── Tổng số lượng ───────────────────────────────────────────
     public function count(): int
     {
-        return (int) $this->scoped()->sum('quantity');
+        return (int) $this->getCart()
+            ->items()
+            ->whereHas('product')
+            ->sum('quantity');
     }
 
+    // ── Tổng tiền ───────────────────────────────────────────────
     public function total(): int
     {
-        return $this->items()->sum(fn (CartItem $item) => $item->quantity * $item->product->price);
+        return (int) $this->items()->sum(
+            fn (CartItem $item) => $item->quantity * ($item->product?->price ?? 0)
+        );
     }
 
-    public function add(Product $product, int $quantity = 1): CartItem
+    // ── Thêm sản phẩm ───────────────────────────────────────────
+    public function add(Product $product, int $quantity = 1): void
     {
-        $item = $this->scoped()->where('product_id', $product->id)->first();
+        if ($product->trashed()) {
+            abort(404, 'Sản phẩm không còn tồn tại.');
+        }
+
+        $quantity = max(1, $quantity);
+        $cart = $this->getCart();
+
+        $item = $cart->items()
+            ->where('product_id', $product->id)
+            ->first();
 
         if ($item) {
             $item->increment('quantity', $quantity);
-            return $item->fresh();
+        } else {
+            $cart->items()->create([
+                'product_id' => $product->id,
+                'quantity'   => $quantity,
+                'price'      => $product->price,
+            ]);
         }
-
-        return CartItem::create([
-            'session_id' => Auth::check() ? null : Session::getId(),
-            'user_id' => Auth::id(),
-            'product_id' => $product->id,
-            'quantity' => $quantity,
-        ]);
     }
 
+    // ── Cập nhật số lượng ───────────────────────────────────────
     public function updateQuantity(int $cartItemId, int $quantity): void
     {
-        $item = $this->scoped()->findOrFail($cartItemId);
+        $item = $this->getCart()
+            ->items()
+            ->whereHas('product')
+            ->findOrFail($cartItemId);
 
         if ($quantity <= 0) {
             $item->delete();
@@ -62,28 +115,63 @@ class CartService
         $item->update(['quantity' => $quantity]);
     }
 
+    // ── Xóa item ────────────────────────────────────────────────
     public function remove(int $cartItemId): void
     {
-        $this->scoped()->where('id', $cartItemId)->delete();
+        $this->getCart()
+            ->items()
+            ->where('id', $cartItemId)
+            ->delete();
     }
 
-    /** Merge guest cart into the user's cart right after login. Call from your LoginController/Fortify action. */
-    public function mergeGuestCartIntoUser(int $userId, string $sessionId): void
+    // ── Merge giỏ guest vào user sau login ──────────────────────
+    public function mergeGuestCart(int $userId): void
     {
-        $guestItems = CartItem::query()->where('session_id', $sessionId)->get();
+        $uuid = Cookie::get(self::COOKIE_NAME);
+        if (!$uuid) return;
 
-        foreach ($guestItems as $guestItem) {
-            $existing = CartItem::query()
-                ->where('user_id', $userId)
+        $guestCart = Cart::where('uuid', $uuid)
+            ->whereNull('user_id')
+            ->where('status', 'active')
+            ->first();
+
+        if (!$guestCart) return;
+
+        $userCart = Cart::firstOrCreate(
+            ['user_id' => $userId, 'status' => 'active'],
+            ['uuid' => Str::uuid()]
+        );
+
+        foreach ($guestCart->items as $guestItem) {
+            $product = Product::find($guestItem->product_id);
+
+            if (!$product) {
+                $guestItem->delete();
+                continue;
+            }
+
+            $userItem = $userCart->items()
                 ->where('product_id', $guestItem->product_id)
                 ->first();
 
-            if ($existing) {
-                $existing->increment('quantity', $guestItem->quantity);
+            if ($userItem) {
+                $userItem->increment('quantity', $guestItem->quantity);
                 $guestItem->delete();
             } else {
-                $guestItem->update(['user_id' => $userId, 'session_id' => null]);
+                $guestItem->update(['cart_id' => $userCart->id]);
             }
         }
+
+        $guestCart->delete();
+        Cookie::queue(Cookie::forget(self::COOKIE_NAME));
+    }
+
+    // ── Dọn item không hợp lệ ───────────────────────────────────
+    public function cleanupInvalidItems(): int
+    {
+        return $this->getCart()
+            ->items()
+            ->whereDoesntHave('product')
+            ->delete();
     }
 }
