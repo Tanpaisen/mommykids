@@ -43,7 +43,7 @@
                 <div>
                     <label class="block text-xs font-bold text-gray-700 mb-1">Mã xác thực *</label>
                     <div class="grid grid-cols-6 gap-2" id="otpInputs">
-<input type="text" maxlength="1" class="otp-box w-full h-10 text-center font-bold text-lg border border-gray-300 rounded-xl focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none">
+                        <input type="text" maxlength="1" class="otp-box w-full h-10 text-center font-bold text-lg border border-gray-300 rounded-xl focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none">
                         <input type="text" maxlength="1" class="otp-box w-full h-10 text-center font-bold text-lg border border-gray-300 rounded-xl focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none">
                         <input type="text" maxlength="1" class="otp-box w-full h-10 text-center font-bold text-lg border border-gray-300 rounded-xl focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none">
                         <input type="text" maxlength="1" class="otp-box w-full h-10 text-center font-bold text-lg border border-gray-300 rounded-xl focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none">
@@ -84,7 +84,8 @@
             if (e.key === 'Backspace' && !e.target.value && idx > 0) boxes[idx - 1].focus();
         });
     });
-function showAlert(msg, isSuccess) {
+
+    function showAlert(msg, isSuccess) {
         const el = document.getElementById('modalAlert');
         el.className = `mb-3 p-2 text-xs rounded-xl text-center ${isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
         el.innerText = msg;
@@ -163,7 +164,7 @@ function showAlert(msg, isSuccess) {
                 showAlert(data.message, false);
             }
         } catch (err) {
-showAlert('Lỗi xác thực OTP!', false);
+            showAlert('Lỗi xác thực OTP!', false);
         }
     }
 </script>

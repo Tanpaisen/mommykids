@@ -17,14 +17,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Trang Dashboard
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-
-        // Quản lý tài khoản Admin
-        Route::get('/quan-tri-vien', [AdminController::class, 'index'])->name('admins.index');
-        Route::get('/quan-tri-vien/create', [AdminController::class, 'create'])->name('admins.create');
-        Route::post('/quan-tri-vien', [AdminController::class, 'store'])->name('admins.store');
-        Route::patch('/quan-tri-vien/{admin}/role', [AdminController::class, 'updateRole'])->name('admins.updateRole');
-        Route::delete('/quan-tri-vien/{admin}', [AdminController::class, 'destroy'])->name('admins.destroy');
-
         // Đăng xuất
         Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
 
