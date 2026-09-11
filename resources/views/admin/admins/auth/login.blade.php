@@ -25,14 +25,14 @@
             <div>
                 <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Email Quản trị</label>
                 <input type="email" name="email" value="{{ old('email') }}" required autofocus
-                       placeholder="admin@mommykids.vn" 
+                       placeholder="admin@mommykids.vn"
                        class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none transition text-sm">
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Mật khẩu</label>
-                <input type="password" name="password" required 
-                       placeholder="••••••••" 
+                <input type="password" name="password" required
+                       placeholder="••••••••"
                        class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none transition text-sm">
             </div>
 
@@ -41,7 +41,7 @@
                 <label for="remember_admin" class="ml-2 text-sm text-slate-400">Duy trì đăng nhập</label>
             </div>
 
-            <button type="submit" 
+            <button type="submit"
                     class="w-full py-3.5 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg shadow-rose-900/30 transition duration-200">
                 Vào Hệ Thống Admin
             </button>

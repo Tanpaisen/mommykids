@@ -81,7 +81,7 @@
                         </svg>
                     </span>
                 </summary>
-                
+
                 <div class="p-6 text-sm text-ink leading-relaxed space-y-4">
                     <p>
                         Chào mừng Quý khách đến với <strong>MommyKids</strong> - Hệ thống bán lẻ đa kênh dành cho Mẹ và Bé hàng đầu Việt Nam.
