@@ -1,144 +1,237 @@
 @extends('client.layouts.app')
 
-@section('title', 'Thông tin tài khoản - MommyKids')
-
 @section('content')
-<div class="max-w-[1280px] mx-auto px-4 lg:px-6 py-6">
+<style>
+    body {
+        background-color: #F5F6F8 !important;
+    }
+    .profile-page {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #2D2D2D;
+    }
+    .profile-card {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        border: none;
+    }
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "/";
+        color: #999;
+    }
+    .badge-customer-pill {
+        background-color: #FDE8E8;
+        color: #E31837;
+        font-weight: 500;
+        padding: 6px 18px;
+        border-radius: 20px;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .loyalty-box-yellow {
+        background-color: #FFF7EB;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+    }
+    .sidebar-menu-link {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 16px;
+        color: #4A4A4A;
+        font-weight: 500;
+        font-size: 15px;
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+    .sidebar-menu-link:hover {
+        background-color: #F8F9FA;
+        color: #E31837;
+    }
+    .sidebar-menu-link.active {
+        color: #E31837;
+        font-weight: 600;
+    }
+    .card-border-subtle {
+        border: 1px solid #ECECEC;
+        border-radius: 16px;
+        background: #ffffff;
+    }
+    .btn-red-action {
+        background-color: #E31837;
+        color: #ffffff !important;
+        border-radius: 24px;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 10px 24px;
+        border: none;
+        transition: background-color 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+    }
+    .btn-red-action:hover {
+        background-color: #C7122C;
+    }
+    .baby-info-box {
+        background-color: #FFFBF2;
+        border: 1px solid #FDE3A7;
+        border-radius: 16px;
+    }
+    .info-label {
+        color: #888888;
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+    .info-value {
+        color: #111111;
+        font-weight: 700;
+        font-size: 15px;
+    }
+</style>
 
-    {{-- Breadcrumbs --}}
-    <div class="flex items-center gap-2 text-xs text-ink-soft mb-6">
-        <a href="{{ route('home') }}" class="hover:text-coral">Trang chủ</a>
-        <span>/</span>
-        <span>Cá nhân</span>
-        <span>/</span>
-        <span class="text-coral font-medium">Tài khoản</span>
-    </div>
+<div class="profile-page py-4">
+    <div class="container" style="max-width: 1140px;">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb bg-transparent p-0 mb-0" style="font-size: 14px;">
+                <li class="breadcrumb-item"><a href="{{ route('home') }}" class="text-decoration-none" style="color: #666;">Trang chủ</a></li>
+                <li class="breadcrumb-item"><span style="color: #666;">Cá nhân</span></li>
+                <li class="breadcrumb-item active fw-medium" style="color: #E31837;" aria-current="page">Tài khoản</li>
+            </ol>
+        </nav>
 
-    @if (session('success'))
-        <div class="mb-4 p-4 rounded-xl bg-mint/10 border border-mint text-mint text-sm font-medium">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-
-        {{-- Sidebar bên trái --}}
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-2xl p-5 border border-coral-light/60 shadow-sm">
-                {{-- Header Tên khách hàng --}}
-                <div class="mb-4">
-                    <h3 class="font-bold text-ink text-base truncate">
-                        Xin chào, {{ $user->name ?? $user->email }}
-                    </h3>
-                    <span class="inline-block mt-1 px-3 py-1 bg-coral-light/50 text-coral text-xs font-semibold rounded-full">
-                        Khách hàng &rsaquo;
-                    </span>
-                </div>
-
-                {{-- Mã khách hàng thân thiết --}}
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center my-4">
-                    <p class="text-xs text-amber-800 font-medium">Mã khách hàng thân thiết</p>
-                    <p class="font-mono font-bold text-lg text-amber-900 tracking-wider mt-1">
-                        893{{ str_pad($user->id, 10, '0', STR_PAD_LEFT) }}
-                    </p>
-                </div>
-
-                {{-- Danh sách menu --}}
-                <nav class="space-y-1 text-sm font-medium text-ink-soft">
-                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-coral-light/40 text-coral font-bold">
-                        <svg class="w-5 h-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Tài khoản
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-coral-light/20 hover:text-coral transition-colors">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                        Đơn hàng
-                    </a>
-                    <a href="{{ route('profile.support') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-coral-light/20 hover:text-coral transition-colors">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        Hỗ trợ người dùng
-                    </a>
-                    <a href="{{ route('profile.policy') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-coral-light/20 hover:text-coral transition-colors">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Quy định, chính sách
-                    </a>
-                </nav>
-            </div>
-        </div>
-
-        {{-- Khung hiển thị / Cập nhật Thông tin bên phải --}}
-        <div class="lg:col-span-3">
-            <div class="bg-white rounded-2xl p-6 border border-coral-light/60 shadow-sm">
-                <h1 class="text-2xl font-bold text-ink mb-6">Thông tin tài khoản</h1>
-
-                <form action="{{ route('profile.update') }}" method="POST">
-                    @csrf
-                    <div class="space-y-6">
-                        <div class="flex items-center gap-2 text-coral font-bold border-b border-coral-light pb-2">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            Thông tin cá nhân
+        <div class="row g-4">
+            <!-- Sidebar Trái -->
+            <div class="col-lg-4 col-md-5">
+                <div class="profile-card p-4">
+                    <!-- User Greeting -->
+                    <div class="text-center mb-3">
+                        <h6 class="fw-bold mb-3 fs-5" style="color: #222;">
+                            Xin chào, {{ $user->name ?? ($user->phone ? (substr($user->phone, 0, 4) . '*****' . substr($user->phone, -3)) : 'Khách hàng') }}
+                        </h6>
+                        
+                        <div class="mb-3">
+                            <span class="badge-customer-pill">
+                                Khách hàng 
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </span>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            {{-- Họ và tên --}}
-                            <div>
-                                <label class="block text-xs text-ink-soft mb-1">Họ và tên *</label>
-                                <input type="text" name="name" value="{{ old('name', $user->name) }}"
-                                       class="w-full px-4 py-2.5 rounded-xl border border-coral-light focus:border-coral outline-none text-sm font-medium text-ink">
+                        <!-- Loyalty Code -->
+                        <div class="loyalty-box-yellow mb-4">
+                            <div class="info-label" style="font-size: 13px;">Mã khách hàng thân thiết</div>
+                            <div class="fw-bold fs-5" style="color: #222; letter-spacing: 0.5px;">
+                                {{ $user->loyalty_code ?? '8932369232370' }}
                             </div>
-
-                            {{-- Số điện thoại --}}
-                            <div>
-                                <label class="block text-xs text-ink-soft mb-1">Số điện thoại</label>
-                                <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" placeholder="Chưa cập nhật"
-                                       class="w-full px-4 py-2.5 rounded-xl border border-coral-light focus:border-coral outline-none text-sm font-medium text-ink">
-                            </div>
-
-                            {{-- Ngày tháng năm sinh --}}
-                            <div>
-                                <label class="block text-xs text-ink-soft mb-1">Ngày tháng năm sinh</label>
-                                <input type="date" name="birthday" value="{{ old('birthday', $user->birthday) }}"
-                                       class="w-full px-4 py-2.5 rounded-xl border border-coral-light focus:border-coral outline-none text-sm font-medium text-ink">
-                            </div>
-
-                            {{-- Giới tính --}}
-                            <div>
-                                <label class="block text-xs text-ink-soft mb-1">Giới tính</label>
-                                <select name="gender" class="w-full px-4 py-2.5 rounded-xl border border-coral-light focus:border-coral outline-none text-sm font-medium text-ink">
-                                    <option value="">Chưa chọn</option>
-                                    <option value="nam" {{ old('gender', $user->gender) == 'nam' ? 'selected' : '' }}>Nam</option>
-                                    <option value="nu" {{ old('gender', $user->gender) == 'nu' ? 'selected' : '' }}>Nữ</option>
-                                    <option value="khac" {{ old('gender', $user->gender) == 'khac' ? 'selected' : '' }}>Khác</option>
-                                </select>
-                            </div>
-
-                            {{-- Email --}}
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs text-ink-soft mb-1">Email</label>
-                                <input type="email" value="{{ $user->email }}" disabled
-                                       class="w-full px-4 py-2.5 rounded-xl border border-coral-light/50 bg-cream/30 text-sm font-medium text-ink-soft cursor-not-allowed">
-                            </div>
-                        </div>
-
-                        <div class="pt-4 border-t border-coral-light/50 flex justify-end">
-                            <button type="submit" class="px-6 py-2.5 bg-coral hover:bg-coral-dark text-white font-bold text-sm rounded-full shadow transition-colors">
-                                Lưu thay đổi
-                            </button>
                         </div>
                     </div>
-                </form>
+
+                    <!-- Navigation Menu -->
+                    <div class="d-flex flex-column gap-1">
+                        <a href="{{ route('profile.edit') }}" class="sidebar-menu-link active">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="#E31837"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                            Tài khoản
+                        </a>
+                        <a href="#" class="sidebar-menu-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="#666"><path d="M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3zm7 17H5V8h14v12z"/></svg>
+                            Đơn hàng
+                        </a>
+                        <a href="{{ route('profile.support') }}" class="sidebar-menu-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="#666"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/></svg>
+                            Hỗ trợ người dùng
+                        </a>
+                        <a href="{{ route('profile.policy') }}" class="sidebar-menu-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="#666"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                            Quy định, chính sách
+                        </a>
+                        <a href="{{ route('notifications.index') }}" class="sidebar-menu-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="#666"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                            Thông báo, bài viết
+                        </a>
+                        <a href="#" class="sidebar-menu-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="#666"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                            Về MommyKids
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Phải -->
+            <div class="col-lg-8 col-md-7">
+                <h4 class="fw-bold mb-4" style="color: #111; font-size: 24px;">Thông tin tài khoản</h4>
+
+                <!-- Khung 1: Thông tin cá nhân -->
+                <div class="card-border-subtle p-4 mb-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="#E31837" class="me-2"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                        <h5 class="fw-bold mb-0" style="color: #111; font-size: 18px;">Thông tin cá nhân</h5>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="info-label">Họ và tên</div>
+                            <div class="info-value">{{ $user->name ?? ($user->phone ? (substr($user->phone, 0, 4) . '*****' . substr($user->phone, -3)) : 'Chưa cập nhật') }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Số điện thoại</div>
+                            <div class="info-value">{{ $user->phone ?? 'Chưa cập nhật' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Ngày tháng năm sinh</div>
+                            <div class="info-value">{{ $user->dob ?? 'Chưa cập nhật' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Giới tính</div>
+                            <div class="info-value">{{ $user->gender ?? 'Nữ' }}</div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="info-label">Email</div>
+                            <div class="info-value">{{ $user->email ?? 'Chưa cập nhật' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Khung 2: Thông tin bé yêu -->
+                <div class="baby-info-box p-4 mb-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 52px; height: 52px; background-color: #FEF0D5;">
+                                <span style="font-size: 26px;">🎁</span>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1" style="color: #A05E03; font-size: 16px;">Thông tin bé yêu</h6>
+                                <p class="text-muted mb-0" style="font-size: 13.5px; line-height: 1.4; max-width: 440px;">
+                                    Thêm chính xác thông tin con để nhận quà tặng đặc biệt từ MommyKids trong ngày sinh nhật của bé.
+                                </p>
+                            </div>
+                        </div>
+                        <button class="btn-red-action">Cập nhật ngay</button>
+                    </div>
+                </div>
+
+                <!-- Khung 3: Danh sách địa chỉ nhận hàng -->
+                <div class="card-border-subtle p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="d-flex align-items-center">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="#E31837" class="me-2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                            <h5 class="fw-bold mb-0" style="color: #111; font-size: 18px;">Danh sách địa chỉ nhận hàng</h5>
+                        </div>
+                        <button class="btn-red-action" style="font-size: 13.5px; padding: 8px 18px;">+ Thêm địa chỉ mới</button>
+                    </div>
+
+                    <div class="text-center py-5 text-muted" style="font-size: 14px; color: #888 !important;">
+                        Chưa có địa chỉ giao hàng nào được lưu.
+                    </div>
+                </div>
+
             </div>
         </div>
-
     </div>
 </div>
 @endsection
