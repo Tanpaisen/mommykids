@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 class Order extends Model
 {
+    use HasUlids;
+
     protected $fillable = [
         'code','user_id','recipient_name','recipient_phone','recipient_email',
         'province_name','district_name','ward_name','address_detail',
@@ -16,6 +18,7 @@ class Order extends Model
         'subtotal','shipping_fee','discount','total',
         'status','payment_method','payment_status','note',
     ];
+
 
     // Auto-generate code khi tạo
     protected static function booted(): void

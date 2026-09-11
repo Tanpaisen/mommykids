@@ -201,6 +201,23 @@
                     </div>
 
                     <hr>
+            @if(config('services.momo.enabled'))
+    <label class="mk-payment-option">
+        <input
+            type="radio"
+            name="payment_method"
+            value="momo"
+            {{ old('payment_method') === 'momo' ? 'checked' : '' }}
+        >
+
+        <span class="mk-payment-icon">💗</span>
+
+        <span>
+            <strong>Ví MoMo</strong>
+            <small>Thanh toán bằng MoMo Test</small>
+        </span>
+    </label>
+@endif
 
                     <div class="mk-row mk-total">
                         <span>Tổng thanh toán</span>

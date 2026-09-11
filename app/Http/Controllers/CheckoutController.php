@@ -7,6 +7,9 @@ use App\Services\GHNService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
+use App\Models\Order;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CheckoutController extends Controller
 {
@@ -128,82 +131,254 @@ return view('checkout.index', compact(
     }
 
     public function store(Request $request)
-    {
-        $items = $this->cart->items();
-        $subtotal = $this->cart->total();
+{
+    $items = $this->cart->items();
+    $subtotal = $this->cart->total();
 
-        if ($items->isEmpty()) {
-            return redirect()->route('cart.index')
-                ->with('error', 'Giỏ hàng của bạn đang trống.');
-        }
-
-        $data = $request->validate([
-            'full_name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:20'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'province_id' => ['required', 'integer'],
-            'to_district_id' => ['required', 'integer'],
-            'to_ward_code' => ['required', 'string'],
-            'address' => ['required', 'string', 'max:500'],
-            'note' => ['nullable', 'string', 'max:1000'],
-            'payment_method' => ['required', 'in:cod,bank'],
-        ], [
-            'full_name.required' => 'Vui lòng nhập họ và tên.',
-            'phone.required' => 'Vui lòng nhập số điện thoại.',
-            'email.email' => 'Email không đúng định dạng.',
-            'province_id.required' => 'Vui lòng chọn tỉnh/thành phố.',
-            'to_district_id.required' => 'Vui lòng chọn quận/huyện.',
-            'to_ward_code.required' => 'Vui lòng chọn phường/xã.',
-            'address.required' => 'Vui lòng nhập địa chỉ nhận hàng.',
-            'payment_method.required' => 'Vui lòng chọn phương thức thanh toán.',
-        ]);
-
-        $weight = 500;
-
-        $feeData = $this->ghn->calculateFee(
-            (int) $data['to_district_id'],
-            $data['to_ward_code'],
-            $weight,
-            (int) $subtotal
-        );
-
-        $shippingFee = $this->extractShippingFee($feeData);
-
-        if ($shippingFee <= 0) {
-            return back()->withInput()
-                ->with('error', 'Không thể tính phí vận chuyển GHN. Vui lòng kiểm tra lại địa chỉ.');
-        }
-
-        $total = $subtotal + $shippingFee;
-        $orderCode = 'MK' . now()->format('ymdHis');
-
-        session([
-            'checkout_order' => [
-                'code' => $orderCode,
-                'customer' => $data,
-                'subtotal' => $subtotal,
-                'shipping_fee' => $shippingFee,
-                'total' => $total,
-                'created_at' => now()->toDateTimeString(),
-            ],
-        ]);
-        if ($data['payment_method'] === 'cod') {
-    return redirect()->route('checkout.success')
-        ->with('cod_success', true);
-}
-
-Cache::put(
-    'checkout_order_' . $orderCode,
-    [
-        'code' => $orderCode,
-        'total' => (int) $total,
-        'status' => 'pending',
-    ],
-    now()->addMinutes(20)
-);
-
-return redirect()->route('checkout.qr');
+    if ($items->isEmpty()) {
+        return redirect()->route('cart.index')
+            ->with('error', 'Giỏ hàng của bạn đang trống.');
     }
+
+    $data = $request->validate([
+        'full_name' => ['required', 'string', 'max:255'],
+        'phone' => ['required', 'string', 'max:20'],
+        'email' => ['nullable', 'email', 'max:255'],
+        'province_id' => ['required', 'integer'],
+        'to_district_id' => ['required', 'integer'],
+        'to_ward_code' => ['required', 'string'],
+        'address' => ['required', 'string', 'max:500'],
+        'note' => ['nullable', 'string', 'max:1000'],
+        'payment_method' => ['required', 'in:cod,bank'],
+    ], [
+        'full_name.required' => 'Vui lòng nhập họ và tên.',
+        'phone.required' => 'Vui lòng nhập số điện thoại.',
+        'email.email' => 'Email không đúng định dạng.',
+        'province_id.required' => 'Vui lòng chọn tỉnh/thành phố.',
+        'to_district_id.required' => 'Vui lòng chọn quận/huyện.',
+        'to_ward_code.required' => 'Vui lòng chọn phường/xã.',
+        'address.required' => 'Vui lòng nhập địa chỉ nhận hàng.',
+        'payment_method.required' => 'Vui lòng chọn phương thức thanh toán.',
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tính phí vận chuyển
+    |--------------------------------------------------------------------------
+    */
+
+    $weight = 500;
+
+    $feeData = $this->ghn->calculateFee(
+        (int) $data['to_district_id'],
+        $data['to_ward_code'],
+        $weight,
+        (int) $subtotal
+    );
+
+    $shippingFee = $this->extractShippingFee($feeData);
+
+    if ($shippingFee <= 0) {
+        return back()
+            ->withInput()
+            ->with(
+                'error',
+                'Không thể tính phí vận chuyển GHN. Vui lòng kiểm tra lại địa chỉ.'
+            );
+    }
+
+    $total = (int) $subtotal + (int) $shippingFee;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lấy tên tỉnh / huyện / xã từ GHN
+    |--------------------------------------------------------------------------
+    */
+
+    $provinces = $this->normalizeGhnList(
+        $this->ghn->getProvinces()
+    );
+
+    $districts = $this->normalizeGhnList(
+        $this->ghn->getDistricts(
+            (int) $data['province_id']
+        )
+    );
+
+    $wards = $this->normalizeGhnList(
+        $this->ghn->getWards(
+            (int) $data['to_district_id']
+        )
+    );
+
+    $provinceName = $this->findGhnName(
+        $provinces,
+        'ProvinceID',
+        $data['province_id'],
+        'ProvinceName'
+    );
+
+    $districtName = $this->findGhnName(
+        $districts,
+        'DistrictID',
+        $data['to_district_id'],
+        'DistrictName'
+    );
+
+    $wardName = $this->findGhnName(
+        $wards,
+        'WardCode',
+        $data['to_ward_code'],
+        'WardName'
+    );
+
+    if (!$provinceName || !$districtName || !$wardName) {
+        return back()
+            ->withInput()
+            ->with(
+                'error',
+                'Không thể xác định đầy đủ địa chỉ giao hàng.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tạo Order + Order Items trong database
+    |--------------------------------------------------------------------------
+    */
+
+    $dbOrder = DB::transaction(function () use (
+        $data,
+        $items,
+        $subtotal,
+        $shippingFee,
+        $total,
+        $provinceName,
+        $districtName,
+        $wardName
+    ) {
+        $order = Order::create([
+            'user_id' => Auth::id(),
+
+            'recipient_name' => $data['full_name'],
+            'recipient_phone' => $data['phone'],
+            'recipient_email' => $data['email'] ?? null,
+
+            'province_name' => $provinceName,
+            'district_name' => $districtName,
+            'ward_name' => $wardName,
+            'address_detail' => $data['address'],
+
+            'ghn_province_id' => (int) $data['province_id'],
+            'ghn_district_id' => (int) $data['to_district_id'],
+            'ghn_ward_code' => $data['to_ward_code'],
+
+            'subtotal' => (int) $subtotal,
+            'shipping_fee' => (int) $shippingFee,
+            'discount' => 0,
+            'total' => (int) $total,
+
+            'status' => 'pending',
+
+            // Form dùng "bank", DB dùng "qr"
+            'payment_method' => match ($data['payment_method']) {
+    'bank' => 'qr',
+    'momo' => 'momo',
+    default => 'cod',
+},
+            'payment_status' => 'unpaid',
+
+            'note' => $data['note'] ?? null,
+        ]);
+
+        foreach ($items as $item) {
+            $product = $item->product;
+
+            if (!$product) {
+                continue;
+            }
+
+            $price = (int) $product->price;
+            $quantity = (int) $item->quantity;
+
+            $order->items()->create([
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'product_sku' => $product->sku ?? null,
+                'price' => $price,
+                'quantity' => $quantity,
+                'subtotal' => $price * $quantity,
+            ]);
+        }
+
+        return $order;
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mã thanh toán dùng cho QR / SePay
+    |--------------------------------------------------------------------------
+    */
+
+    $paymentCode = 'MK' . now()->format('ymdHis');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session dùng cho các trang checkout hiện tại
+    |--------------------------------------------------------------------------
+    */
+
+    session([
+        'checkout_order' => [
+            'id' => $dbOrder->id,
+            'db_code' => $dbOrder->code,
+
+            // Giữ code MK để QR + paymentStatus hiện tại tiếp tục hoạt động
+            'code' => $paymentCode,
+
+            'customer' => $data,
+            'subtotal' => (int) $subtotal,
+            'shipping_fee' => (int) $shippingFee,
+            'total' => (int) $total,
+            'created_at' => now()->toDateTimeString(),
+        ],
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | COD
+    |--------------------------------------------------------------------------
+    */
+
+    if ($data['payment_method'] === 'cod') {
+        return redirect()
+            ->route('checkout.success')
+            ->with('cod_success', true);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chuyển khoản ngân hàng / SePay
+    |--------------------------------------------------------------------------
+    */
+
+    Cache::put(
+        'checkout_order_' . $paymentCode,
+        [
+            'code' => $paymentCode,
+
+            // Quan trọng: nối mã MK với order thật trong DB
+            'order_id' => $dbOrder->id,
+            'order_code' => $dbOrder->code,
+
+            'total' => (int) $total,
+            'status' => 'pending',
+        ],
+        now()->addMinutes(20)
+    );
+
+    return redirect()->route('checkout.qr');
+}
 
     public function qr()
     {
@@ -219,7 +394,7 @@ return redirect()->route('checkout.qr');
         $total = $order['total'];
 
         $bankId = config('services.vietqr.bank_id', '970422');
-        
+
         $accountNo = config('services.vietqr.account_no');
         $accountName = config('services.vietqr.account_name', 'MOMMYKIDS');
 
@@ -466,8 +641,53 @@ public function paymentStatus(string $code)
             'order', 'items', 'subtotal', 'shippingFee', 'total', 'payment'
         ));
     }
+      private function normalizeGhnList(array $response): array
+{
+    if (
+        isset($response['data'])
+        && is_array($response['data'])
+    ) {
+        return $response['data'];
+    }
 
-    private function extractShippingFee(array $feeData): int
+    if (
+        isset($response[0])
+        && is_array($response[0])
+    ) {
+        return $response;
+    }
+
+    if (!empty($response)) {
+        return [$response];
+    }
+
+    return [];
+}
+
+private function findGhnName(
+    array $items,
+    string $idKey,
+    string|int $wantedId,
+    string $nameKey
+): ?string {
+    foreach ($items as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+
+        if (
+            isset($item[$idKey])
+            && (string) $item[$idKey] === (string) $wantedId
+        ) {
+            return isset($item[$nameKey])
+                ? (string) $item[$nameKey]
+                : null;
+        }
+    }
+
+    return null;
+}   
+ private function extractShippingFee(array $feeData): int
     {
         if (isset($feeData['total'])) {
             return (int) $feeData['total'];
@@ -479,4 +699,5 @@ public function paymentStatus(string $code)
 
         return 0;
     }
+    
 }
