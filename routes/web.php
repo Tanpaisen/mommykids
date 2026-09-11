@@ -53,6 +53,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/thanh-toan/xac-nhan-chuyen-khoan', [CheckoutController::class, 'confirmTransfer'])->name('checkout.confirm-transfer');
     Route::get('/thanh-toan/thanh-cong', [CheckoutController::class, 'success'])->name('checkout.success');
 
+    // Loyalty Points API
+    Route::post('/thanh-toan/ap-dung-diem', [CheckoutController::class, 'applyPoints'])->name('checkout.apply_points');
+    Route::post('/thanh-toan/huy-diem', [CheckoutController::class, 'removePoints'])->name('checkout.remove_points');
+
     // GHN Checkout API
     Route::get('/checkout/districts', [CheckoutController::class, 'districts'])->name('checkout.districts');
     Route::get('/checkout/wards', [CheckoutController::class, 'wards'])->name('checkout.wards');
@@ -88,5 +92,4 @@ require __DIR__ . '/auth/admin.php';
 | Admin Module Routes Include
 |--------------------------------------------------------------------------
 */
-
 require __DIR__ . '/admin.php';
