@@ -19,7 +19,7 @@
                 <div class="max-w-md">
                     <p class="font-display font-extrabold text-2xl lg:text-4xl text-white leading-tight">Voucher tặng<br>bạn mới</p>
                     <p class="mt-3 text-white/90 text-sm lg:text-base">Nhận ngay ưu đãi 30K cho đơn hàng đầu tiên</p>
-                    <a href="#" class="btn-primary bg-white !text-mint hover:!bg-cream mt-5">Nhận ngay</a>
+                    <a href="{{ route('vouchers.index') }}" class="btn-primary bg-white !text-mint hover:!bg-cream mt-5">Nhận ngay</a>
                 </div>
                 <img src="https://via.placeholder.com/260x260?text=Voucher" alt="Voucher tặng bạn mới" class="hidden lg:block w-56 h-56 object-contain drop-shadow-xl">
             </div>
@@ -35,15 +35,15 @@
     {{-- ============ QUICK ACTION ICONS ============ --}}
     <section class="card p-4 grid grid-cols-4 lg:grid-cols-7 gap-4">
         @foreach ([
-            ['icon' => '🆕', 'label' => 'Hàng mới'],
-            ['icon' => '🏬', 'label' => 'Tìm cửa hàng'],
-            ['icon' => '📞', 'label' => 'Hotline'],
-            ['icon' => '🎁', 'label' => 'Đổi quà'],
-            ['icon' => '🎟️', 'label' => 'Voucher'],
-            ['icon' => '📱', 'label' => 'Mini App'],
-            ['icon' => '📅', 'label' => 'Sự kiện'],
+            ['icon' => '🆕', 'label' => 'Hàng mới', 'url' => '#'],
+            ['icon' => '🏬', 'label' => 'Tìm cửa hàng', 'url' => '#'],
+            ['icon' => '📞', 'label' => 'Hotline', 'url' => '#'],
+            ['icon' => '🎁', 'label' => 'Đổi quà', 'url' => '#'],
+            ['icon' => '🎟️', 'label' => 'Voucher', 'url' => route('vouchers.index')],
+            ['icon' => '📱', 'label' => 'Mini App', 'url' => '#'],
+            ['icon' => '📅', 'label' => 'Sự kiện', 'url' => '#'],
         ] as $action)
-            <a href="#" class="flex flex-col items-center gap-2 group">
+            <a href="{{ $action['url'] }}" class="flex flex-col items-center gap-2 group">
                 <span class="w-12 h-12 rounded-2xl bg-coral-light flex items-center justify-center text-xl group-hover:bg-coral group-hover:text-white transition-colors">{{ $action['icon'] }}</span>
                 <span class="text-xs text-ink-soft text-center">{{ $action['label'] }}</span>
             </a>
@@ -70,11 +70,11 @@
                 <p class="text-xs text-ink-soft">Sữa bột</p>
             </div>
         </div>
-        <a href="#" class="btn-primary shrink-0">Nhận ngay</a>
+        <!-- ĐÃ SỬA: Gắn link Voucher -->
+        <a href="{{ route('vouchers.index') }}" class="btn-primary shrink-0">Nhận ngay</a>
     </section>
 
     {{-- ============ PRODUCT SECTIONS ============ --}}
-    {{-- $sections comes from App\Http\Controllers\HomeController@index — one block per category with products --}}
     @forelse ($sections as $section)
         <section class="card p-4 lg:p-6">
             <div class="flex items-center justify-between mb-4">
