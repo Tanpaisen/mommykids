@@ -38,6 +38,10 @@ return new class extends Migration {
                 'shipping','delivered','cancelled','refunded'
             ])->default('pending');
 
+            $table->unsignedInteger('points_used')->default(0);
+
+            $table->unsignedBigInteger('points_discount')->default(0);
+
             $table->enum('payment_method', ['cod','vnpay','qr'])->default('cod');
             $table->enum('payment_status', ['unpaid','paid','refunded'])->default('unpaid');
 
