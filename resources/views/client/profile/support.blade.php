@@ -73,7 +73,7 @@
                 <h1 class="text-2xl font-bold text-ink mb-8">Liên hệ với chúng tôi</h1>
 
                 <div class="space-y-8 text-sm text-ink leading-relaxed">
-                    
+
                     {{-- 1. Hotline --}}
                     <div>
                         <h2 class="font-bold text-base text-ink mb-3">1. Liên hệ Hotline <span class="text-coral">1800 6886</span> (miễn phí)</h2>
