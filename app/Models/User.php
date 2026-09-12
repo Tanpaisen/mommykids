@@ -147,7 +147,6 @@ class User extends Authenticatable
 
     public function savedVouchers()
     {
-        return $this->belongsToMany(Voucher::class, 'voucher_users', 'user_id', 'voucher_id')
-                    ->withTimestamps(); // Lưu thêm thời gian lúc khách thu thập mã
+        return $this->belongsToMany(Voucher::class, 'voucher_users', 'user_id', 'voucher_id');
     }
 }

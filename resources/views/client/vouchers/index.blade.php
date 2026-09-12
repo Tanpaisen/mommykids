@@ -73,7 +73,14 @@
 
     <!-- 4. DANH SÁCH VOUCHER -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="voucher-list">
-        
+        @php
+            $savedVoucherIds = [];
+            if(auth()->check()) {
+                // Pluck lấy mảng các ID voucher mà user này đã lưu
+                $savedVoucherIds = auth()->user()->savedVouchers()->pluck('vouchers.id')->toArray();
+            }
+        @endphp
+
         @forelse($vouchers as $voucher)
             @php
                 // --- XỬ LÝ MÀU SẮC & ICON THEO LOẠI MÃ ---
@@ -151,9 +158,17 @@
                     <div class="flex justify-between items-end mt-4">
                         <button class="text-gray-400 hover:text-pink-500 text-xs font-medium transition-colors">Điều kiện</button>
                         <!-- Nút LƯU MÃ - Tích hợp gọi API -->
-                        <button onclick="saveVoucherCode('{{ $voucher->code }}', this)" class="border-2 border-pink-500 text-pink-500 hover:bg-pink-50 text-sm font-bold px-6 py-1.5 rounded-lg transition-all active:scale-95 whitespace-nowrap">
-                            Lưu mã
-                        </button>
+                        @if(in_array($voucher->id, $savedVoucherIds))
+                            <!-- Trạng thái đã lưu -->
+                            <button disabled class="bg-pink-500 text-white text-sm font-bold px-6 py-1.5 rounded-lg whitespace-nowrap opacity-80 cursor-not-allowed">
+                                Đã cất ví ✔
+                            </button>
+                        @else
+                            <!-- Trạng thái chưa lưu -->
+                            <button onclick="saveVoucherCode('{{ $voucher->code }}', this)" class="border-2 border-pink-500 text-pink-500 hover:bg-pink-50 text-sm font-bold px-6 py-1.5 rounded-lg transition-all active:scale-95 whitespace-nowrap">
+                                Lưu mã
+                            </button>
+                        @endif
                     </div>
                 </div>
             </div>
