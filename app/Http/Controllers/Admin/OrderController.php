@@ -33,7 +33,23 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         $order->load(['items.product', 'shipment', 'user']);
-        return view('admin.orders.show', compact('order'));
+
+        $ghnData = null;
+
+        // Nếu đã có vận đơn → lấy thông tin realtime từ GHN
+        if ($order->shipment?->ghn_order_code) {
+            $ghnData = $this->ghn->trackOrder($order->shipment->ghn_order_code);
+
+            // Cập nhật status mới nhất vào DB
+            if (!empty($ghnData['status'])) {
+                $order->shipment->update([
+                    'status'       => strtolower($ghnData['status']),
+                    'ghn_response' => $ghnData,
+                ]);
+            }
+        }
+
+        return view('admin.orders.show', compact('order', 'ghnData'));
     }
 
     /** Cập nhật trạng thái đơn */
