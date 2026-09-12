@@ -142,5 +142,4 @@ require __DIR__ . '/auth/admin.php';
 | Admin Module Routes Include
 |--------------------------------------------------------------------------
 */
-
 require __DIR__ . '/admin.php';

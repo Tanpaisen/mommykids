@@ -258,32 +258,50 @@
 @media(max-width:600px){.mk-form-grid{grid-template-columns:1fr}.mk-full{grid-column:auto}.mk-product{grid-template-columns:54px 1fr}.mk-product>b{grid-column:2}.mk-checkout-page{padding:20px 10px 40px}}
 </style>
 
+<script type="application/json" id="checkout-config">
+{
+    "subtotal": {{ (int) $subtotal }},
+    "oldProvinceId": @json(old('province_id')),
+    "oldDistrictId": @json(old('to_district_id')),
+    "oldWardCode": @json(old('to_ward_code')),
+    "routes": {
+        "districts": @json(route('checkout.districts')),
+        "wards": @json(route('checkout.wards')),
+        "shippingFee": @json(route('checkout.shipping-fee'))
+    }
+}
+</script>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const config = JSON.parse(document.getElementById('checkout-config').textContent);
     const province = document.getElementById('province');
     const district = document.getElementById('district');
     const ward = document.getElementById('ward');
     const shippingText = document.getElementById('checkout-shipping');
     const totalText = document.getElementById('checkout-total');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
-    province.addEventListener('change', async () => {
+    const formatMoney = (amount) => Number(amount).toLocaleString('vi-VN') + 'đ';
+
+    // Hàm tải danh sách Quận/Huyện
+    async function loadDistricts(provinceId, selectedDistrictId = null) {
         district.disabled = true;
         ward.disabled = true;
         district.innerHTML = '<option value="">Đang tải...</option>';
         ward.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
         shippingText.textContent = 'Chưa tính';
-        totalText.textContent = '{{ number_format($subtotal) }}đ';
+        totalText.textContent = formatMoney(config.subtotal);
 
-        if (!province.value) {
+        if (!provinceId) {
             district.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
             return;
         }
 
         try {
-            const response = await fetch(
-                `{{ route('checkout.districts') }}?province_id=${province.value}`,
-                { headers: { 'Accept': 'application/json' } }
-            );
+            const response = await fetch(`${config.routes.districts}?province_id=${provinceId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
 
             if (!response.ok) throw new Error('Không tải được quận/huyện.');
 
@@ -291,7 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
             district.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
 
             data.forEach(item => {
-                district.innerHTML += `<option value="${item.DistrictID}">${item.DistrictName}</option>`;
+                const isSelected = selectedDistrictId && String(selectedDistrictId) === String(item.DistrictID) ? 'selected' : '';
+                district.innerHTML += `<option value="${item.DistrictID}" ${isSelected}>${item.DistrictName}</option>`;
             });
 
             district.disabled = false;
@@ -299,24 +318,24 @@ document.addEventListener('DOMContentLoaded', () => {
             district.innerHTML = '<option value="">Không tải được quận/huyện</option>';
             console.error(error);
         }
-    });
+    }
 
-    district.addEventListener('change', async () => {
+    // Hàm tải danh sách Phường/Xã
+    async function loadWards(districtId, selectedWardCode = null) {
         ward.disabled = true;
         ward.innerHTML = '<option value="">Đang tải...</option>';
         shippingText.textContent = 'Chưa tính';
-        totalText.textContent = '{{ number_format($subtotal) }}đ';
+        totalText.textContent = formatMoney(config.subtotal);
 
-        if (!district.value) {
+        if (!districtId) {
             ward.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
             return;
         }
 
         try {
-            const response = await fetch(
-                `{{ route('checkout.wards') }}?district_id=${district.value}`,
-                { headers: { 'Accept': 'application/json' } }
-            );
+            const response = await fetch(`${config.routes.wards}?district_id=${districtId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
 
             if (!response.ok) throw new Error('Không tải được phường/xã.');
 
@@ -324,7 +343,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ward.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
 
             data.forEach(item => {
-                ward.innerHTML += `<option value="${item.WardCode}">${item.WardName}</option>`;
+                const isSelected = selectedWardCode && String(selectedWardCode) === String(item.WardCode) ? 'selected' : '';
+                ward.innerHTML += `<option value="${item.WardCode}" ${isSelected}>${item.WardName}</option>`;
             });
 
             ward.disabled = false;
@@ -332,31 +352,27 @@ document.addEventListener('DOMContentLoaded', () => {
             ward.innerHTML = '<option value="">Không tải được phường/xã</option>';
             console.error(error);
         }
-    });
+    }
 
-    ward.addEventListener('change', async () => {
+    // Hàm tính phí vận chuyển
+    async function calculateShippingFee() {
         if (!district.value || !ward.value) return;
 
         shippingText.textContent = 'Đang tính...';
 
         try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
-            const response = await fetch(
-                `{{ route('checkout.shipping-fee') }}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken ?? ''
-                    },
-                    body: JSON.stringify({
-                        district_id: Number(district.value),
-                        ward_code: ward.value
-                    })
-                }
-            );
+            const response = await fetch(config.routes.shippingFee, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken ?? ''
+                },
+                body: JSON.stringify({
+                    district_id: Number(district.value),
+                    ward_code: ward.value
+                })
+            });
 
             const data = await response.json();
 
@@ -366,13 +382,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            shippingText.textContent = Number(data.shipping_fee).toLocaleString('vi-VN') + 'đ';
-            totalText.textContent = Number(data.total).toLocaleString('vi-VN') + 'đ';
+            shippingText.textContent = formatMoney(data.shipping_fee);
+            totalText.textContent = formatMoney(data.total);
         } catch (error) {
             shippingText.textContent = 'Không tính được phí';
             console.error(error);
         }
-    });
+    }
+
+    // Sự kiện khi người dùng tự chọn lại dropdowns
+    province.addEventListener('change', () => loadDistricts(province.value));
+    district.addEventListener('change', () => loadWards(district.value));
+    ward.addEventListener('change', calculateShippingFee);
+
+    // BƯỚC 3.4 & 3.5: Khôi phục lựa chọn cũ (old) & tự động tính phí vận chuyển khi reload
+    async function restoreOldState() {
+        if (config.oldProvinceId) {
+            await loadDistricts(config.oldProvinceId, config.oldDistrictId);
+            if (config.oldDistrictId) {
+                await loadWards(config.oldDistrictId, config.oldWardCode);
+                if (config.oldWardCode) {
+                    await calculateShippingFee();
+                }
+            }
+        }
+    }
+
+    restoreOldState();
 });
 </script>
 @endsection
