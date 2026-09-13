@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Payment\ZaloPayController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,6 +17,12 @@ Route::post('/sepay/webhook', [
     CheckoutController::class,
     'sepayWebhook',
 ])->name('sepay.webhook');
+
+Route::post('/zalopay/callback', [
+    ZaloPayController::class,
+    'callback',
+])->name('zalopay.callback');
+
 
 /*
 |--------------------------------------------------------------------------

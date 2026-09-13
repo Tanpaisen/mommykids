@@ -13,6 +13,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Payment\ZaloPayController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +128,22 @@ Route::prefix('api')->group(function () {
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])
         ->name('api.verify-otp');
 });
+
+Route::get('/payments/zalopay/create', [ZaloPayController::class, 'create'])
+    ->name('zalopay.create');
+
+Route::get('/payments/zalopay/return', [ZaloPayController::class, 'result'])
+    ->name('zalopay.return');
+
+Route::get(
+    '/payments/zalopay/qr',
+    [ZaloPayController::class, 'qr']
+)->name('zalopay.qr');
+
+Route::get(
+    '/payments/zalopay/status',
+    [ZaloPayController::class, 'status']
+)->name('zalopay.status');
 
 /*
 |--------------------------------------------------------------------------
