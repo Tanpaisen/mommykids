@@ -72,4 +72,11 @@ return [
     'callback_url' => env('ZALOPAY_CALLBACK_URL'),
     'redirect_url' => env('ZALOPAY_REDIRECT_URL'),
 ],
+'stripe' => [
+    'enabled' => env('STRIPE_ENABLED', false),
+    'secret' => env('STRIPE_SECRET'),
+    'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    'success_url' => env('STRIPE_SUCCESS_URL'),
+    'cancel_url' => env('STRIPE_CANCEL_URL'),
+],
 ];

@@ -244,7 +244,7 @@ class CheckoutController extends Controller
             'to_ward_code' => ['required', 'string'],
             'address' => ['required', 'string', 'max:500'],
             'note' => ['nullable', 'string', 'max:1000'],
-            'payment_method' => ['required', 'in:cod,bank,zalopay'],
+            'payment_method' => ['required', 'in:cod,bank,zalopay,stripe'],
         ], [
             'full_name.required' => 'Vui lòng nhập họ và tên.',
             'phone.required' => 'Vui lòng nhập số điện thoại.',
@@ -378,8 +378,8 @@ class CheckoutController extends Controller
 
                 // Form dùng "bank", DB dùng "qr". Các phương thức khác giữ nguyên.
                 'payment_method' => match ($data['payment_method']) {
-                    'bank' => 'qr',
-                    default => $data['payment_method'],
+                  'bank' => 'qr',
+                  default => $data['payment_method'],
                 },
                 'payment_status' => 'unpaid',
 
@@ -481,7 +481,9 @@ class CheckoutController extends Controller
         if ($data['payment_method'] === 'zalopay') {
             return redirect()->route('zalopay.create');
         }
-
+        if ($data['payment_method'] === 'stripe') {
+         return redirect()->route('stripe.create');
+         }
         /*
         |--------------------------------------------------------------------------
         | Chuyển khoản ngân hàng / SePay
@@ -511,10 +513,10 @@ class CheckoutController extends Controller
         }
 
         $items = $this->cart->items();
-        $subtotal = $order['subtotal'];
-        $shippingFee = $order['shipping_fee'];
-        $pointsDiscount = $order['points_discount'] ?? 0;
-        $total = $order['total'];
+        $subtotal = (int) ($order['subtotal'] ?? 0);
+        $shippingFee = (int) ($order['shipping_fee'] ?? 0);
+        $pointsDiscount = (int) ($order['points_discount'] ?? 0);
+        $total = (int) ($order['total'] ?? 0);
 
         $bankId = config('services.vietqr.bank_id', '970422');
 

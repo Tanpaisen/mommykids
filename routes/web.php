@@ -14,7 +14,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Payment\ZaloPayController;
-
+use App\Http\Controllers\Payment\StripeController;
 /*
 |--------------------------------------------------------------------------
 | Client Storefront Routes
@@ -144,6 +144,16 @@ Route::get(
     '/payments/zalopay/status',
     [ZaloPayController::class, 'status']
 )->name('zalopay.status');
+
+Route::get(
+    '/payments/stripe/create',
+    [StripeController::class, 'create']
+)->name('stripe.create');
+
+Route::get(
+    '/payments/stripe/success',
+    [StripeController::class, 'success']
+)->name('stripe.success');
 
 /*
 |--------------------------------------------------------------------------

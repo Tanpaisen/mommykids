@@ -141,6 +141,19 @@
                         @endif
                     </section>
                 </div>
+                <label class="mk-payment-option">
+    <input
+        type="radio"
+        name="payment_method"
+        value="stripe"
+        {{ old('payment_method') === 'stripe' ? 'checked' : '' }}
+    >
+
+    <div>
+        <strong>Stripe - Visa / Mastercard</strong>
+        <span>Thanh toán bằng thẻ quốc tế qua Stripe Sandbox</span>
+    </div>
+</label>
 
                 <aside class="mk-card mk-summary">
                     <h2>Đơn hàng của bạn</h2>
@@ -224,6 +237,19 @@
         </form>
     </div>
 </div>
+<label class="mk-payment-option">
+    <input
+        type="radio"
+        name="payment_method"
+        value="stripe"
+        {{ old('payment_method') === 'stripe' ? 'checked' : '' }}
+    >
+
+    <div>
+        <strong>Stripe - Visa / Mastercard</strong>
+        <span>Thanh toán bằng thẻ quốc tế qua Stripe Sandbox</span>
+    </div>
+</label>
 
 <style>
 .mk-checkout-page{background:#fff8f7;min-height:100vh;padding:32px 16px 60px}

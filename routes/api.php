@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Payment\ZaloPayController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Payment\StripeController;
 /*
 |--------------------------------------------------------------------------
 | Payment Webhooks
@@ -43,5 +43,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/cart', [CartController::class, 'store']);
         Route::patch('/cart/{cartItem}', [CartController::class, 'update']);
         Route::delete('/cart/{cartItem}', [CartController::class, 'destroy']);
+
+    Route::post(
+    '/stripe/webhook',
+    [StripeController::class, 'webhook']
+)->name('stripe.webhook');
     });
 });
