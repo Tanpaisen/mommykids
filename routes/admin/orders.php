@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlaceholderController;
+use App\Http\Controllers\Admin\ShipmentController;
 
 Route::prefix('don-hang')->name('orders.')->group(function () {
     Route::get('/', [OrderController::class, 'index'])->name('index');
@@ -11,10 +12,14 @@ Route::prefix('don-hang')->name('orders.')->group(function () {
 
     // GHN
     Route::post('/{order:code}/tao-van-don', [OrderController::class, 'createShipment'])->name('shipment.create');
-    Route::get('/{order:code}/tra-cuu', [OrderController::class, 'trackShipment'])->name('shipment.track');
+    Route::post('/{order:code}/tra-cuu', [OrderController::class, 'trackShipment'])->name('shipment.track');
     Route::get('/{order:code}/in-van-don', [OrderController::class, 'printLabel'])->name('shipment.print');
     Route::delete('/{order:code}/huy-van-don', [OrderController::class, 'cancelShipment'])->name('shipment.cancel');
 });
 
-Route::get('/van-chuyen', fn () => (new PlaceholderController)->index('Vận chuyển (GHN)'))->name('shipments.index');
+Route::prefix('van-chuyen')->name('shipments.')->group(function () {
+    Route::get('/', [ShipmentController::class, 'index'])->name('index');
+    Route::get('/api', [ShipmentController::class, 'apiIndex'])->name('api');
+});
+
 Route::get('/doi-tra', fn () => (new PlaceholderController)->index('Đổi trả & Hoàn tiền'))->name('refunds.index');
