@@ -14,6 +14,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\CheckoutController;
 
+// --- CONTROLLERS CẨM NANG ---
+use App\Http\Controllers\Admin\HandbookCategoryController;
+use App\Http\Controllers\Client\HandbookController;
+
 /*
 |--------------------------------------------------------------------------
 | Client Storefront Routes
@@ -33,6 +37,9 @@ Route::get('/tim-kiem', [SearchController::class, 'index'])
 
 Route::get('/gio-hang', [CartController::class, 'index'])
     ->name('cart.index');
+
+// ROUTE CẨM NANG PHÍA CLIENT
+Route::get('/cam-nang/{slug?}', [HandbookController::class, 'index'])->name('handbook.show');
 
 Route::get('/thong-bao', [NotificationController::class, 'index'])
     ->middleware('auth')
