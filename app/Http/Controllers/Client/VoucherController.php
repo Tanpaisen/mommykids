@@ -13,28 +13,38 @@ class VoucherController extends Controller
     {
         $now = now();
 
-        // Truy vấn lấy các Voucher đủ điều kiện hiển thị cho khách
-        $vouchers = Voucher::where('status', 'active')
+        // Khởi tạo Query lấy các Voucher đủ điều kiện hiển thị
+        $query = Voucher::where('status', 'active')
             ->where('is_public', true) // Chỉ lấy mã công khai
-            ->where(function ($query) use ($now) {
-                // Đã đến thời gian bắt đầu (hoặc không cài đặt thời gian)
-                $query->whereNull('starts_at')
-                      ->orWhere('starts_at', '<=', $now);
+            ->where(function ($q) use ($now) {
+                // Đã đến thời gian bắt đầu
+                $q->whereNull('starts_at')
+                  ->orWhere('starts_at', '<=', $now);
             })
-            ->where(function ($query) use ($now) {
-                // Chưa hết hạn (hoặc không cài đặt hạn)
-                $query->whereNull('expires_at')
-                      ->orWhere('expires_at', '>=', $now);
+            ->where(function ($q) use ($now) {
+                // Chưa hết hạn
+                $q->whereNull('expires_at')
+                  ->orWhere('expires_at', '>=', $now);
             })
-            ->where(function ($query) {
-                // Còn lượt sử dụng (hoặc không giới hạn)
-                $query->whereNull('total_quantity')
-                      ->orWhere('total_quantity', '>', 0);
-            })
-            ->latest()
-            ->get();
+            ->where(function ($q) {
+                // Còn lượt sử dụng
+                $q->whereNull('total_quantity')
+                  ->orWhere('total_quantity', '>', 0);
+            });
 
-        // Tách ra 2 mảng nhỏ nếu Frontend cần phân loại Tab dễ hơn (Tùy chọn)
+        // LOẠI TRỪ CÁC VOUCHER ĐÃ LƯU (Nếu khách đã đăng nhập)
+        if (Auth::check()) {
+            $savedVoucherIds = Auth::user()->savedVouchers()->pluck('vouchers.id')->toArray();
+            
+            if (!empty($savedVoucherIds)) {
+                $query->whereNotIn('id', $savedVoucherIds);
+            }
+        }
+
+        // Lấy danh sách cuối cùng
+        $vouchers = $query->latest()->get();
+
+        // Tách ra 2 mảng nhỏ cho Tabs
         $orderVouchers = $vouchers->where('type', 'order');
         $shippingVouchers = $vouchers->where('type', 'shipping');
 
@@ -43,7 +53,7 @@ class VoucherController extends Controller
 
     public function saveVoucher(Request $request)
     {
-        // 1. Khách vãng lai chưa đăng nhập -> Trả về lỗi 401 bắt đi đăng nhập
+        // 1. Khách vãng lai chưa đăng nhập -> Trả về lỗi 401
         if (!Auth::check()) {
             return response()->json([
                 'success' => false,
@@ -51,11 +61,12 @@ class VoucherController extends Controller
             ], 401);
         }
 
-        $request->validate(['code' => 'required|string']);
+        // JS đang gửi id lên thay vì code
+        $request->validate(['id' => 'required|string']);
         $user = Auth::user();
 
-        // 2. Tìm mã Voucher xem có hợp lệ không
-        $voucher = Voucher::where('code', $request->code)
+        // 2. Tìm mã Voucher
+        $voucher = Voucher::where('id', $request->id)
             ->where('status', 'active')
             ->first();
 
@@ -66,7 +77,16 @@ class VoucherController extends Controller
             ], 404);
         }
 
-        // 3. Check xem khách đã lưu mã này chưa (Tránh spam click)
+        // Xác minh lại một lần nữa phòng trường hợp khách ngâm tab quá lâu
+        if ($voucher->expires_at && $voucher->expires_at < now()) {
+            return response()->json(['success' => false, 'message' => 'Rất tiếc, mã ưu đãi này vừa hết hạn!'], 400);
+        }
+
+        if ($voucher->total_quantity !== null && $voucher->total_quantity <= 0) {
+            return response()->json(['success' => false, 'message' => 'Rất tiếc, mã ưu đãi này đã hết lượt lưu!'], 400);
+        }
+
+        // 3. Check xem khách đã lưu mã này chưa (Tránh spam click/request)
         if ($user->savedVouchers()->where('voucher_id', $voucher->id)->exists()) {
             return response()->json([
                 'success' => false,
@@ -76,6 +96,12 @@ class VoucherController extends Controller
 
         // 4. Nếu êm xuôi -> Attach (Insert 1 dòng vào bảng voucher_users)
         $user->savedVouchers()->attach($voucher->id);
+
+        // (Tùy chọn) 5. Trừ đi 1 lượt sử dụng của voucher trên hệ thống
+        // Nếu logic của bạn là "Cứ cất vào ví là mất 1 slot (xí chỗ)" thì bỏ comment dòng dưới:
+        // if ($voucher->total_quantity !== null) {
+        //     $voucher->decrement('total_quantity');
+        // }
 
         return response()->json([
             'success' => true,
