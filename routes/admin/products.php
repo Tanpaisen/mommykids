@@ -1,10 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\StageController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\ProductController;
-
 // ── Giai đoạn ──
 Route::controller(StageController::class)->group(function () {
     Route::get('/giai-doan-thung-rac', 'trash')->name('stages.trash');

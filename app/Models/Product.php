@@ -17,6 +17,16 @@ class Product extends Model
         'name',
         'slug',
         'description',
+
+        // Nội dung chi tiết sản phẩm
+        'origin',
+        'manufacturer',
+        'ingredients',
+        'usage_instructions',
+        'storage_instructions',
+        'warning',
+        'highlights',
+
         'image',
         'images',
         'price',
@@ -51,6 +61,7 @@ class Product extends Model
         'height_cm' => 'integer',
 
         'images' => 'array',
+        'highlights' => 'array',
 
         'deleted_at' => 'datetime',
         'restored_at' => 'datetime',

@@ -166,6 +166,11 @@ class ProductController extends Controller
             $this->messages()
         );
 
+        $validated['highlights'] =
+            $this->normalizeHighlights(
+                $validated['highlights'] ?? null
+            );
+
         /*
          * Tạo slug.
          */
@@ -344,6 +349,11 @@ class ProductController extends Controller
             $rules,
             $this->messages()
         );
+
+        $validated['highlights'] =
+            $this->normalizeHighlights(
+                $validated['highlights'] ?? null
+            );
 
         /*
          * Chuẩn hóa slug.
@@ -805,6 +815,85 @@ class ProductController extends Controller
             ],
 
             /*
+             * Nội dung chi tiết sản phẩm.
+             */
+            'origin' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'manufacturer' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'ingredients' => [
+                'nullable',
+                'string',
+            ],
+
+            'usage_instructions' => [
+                'nullable',
+                'string',
+            ],
+
+            'storage_instructions' => [
+                'nullable',
+                'string',
+            ],
+
+            'warning' => [
+                'nullable',
+                'string',
+            ],
+
+            /*
+             * Điểm nổi bật sản phẩm.
+             * Lưu dưới dạng JSON trong products.highlights.
+             */
+            'highlights' => [
+                'nullable',
+                'array',
+            ],
+
+            'highlights.items' => [
+                'nullable',
+                'array',
+                'max:4',
+            ],
+
+            'highlights.items.*.title' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'highlights.items.*.subtitle' => [
+                'nullable',
+                'string',
+                'max:150',
+            ],
+
+            'highlights.items.*.icon' => [
+                'nullable',
+                'in:shield,brain,digest,heart,bone,eye,check',
+            ],
+
+            'highlights.message' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'highlights.submessage' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            /*
              * Giá.
              */
             'price' => [
@@ -960,12 +1049,6 @@ class ProductController extends Controller
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Validation messages
-    |--------------------------------------------------------------------------
-    */
-
     private function messages(): array
     {
         return [
@@ -1047,6 +1130,24 @@ class ProductController extends Controller
             'height_cm.min' =>
                 'Chiều cao sản phẩm phải lớn hơn 0 cm.',
 
+            'highlights.items.max' =>
+                'Chỉ được nhập tối đa 4 điểm nổi bật.',
+
+            'highlights.items.*.title.max' =>
+                'Tiêu đề điểm nổi bật không được vượt quá 100 ký tự.',
+
+            'highlights.items.*.subtitle.max' =>
+                'Nội dung ngắn của điểm nổi bật không được vượt quá 150 ký tự.',
+
+            'highlights.items.*.icon.in' =>
+                'Icon điểm nổi bật không hợp lệ.',
+
+            'highlights.message.max' =>
+                'Thông điệp nổi bật không được vượt quá 255 ký tự.',
+
+            'highlights.submessage.max' =>
+                'Nội dung phụ không được vượt quá 255 ký tự.',
+
             'image.image' =>
                 'Ảnh đại diện không hợp lệ.',
 
@@ -1070,11 +1171,50 @@ class ProductController extends Controller
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Tạo slug
-    |--------------------------------------------------------------------------
-    */
+    private function normalizeHighlights(?array $highlights): ?array
+    {
+        if (!$highlights) {
+            return null;
+        }
+
+        $items = collect($highlights['items'] ?? [])
+            ->map(function ($item) {
+                return [
+                    'title' => filled($item['title'] ?? null)
+                        ? trim((string) $item['title'])
+                        : null,
+                    'subtitle' => filled($item['subtitle'] ?? null)
+                        ? trim((string) $item['subtitle'])
+                        : null,
+                    'icon' => filled($item['icon'] ?? null)
+                        ? (string) $item['icon']
+                        : 'check',
+                ];
+            })
+            ->filter(fn ($item) => filled($item['title']))
+            ->take(4)
+            ->values()
+            ->all();
+
+        $message = filled($highlights['message'] ?? null)
+            ? trim((string) $highlights['message'])
+            : null;
+
+        $submessage = filled($highlights['submessage'] ?? null)
+            ? trim((string) $highlights['submessage'])
+            : null;
+
+        if (empty($items) && !$message && !$submessage) {
+            return null;
+        }
+
+        return [
+            'items' => $items,
+            'message' => $message,
+            'submessage' => $submessage,
+        ];
+    }
+
 
     private function makeSlug(
         ?string $slug,
@@ -1087,19 +1227,10 @@ class ProductController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Tạo Cloudinary instance
-    |--------------------------------------------------------------------------
-    */
 
     private function cloudinary(): Cloudinary
     {
-        /*
-         * config/cloudinary.php:
-         *
-         * 'cloud_url' => env('CLOUDINARY_URL')
-         */
+
         $cloudUrl =
             config(
                 'cloudinary.cloud_url'
@@ -1117,27 +1248,10 @@ class ProductController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Upload Cloudinary
-    |--------------------------------------------------------------------------
-    */
-
     private function uploadToCloudinary(
         UploadedFile $file,
         string $folder
     ): string {
-        /*
-         * QUAN TRỌNG:
-         *
-         * Cloudinary PHP SDK 2.x:
-         *
-         * ĐÚNG:
-         * ->uploadApi()
-         *
-         * SAI:
-         * ->uploadApi
-         */
 
         $result =
             $this->cloudinary()
@@ -1145,41 +1259,28 @@ class ProductController extends Controller
                 ->upload(
                     $file->getRealPath(),
                     [
-                        /*
-                         * Folder trên Cloudinary.
-                         */
+    
                         'folder' =>
                             $folder,
 
-                        /*
-                         * Chỉ image.
-                         */
+
                         'resource_type' =>
                             'image',
 
-                        /*
-                         * Giữ tên file gốc.
-                         */
+
                         'use_filename' =>
                             true,
 
-                        /*
-                         * Thêm phần unique tránh trùng tên.
-                         */
+
                         'unique_filename' =>
                             true,
 
-                        /*
-                         * Không ghi đè asset cũ.
-                         */
+
                         'overwrite' =>
                             false,
                     ]
                 );
 
-        /*
-         * Cloudinary trả HTTPS URL.
-         */
         $url =
             $result['secure_url']
             ?? null;
@@ -1194,18 +1295,6 @@ class ProductController extends Controller
         return $url;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Xóa ảnh
-    |--------------------------------------------------------------------------
-    |
-    | Hỗ trợ đồng thời:
-    |
-    | 1. Ảnh Cloudinary mới
-    | 2. Ảnh local Laravel cũ
-    | 3. URL ngoài không thuộc Cloudinary
-    |
-    */
 
     private function deleteStoredImage(
         ?string $image
@@ -1213,12 +1302,6 @@ class ProductController extends Controller
         if (!$image) {
             return;
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Cloudinary
-        |--------------------------------------------------------------------------
-        */
 
         if (
             $this->isCloudinaryUrl(
@@ -1236,12 +1319,7 @@ class ProductController extends Controller
             }
 
             try {
-                /*
-                 * QUAN TRỌNG:
-                 *
-                 * phải dùng uploadApi()
-                 * chứ không phải uploadApi.
-                 */
+
                 $this->cloudinary()
                     ->uploadApi()
                     ->destroy(
@@ -1250,29 +1328,17 @@ class ProductController extends Controller
                             'resource_type' =>
                                 'image',
 
-                            /*
-                             * Làm CDN xóa cache ảnh.
-                             */
                             'invalidate' =>
                                 true,
                         ]
                     );
             } catch (\Throwable $e) {
-                /*
-                 * Không làm hỏng thao tác database
-                 * chỉ vì Cloudinary xóa asset lỗi.
-                 */
+
                 report($e);
             }
 
             return;
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | URL ngoài
-        |--------------------------------------------------------------------------
-        */
 
         if (
             Str::startsWith(
@@ -1283,35 +1349,15 @@ class ProductController extends Controller
                 ]
             )
         ) {
-            /*
-             * Không tự xóa tài nguyên
-             * của website/service khác.
-             */
+
             return;
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Ảnh local cũ
-        |--------------------------------------------------------------------------
-        |
-        | Ví dụ:
-        |
-        | products/main/abc.jpg
-        |
-        */
 
         Storage::disk('public')
             ->delete(
                 $image
             );
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Kiểm tra URL Cloudinary
-    |--------------------------------------------------------------------------
-    */
 
     private function isCloudinaryUrl(
         string $url
@@ -1336,22 +1382,6 @@ class ProductController extends Controller
             );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Lấy Cloudinary public_id từ URL
-    |--------------------------------------------------------------------------
-    |
-    | Ví dụ:
-    |
-    | https://res.cloudinary.com/xxx/image/upload/
-    | v1234567890/mommykids/products/main/meiji_abc.jpg
-    |
-    | Sẽ lấy:
-    |
-    | mommykids/products/main/meiji_abc
-    |
-    */
-
     private function extractCloudinaryPublicId(
         string $url
     ): ?string {
@@ -1365,9 +1395,6 @@ class ProductController extends Controller
             return null;
         }
 
-        /*
-         * Tìm phần /image/upload/.
-         */
         $marker =
             '/image/upload/';
 
@@ -1381,9 +1408,6 @@ class ProductController extends Controller
             return null;
         }
 
-        /*
-         * Lấy phần sau /image/upload/.
-         */
         $relativePath =
             substr(
                 $path,
@@ -1391,17 +1415,6 @@ class ProductController extends Controller
                 + strlen($marker)
             );
 
-        /*
-         * Bỏ Cloudinary version.
-         *
-         * Ví dụ:
-         *
-         * v1756300000/...
-         *
-         * =>
-         *
-         * mommykids/...
-         */
         $relativePath =
             preg_replace(
                 '#^v\d+/#',
@@ -1413,14 +1426,6 @@ class ProductController extends Controller
             return null;
         }
 
-        /*
-         * Bỏ phần mở rộng file:
-         *
-         * .jpg
-         * .jpeg
-         * .png
-         * .webp
-         */
         $publicId =
             preg_replace(
                 '/\.[^\.\/]+$/',
@@ -1432,9 +1437,6 @@ class ProductController extends Controller
             return null;
         }
 
-        /*
-         * Decode ký tự URL.
-         */
         return rawurldecode(
             ltrim(
                 $publicId,
