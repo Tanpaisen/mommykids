@@ -13,6 +13,8 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Payment\ZaloPayController;
+use App\Http\Controllers\Payment\StripeController;
 use App\Http\Controllers\Client\VoucherController;
 
 /*
@@ -134,6 +136,32 @@ Route::prefix('api')->group(function () {
     Route::post('/vouchers/save', [VoucherController::class, 'saveVoucher'])
         ->name('api.vouchers.save');
 });
+
+Route::get('/payments/zalopay/create', [ZaloPayController::class, 'create'])
+    ->name('zalopay.create');
+
+Route::get('/payments/zalopay/return', [ZaloPayController::class, 'result'])
+    ->name('zalopay.return');
+
+Route::get(
+    '/payments/zalopay/qr',
+    [ZaloPayController::class, 'qr']
+)->name('zalopay.qr');
+
+Route::get(
+    '/payments/zalopay/status',
+    [ZaloPayController::class, 'status']
+)->name('zalopay.status');
+
+Route::get(
+    '/payments/stripe/create',
+    [StripeController::class, 'create']
+)->name('stripe.create');
+
+Route::get(
+    '/payments/stripe/success',
+    [StripeController::class, 'success']
+)->name('stripe.success');
 
 /*
 |--------------------------------------------------------------------------
