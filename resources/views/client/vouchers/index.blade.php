@@ -70,126 +70,137 @@
         <a href="#" class="hidden md:block text-sm font-medium text-gray-500 hover:text-pink-500 whitespace-nowrap ml-4 transition-colors">Xem lịch sử ></a>
     </div>
 
-    <!-- 4. KHU VỰC SĂN VOUCHER KIỂU TINDER (SWIPE CARD DECK) -->
-    <div class="max-w-md mx-auto relative mb-12">
+    <!-- 4. KHU VỰC SĂN VOUCHER KIỂU TINDER (NÂNG CẤP BOARD UI) -->
+    <div class="max-w-3xl mx-auto mb-16 relative">
         
-        <!-- Dòng hướng dẫn phong cách minigame -->
-        <div class="text-center mb-4">
-            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest">💡 Bấm nút hoặc vuốt để khám phá ưu đãi</p>
-        </div>
+        <!-- Bảng điều khiển (Board) bọc ngoài để giảm khoảng trắng -->
+        <div class="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-pink-100 relative overflow-hidden">
+            
+            <!-- Hiệu ứng trang trí nền (Gradient & Blur) tạo chiều sâu -->
+            <div class="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-pink-50/80 to-white opacity-80 z-0"></div>
+            <div class="absolute -left-12 top-10 w-40 h-40 bg-pink-200/40 rounded-full blur-3xl z-0 pointer-events-none"></div>
+            <div class="absolute -right-12 bottom-10 w-40 h-40 bg-teal-200/30 rounded-full blur-3xl z-0 pointer-events-none"></div>
 
-        @php
-            $savedVoucherIds = [];
-            if(auth()->check()) {
-                $savedVoucherIds = auth()->user()->savedVouchers()->pluck('vouchers.id')->toArray();
-            }
-        @endphp
+            <div class="relative z-10 flex flex-col items-center">
+                
+                <!-- Tiêu đề Board -->
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-black text-gray-800 mb-2 tracking-tight">Săn Deal Chớp Nhoáng ⚡</h3>
+                    <p class="text-[10px] font-bold text-pink-500 uppercase tracking-widest bg-pink-50 border border-pink-100 px-4 py-1.5 rounded-full inline-block shadow-sm">
+                        Vuốt Trái: Bỏ Qua &nbsp;|&nbsp; Vuốt Phải: Cất Ví
+                    </p>
+                </div>
 
-        <!-- Stack chứa các thẻ voucher -->
-        <div id="swipe-card-container" class="relative h-[240px] w-full flex items-center justify-center">
-            @forelse($vouchers as $index => $voucher)
-                @php
-                    $isShipping = $voucher->type === 'shipping';
-                    $leftBgClass = $isShipping ? 'bg-emerald-400 border-emerald-200/50' : 'bg-pink-500 border-pink-200/50';
-                    $badgeClass = $isShipping ? 'bg-emerald-100 text-emerald-700' : 'bg-pink-100 text-pink-600';
-                    
-                    $icon = $isShipping ? '🚚' : '🛒';
-                    if (!$isShipping && $voucher->discount_type === 'percent') $icon = '✨';
-
-                    $discountText = '';   
-                    $discountTitle = '';  
-                    
-                    if ($voucher->discount_type === 'percent') {
-                        $discountText = 'Giảm<br>' . $voucher->discount_value . '%';
-                        $discountTitle = 'Giảm ' . $voucher->discount_value . '%';
-                        if ($voucher->max_discount_amount) {
-                            $discountTitle .= ' (Tối đa ' . number_format($voucher->max_discount_amount, 0, ',', '.') . 'đ)';
-                        }
-                    } elseif ($voucher->discount_type === 'free_shipping') {
-                        $discountText = 'Free<br>Ship';
-                        $discountTitle = 'Miễn phí vận chuyển';
-                        if ($voucher->max_discount_amount) {
-                            $discountTitle = 'Hỗ trợ tối đa ' . number_format($voucher->max_discount_amount, 0, ',', '.') . 'đ phí ship';
-                        }
-                    } else {
-                        $valK = $voucher->discount_value / 1000;
-                        $discountText = 'Giảm<br>' . $valK . 'K';
-                        $discountTitle = 'Giảm ' . number_format($voucher->discount_value, 0, ',', '.') . 'đ';
-                    }
-
-                    $expireText = $voucher->expires_at ? 'HSD: ' . \Carbon\Carbon::parse($voucher->expires_at)->format('d/m/Y H:i') : 'Không thời hạn';
-                    $minOrderText = $voucher->min_order_amount > 0 ? ' cho đơn từ ' . number_format($voucher->min_order_amount, 0, ',', '.') . 'đ' : '';
-                    $isSaved = in_array($voucher->id, $savedVoucherIds);
-                @endphp
-
-                <!-- Mỗi thẻ voucher (xếp chồng lên nhau) -->
-                <div class="voucher-card absolute w-full h-[180px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-300 select-none cursor-grab active:cursor-grabbing flex"
-                    style="z-index: {{ count($vouchers) - $index }};"
-                    data-id="{{ $voucher->id }}"
-                    data-type="{{ $voucher->type }}">
-                    
-                    <!-- Nửa trái (Full chiều cao h-full) -->
-                    <div class="w-1/3 min-w-[110px] h-full {{ $leftBgClass }} flex flex-col items-center justify-center p-4 border-r-2 border-dashed relative text-white">
-                        <div class="absolute -top-3 -right-3 w-6 h-6 bg-gray-50 rounded-full"></div>
-                        <div class="absolute -bottom-3 -right-3 w-6 h-6 bg-gray-50 rounded-full"></div>
-                        <span class="text-3xl mb-1 drop-shadow-sm">{{ $icon }}</span>
-                        <span class="font-bold text-lg text-center leading-tight">{!! $discountText !!}</span>
-                    </div>
-                    
-                    <!-- Nửa phải -->
-                    <div class="w-2/3 h-full p-4 flex flex-col justify-between bg-white">
-                        <div>
-                            <div class="flex justify-between items-start mb-1">
-                                <span class="{{ $badgeClass }} text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
-                                    {{ $voucher->type === 'shipping' ? 'Vận chuyển' : 'Đơn hàng' }}
-                                </span>
-                                @if($voucher->total_quantity && $voucher->total_quantity <= 10)
-                                    <span class="text-[10px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full animate-pulse">
-                                        🔥 Sắp hết
-                                    </span>
-                                @else
-                                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                                        Đang diễn ra
-                                    </span>
-                                @endif
-                            </div>
-                            <h4 class="font-bold text-gray-800 text-sm leading-snug line-clamp-1" title="{{ $voucher->name }}">{{ $voucher->name }}</h4>
-                            <p class="text-[11px] text-gray-500 mt-0.5 font-medium">{{ $discountTitle }}{{ $minOrderText }}</p>
-                            <p class="text-[10px] text-gray-400 flex items-center gap-1 mt-1">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                {{ $expireText }}
-                            </p>
-                        </div>
+                <!-- Vùng chứa Thẻ (Thu gọn vào max-w-sm để tỷ lệ thẻ đẹp hơn) -->
+                <div class="w-full max-w-sm relative">
+                    <div id="swipe-card-container" class="relative h-[200px] w-full flex items-center justify-center">
                         
-                        <div class="flex justify-between items-center pt-2 border-t border-gray-100">
-                            <span class="text-[11px] text-gray-400">Thẻ số {{ $index + 1 }}/{{ count($vouchers) }}</span>
-                            <span class="text-[11px] font-semibold text-pink-500">MommyKids</span>
+                        <!-- THẺ ĐÁY (BASE CARD) - Luôn nằm cố định dưới cùng (z-index: 0) -->
+                        <div class="absolute w-full h-[180px] bg-gray-50/80 backdrop-blur-sm rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-center z-0">
+                            <div class="w-12 h-12 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-xl mb-3 shadow-inner">
+                                📭
+                            </div>
+                            <h3 class="font-bold text-gray-600 text-sm">Toàn bộ cơ hội đã được xem</h3>
+                            <p class="text-[11px] text-gray-400 mt-1 max-w-[220px]">Bạn đã duyệt qua tất cả mã ưu đãi. Hãy kiểm tra chiến lợi phẩm trong ví nhé!</p>
+                            <button onclick="location.reload()" class="mt-4 text-gray-500 hover:text-pink-600 text-[11px] font-bold px-5 py-2 rounded-full border border-gray-300 hover:border-pink-300 hover:bg-pink-50 transition-all active:scale-95">
+                                ↻ Tải lại thẻ
+                            </button>
                         </div>
+
+                        <!-- Vòng lặp render các thẻ Voucher -->
+                        @foreach($vouchers as $index => $voucher)
+                            @php
+                                $isShipping = $voucher->type === 'shipping';
+                                $leftBgClass = $isShipping ? 'bg-emerald-400 border-emerald-200/50' : 'bg-pink-500 border-pink-200/50';
+                                $badgeClass = $isShipping ? 'bg-emerald-100 text-emerald-700' : 'bg-pink-100 text-pink-600';
+                                
+                                $icon = $isShipping ? '🚚' : '🛒';
+                                if (!$isShipping && $voucher->discount_type === 'percent') $icon = '✨';
+
+                                $discountText = '';   
+                                $discountTitle = '';  
+                                
+                                if ($voucher->discount_type === 'percent') {
+                                    $discountText = 'Giảm<br>' . $voucher->discount_value . '%';
+                                    $discountTitle = 'Giảm ' . $voucher->discount_value . '%';
+                                    if ($voucher->max_discount_amount) {
+                                        $discountTitle .= ' (Tối đa ' . number_format($voucher->max_discount_amount, 0, ',', '.') . 'đ)';
+                                    }
+                                } elseif ($voucher->discount_type === 'free_shipping') {
+                                    $discountText = 'Free<br>Ship';
+                                    $discountTitle = 'Miễn phí vận chuyển';
+                                    if ($voucher->max_discount_amount) {
+                                        $discountTitle = 'Hỗ trợ tối đa ' . number_format($voucher->max_discount_amount, 0, ',', '.') . 'đ phí ship';
+                                    }
+                                } else {
+                                    $valK = $voucher->discount_value / 1000;
+                                    $discountText = 'Giảm<br>' . $valK . 'K';
+                                    $discountTitle = 'Giảm ' . number_format($voucher->discount_value, 0, ',', '.') . 'đ';
+                                }
+
+                                $expireText = $voucher->expires_at ? 'HSD: ' . \Carbon\Carbon::parse($voucher->expires_at)->format('d/m/Y H:i') : 'Không thời hạn';
+                                $minOrderText = $voucher->min_order_amount > 0 ? ' cho đơn từ ' . number_format($voucher->min_order_amount, 0, ',', '.') . 'đ' : '';
+                            @endphp
+
+                            <!-- Thẻ Voucher -->
+                            <div class="voucher-card absolute w-full h-[180px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-300 select-none cursor-grab active:cursor-grabbing flex"
+                                style="z-index: {{ count($vouchers) - $index }};"
+                                data-id="{{ $voucher->id }}">
+                                
+                                <!-- Nửa trái -->
+                                <div class="w-1/3 min-w-[110px] h-full {{ $leftBgClass }} flex flex-col items-center justify-center p-4 border-r-2 border-dashed relative text-white">
+                                    <div class="absolute -top-3 -right-3 w-6 h-6 bg-gray-50 rounded-full"></div>
+                                    <div class="absolute -bottom-3 -right-3 w-6 h-6 bg-gray-50 rounded-full"></div>
+                                    <span class="text-3xl mb-1 drop-shadow-sm">{{ $icon }}</span>
+                                    <span class="font-bold text-lg text-center leading-tight">{!! $discountText !!}</span>
+                                </div>
+                                
+                                <!-- Nửa phải -->
+                                <div class="w-2/3 h-full p-4 flex flex-col justify-between bg-white">
+                                    <div>
+                                        <div class="flex justify-between items-start mb-1">
+                                            <span class="{{ $badgeClass }} text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
+                                                {{ $voucher->type === 'shipping' ? 'Vận chuyển' : 'Đơn hàng' }}
+                                            </span>
+                                            @if($voucher->total_quantity && $voucher->total_quantity <= 10)
+                                                <span class="text-[10px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full animate-pulse">🔥 Sắp hết</span>
+                                            @else
+                                                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Đang diễn ra</span>
+                                            @endif
+                                        </div>
+                                        <h4 class="font-bold text-gray-800 text-sm leading-snug line-clamp-1" title="{{ $voucher->name }}">{{ $voucher->name }}</h4>
+                                        <p class="text-[11px] text-gray-500 mt-0.5 font-medium">{{ $discountTitle }}{{ $minOrderText }}</p>
+                                        <p class="text-[10px] text-gray-400 flex items-center gap-1 mt-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            {{ $expireText }}
+                                        </p>
+                                    </div>
+                                    <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                                        <span class="text-[11px] text-gray-400 font-medium">Thẻ số {{ $index + 1 }}/{{ count($vouchers) }}</span>
+                                        <span class="text-[11px] font-black text-pink-500">MommyKids</span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
-                </div>
-            @empty
-                <div class="w-full py-16 text-center flex flex-col items-center justify-center bg-white rounded-2xl border border-gray-100 shadow-sm">
-                    <span class="text-6xl mb-4">🥺</span>
-                    <h3 class="text-xl font-bold text-gray-700">Chưa có mã ưu đãi nào</h3>
-                    <p class="text-gray-500 mt-2">Mẹ quay lại sau để săn voucher nhé!</p>
-                </div>
-            @endforelse
-        </div>
 
-        <!-- 5. THANH ĐIỀU KHIỂN HÀNH ĐỘNG (Nút X và Lưu) -->
-        @if($vouchers->count() > 0)
-        <div class="flex items-center justify-center gap-8 mt-8">
-            <!-- Nút Bỏ qua (X) -->
-            <button onclick="swipeCard('left')" class="w-14 h-14 bg-white border border-gray-200 rounded-full flex items-center justify-center text-red-500 shadow-md hover:bg-red-50 hover:scale-110 active:scale-95 transition-all text-xl font-bold">
-                ✕
-            </button>
-            <!-- Nút Lưu quà (Lưu vào ví) -->
-            <button onclick="swipeCard('right')" class="w-16 h-16 bg-gradient-to-tr from-pink-500 to-rose-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-pink-200 hover:scale-110 active:scale-95 transition-all text-2xl">
-                💾
-            </button>
-        </div>
-        @endif
+                    <!-- 5. THANH ĐIỀU KHIỂN HÀNH ĐỘNG (Nút X và Lưu) -->
+                    @if($vouchers->count() > 0)
+                    <div class="flex items-center justify-center gap-8 mt-10 w-full relative z-10 transition-opacity duration-300" id="swipe-controls">
+                        <!-- Nút Bỏ qua (X) -->
+                        <button onclick="swipeCard('left')" class="w-14 h-14 bg-white border border-gray-200 rounded-full flex items-center justify-center text-red-500 shadow-md hover:bg-red-50 hover:border-red-200 hover:scale-110 active:scale-95 transition-all text-xl font-bold">
+                            ✕
+                        </button>
+                        <!-- Nút Lưu quà (Lưu vào ví) -->
+                        <button onclick="swipeCard('right')" class="w-16 h-16 bg-gradient-to-tr from-pink-500 to-rose-500 rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(236,72,153,0.3)] hover:shadow-[0_10px_25px_rgba(236,72,153,0.4)] hover:scale-110 active:scale-95 transition-all text-2xl">
+                            💾
+                        </button>
+                    </div>
+                    @endif
+                </div>
 
+            </div>
+        </div>
     </div>
 </div>
 
@@ -212,42 +223,86 @@
         let currentIndex = cards.length - 1; 
         updateCardStack();
 
-        window.swipeCard = async function(direction) {
+        // 1. HÀM ĐIỀU KHIỂN BẰNG NÚT BẤM (X VÀ TIM)
+        window.swipeCard = function(direction) {
             if (currentIndex < 0) return;
-
             const currentCard = cards[currentIndex];
             const voucherId = currentCard.getAttribute('data-id');
 
-            currentCard.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
             if (direction === 'left') {
-                currentCard.style.transform = 'translateX(-120%) rotate(-20deg)';
-                currentCard.style.opacity = '0';
+                animateCard(currentCard, 'left');
+                currentIndex--;
+                checkEmptyStack();
             } else {
-                currentCard.style.transform = 'translateX(120%) rotate(20deg)';
-                currentCard.style.opacity = '0';
-                saveVoucherById(voucherId);
-            }
-
-            currentIndex--;
-
-            if (currentIndex < 0) {
-                setTimeout(() => {
-                    document.getElementById('swipe-card-container').innerHTML = `
-                        <div class="w-full py-16 text-center flex flex-col items-center justify-center bg-white rounded-2xl border border-gray-100 shadow-sm">
-                            <span class="text-5xl mb-3">🎉</span>
-                            <h3 class="text-lg font-bold text-gray-800">Đã xem hết ưu đãi!</h3>
-                            <p class="text-xs text-gray-500 mt-1">Mẹ đã cất những chiếc mã tuyệt vời vào ví.</p>
-                            <button onclick="location.reload()" class="mt-4 bg-pink-500 text-white text-xs font-bold px-5 py-2 rounded-full shadow-sm hover:bg-pink-600 transition-colors">Xem lại từ đầu</button>
-                        </div>
-                    `;
-                    const controlBar = document.querySelector('.flex.items-center.justify-center.gap-8.mt-8');
-                    if (controlBar) controlBar.style.display = 'none';
-                }, 400);
-            } else {
-                updateCardStack();
+                // Nếu là vuốt phải (Lưu), Giao cho AJAX xử lý, khoan hãy cho qua bài
+                handleSaveVoucher(currentCard, voucherId);
             }
         }
 
+        // 2. HÀM HIỆU ỨNG BAY THẺ
+        function animateCard(card, direction) {
+            card.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+            if (direction === 'left') {
+                card.style.transform = 'translateX(-120%) rotate(-20deg)';
+            } else {
+                card.style.transform = 'translateX(120%) rotate(20deg)';
+            }
+            card.style.opacity = '0';
+        }
+
+        // 3. HÀM "GIẬT THẺ LẠI" (UNDO) KHI LỖI HOẶC CHƯA ĐĂNG NHẬP
+        function undoCard(card) {
+            card.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            card.style.transform = 'scale(1) translateY(0px) rotate(0deg)';
+            card.style.opacity = '1';
+        }
+
+        // 4. XỬ LÝ AJAX LƯU VOUCHER VÀ QUYẾT ĐỊNH CHO THẺ BAY HAY GIỮ LẠI
+        async function handleSaveVoucher(card, voucherId) {
+            // Cho thẻ bay đi trước để tạo cảm giác mượt
+            animateCard(card, 'right');
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const response = await fetch('/api/vouchers/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken || ''
+                    },
+                    body: JSON.stringify({ id: voucherId }) // Controller của bạn đang dùng id
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // API Báo lưu thành công -> Cho qua bài luôn
+                    currentIndex--;
+                    checkEmptyStack();
+                } else {
+                    // API Báo lỗi -> Giật thẻ quay lại vị trí cũ!
+                    undoCard(card);
+                    
+                    if (response.status === 401) {
+                        // Gọi Popup Đăng nhập
+                        if (typeof openLoginModal === 'function') {
+                            openLoginModal();
+                        } else {
+                            alert('Vui lòng đăng nhập để lưu mã ưu đãi!');
+                        }
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra!');
+                    }
+                }
+            } catch (error) {
+                console.error('Lỗi lưu mã:', error);
+                undoCard(card); // Lỗi mạng cũng giật thẻ lại
+                alert('Mất kết nối đến máy chủ, vui lòng thử lại.');
+            }
+        }
+
+        // 5. CẬP NHẬT GIAO DIỆN XẾP CHỒNG (Z-INDEX & SCALE)
         function updateCardStack() {
             cards.forEach((card, index) => {
                 if (index <= currentIndex) {
@@ -269,24 +324,27 @@
             });
         }
 
-        async function saveVoucherById(id) {
-            try {
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                await fetch('/api/vouchers/save', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken || ''
-                    },
-                    body: JSON.stringify({ id: id })
-                });
-            } catch (error) {
-                console.error('Lỗi lưu mã:', error);
+        // 6. KIỂM TRA HẾT BÀI VÀ HIỂN THỊ THÔNG BÁO TỔNG KẾT
+        function checkEmptyStack() {
+            if (currentIndex < 0) {
+                setTimeout(() => {
+                    document.getElementById('swipe-card-container').innerHTML = `
+                        <div class="w-full py-16 text-center flex flex-col items-center justify-center bg-white rounded-2xl border border-gray-100 shadow-sm">
+                            <span class="text-5xl mb-3">🎉</span>
+                            <h3 class="text-lg font-bold text-gray-800">Đã xem hết ưu đãi!</h3>
+                            <p class="text-xs text-gray-500 mt-1">Mẹ đã cất những chiếc mã tuyệt vời vào ví.</p>
+                            <button onclick="location.reload()" class="mt-4 bg-pink-500 text-white text-xs font-bold px-5 py-2 rounded-full shadow-sm hover:bg-pink-600 transition-colors">Xem lại từ đầu</button>
+                        </div>
+                    `;
+                    const controlBar = document.querySelector('.flex.items-center.justify-center.gap-8.mt-8');
+                    if (controlBar) controlBar.style.display = 'none';
+                }, 400);
+            } else {
+                updateCardStack();
             }
         }
 
-        // Thêm tính năng kéo chuột/vuốt trên mobile & desktop cho thẻ trên cùng
+        // 7. XỬ LÝ SỰ KIỆN KÉO THẢ BẰNG CHUỘT / CẢM ỨNG (TOUCH/DRAG)
         cards.forEach((card, index) => {
             let startX = 0, currentX = 0, isDragging = false;
 
@@ -295,7 +353,7 @@
                 isDragging = true;
                 startX = e.clientX;
                 card.setPointerCapture(e.pointerId);
-                card.style.transition = 'none';
+                card.style.transition = 'none'; // Tắt hiệu ứng mượt khi đang kéo
             });
 
             card.addEventListener('pointermove', (e) => {
@@ -311,13 +369,16 @@
                 card.releasePointerCapture(e.pointerId);
 
                 if (currentX > 100) {
-                    swipeCard('right'); // Kéo sang phải -> Lưu
+                    // Kéo sang phải đủ xa -> Lưu mã
+                    handleSaveVoucher(card, card.getAttribute('data-id'));
                 } else if (currentX < -100) {
-                    swipeCard('left');  // Kéo sang trái -> Bỏ qua
+                    // Kéo sang trái đủ xa -> Bỏ qua
+                    animateCard(card, 'left');
+                    currentIndex--;
+                    checkEmptyStack();
                 } else {
-                    // Trả về vị trí cũ nếu kéo ít
-                    card.style.transition = 'transform 0.3s ease';
-                    card.style.transform = 'translateX(0px) rotate(0deg)';
+                    // Kéo chưa đủ xa -> Trả về vị trí cũ (Undo kéo)
+                    undoCard(card);
                 }
                 currentX = 0;
             });
