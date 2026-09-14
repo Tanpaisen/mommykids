@@ -114,27 +114,46 @@
                     <span>{{ $order->shipment->expected_delivery_at?->format('d/m/Y') ?? '—' }}</span></div>
             </div>
 
-            <div class="flex gap-3 flex-wrap">
+            {{-- Trạng thái in - thêm id để JS cập nhật --}}
+            <div><span class="text-gray-500 block text-xs">In vận đơn</span>
+                <span id="print-status" class="text-xs @if($order->shipment->printed_at) text-green-600 @else text-gray-400 @endif">
+                    @if($order->shipment->printed_at)
+                        ✅ {{ $order->shipment->printed_at->format('H:i d/m/Y') }}
+                    @else
+                        Chưa in
+                    @endif
+                </span>
+            </div>
+
+           <div class="flex gap-3 flex-wrap">
                 {{-- In vận đơn --}}
-                <a href="{{ route('admin.orders.shipment.print', $order) }}" target="_blank"
-                   class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+                <a href="{{ route('admin.orders.shipment.print', $order) }}"
+                target="_blank"
+                onclick="markPrinted()"
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
                     🖨️ In vận đơn
                 </a>
 
-                {{-- Tra cứu GHN --}}
-                <a href="{{ route('admin.orders.shipment.track', $order) }}"
-                   class="border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg text-sm hover:bg-indigo-50">
-                    🔄 Cập nhật trạng thái
-                </a>
-
-                {{-- Huỷ vận đơn --}}
-                <form method="POST" action="{{ route('admin.orders.shipment.cancel', $order) }}"
-                      onsubmit="return confirm('Huỷ vận đơn GHN này?')">
-                    @csrf @method('DELETE')
-                    <button class="border border-red-400 text-red-500 px-4 py-2 rounded-lg text-sm hover:bg-red-50">
-                        ❌ Huỷ vận đơn
+                {{-- Tra cứu GHN — lấy trạng thái mới nhất --}}
+                <form method="POST" action="{{ route('admin.orders.shipment.track', $order) }}">
+                    @csrf
+                    <button type="submit"
+                            class="border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg text-sm hover:bg-indigo-50">
+                        🔄 Tra cứu GHN
                     </button>
                 </form>
+
+                {{-- Huỷ vận đơn — chỉ hiện khi chưa lấy hàng --}}
+                @if(in_array($order->shipment->status, ['pending', 'ready_to_pick']))
+                    <form method="POST" action="{{ route('admin.orders.shipment.cancel', $order) }}"
+                        onsubmit="return confirm('Huỷ vận đơn GHN này?')">
+                        @csrf @method('DELETE')
+                        <button type="submit"
+                                class="border border-red-400 text-red-500 px-4 py-2 rounded-lg text-sm hover:bg-red-50">
+                            ❌ Huỷ vận đơn
+                        </button>
+                    </form>
+                @endif
             </div>
 
         @else
@@ -183,4 +202,19 @@
     </div>
 
 </div>
+
+@push('scripts')
+<script>
+function markPrinted() {
+    const status = document.getElementById('print-status');
+    if (!status) return;
+    const now = new Date();
+    const pad = n => n.toString().padStart(2, '0');
+    const formatted = `${pad(now.getHours())}:${pad(now.getMinutes())} ${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}`;
+    status.textContent = '✅ ' + formatted;
+    status.className = 'text-xs text-green-600';
+}
+</script>
+@endpush
+
 @endsection

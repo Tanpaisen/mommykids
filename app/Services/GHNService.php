@@ -121,14 +121,16 @@ class GHNService
             'order_codes' => $orderCodes,
         ]);
 
+        Log::info('GHN gen-token response', ['resp' => $resp, 'orderCodes' => $orderCodes]);
+
         $printToken = $resp['token'] ?? null;
 
         if (! $printToken) {
             throw new \RuntimeException('Không lấy được print token từ GHN: ' . json_encode($resp));
         }
 
-        return "https://dev-online-gateway.ghn.vn/a5/public-api/print?" .
-               http_build_query(['token' => $printToken]);
+        return "https://dev-online-gateway.ghn.vn/a5/public-api/printA5?" .
+            http_build_query(['token' => $printToken]);
     }
 
     // ─── Huỷ đơn ─────────────────────────────────────────────────────────────
