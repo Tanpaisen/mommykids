@@ -42,7 +42,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('checkout.store') }}">
+       <form method="POST" action="{{ route('checkout.store', [], false) }}">
             @csrf
 
             <div class="mk-checkout-grid">
@@ -127,8 +127,33 @@
                                 <small>Thanh toán qua tài khoản ngân hàng</small>
                             </span>
                         </label>
+
+                        @if(config('services.zalopay.enabled'))
+                            <label class="mk-payment-option">
+                                <input type="radio" name="payment_method" value="zalopay"
+                                    {{ old('payment_method') === 'zalopay' ? 'checked' : '' }}>
+                                <span class="mk-payment-icon">💙</span>
+                                <span>
+                                    <strong>ZaloPay</strong>
+                                    <small>Thanh toán an toàn qua ZaloPay Sandbox</small>
+                                </span>
+                            </label>
+                        @endif
                     </section>
                 </div>
+                <label class="mk-payment-option">
+    <input
+        type="radio"
+        name="payment_method"
+        value="stripe"
+        {{ old('payment_method') === 'stripe' ? 'checked' : '' }}
+    >
+
+    <div>
+        <strong>Stripe - Visa / Mastercard</strong>
+        <span>Thanh toán bằng thẻ quốc tế qua Stripe Sandbox</span>
+    </div>
+</label>
 
                 <aside class="mk-card mk-summary">
                     <h2>Đơn hàng của bạn</h2>
@@ -201,24 +226,6 @@
                     </div>
 
                     <hr>
-            @if(config('services.momo.enabled'))
-    <label class="mk-payment-option">
-        <input
-            type="radio"
-            name="payment_method"
-            value="momo"
-            {{ old('payment_method') === 'momo' ? 'checked' : '' }}
-        >
-
-        <span class="mk-payment-icon">💗</span>
-
-        <span>
-            <strong>Ví MoMo</strong>
-            <small>Thanh toán bằng MoMo Test</small>
-        </span>
-    </label>
-@endif
-
                     <div class="mk-row mk-total">
                         <span>Tổng thanh toán</span>
                         <strong id="checkout-total">{{ number_format($subtotal) }}đ</strong>
@@ -230,6 +237,19 @@
         </form>
     </div>
 </div>
+<label class="mk-payment-option">
+    <input
+        type="radio"
+        name="payment_method"
+        value="stripe"
+        {{ old('payment_method') === 'stripe' ? 'checked' : '' }}
+    >
+
+    <div>
+        <strong>Stripe - Visa / Mastercard</strong>
+        <span>Thanh toán bằng thẻ quốc tế qua Stripe Sandbox</span>
+    </div>
+</label>
 
 <style>
 .mk-checkout-page{background:#fff8f7;min-height:100vh;padding:32px 16px 60px}
@@ -265,10 +285,10 @@
     "oldDistrictId": @json(old('to_district_id')),
     "oldWardCode": @json(old('to_ward_code')),
     "routes": {
-        "districts": @json(route('checkout.districts')),
-        "wards": @json(route('checkout.wards')),
-        "shippingFee": @json(route('checkout.shipping-fee'))
-    }
+    "districts": @json(route('checkout.districts', [], false)),
+    "wards": @json(route('checkout.wards', [], false)),
+    "shippingFee": @json(route('checkout.shipping-fee', [], false))
+}
 }
 </script>
 

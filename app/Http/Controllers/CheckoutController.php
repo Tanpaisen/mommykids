@@ -84,27 +84,35 @@ class CheckoutController extends Controller
         ));
     }
 
-    public function districts(Request $request)
-    {
-        $data = $request->validate([
-            'province_id' => ['required', 'integer'],
-        ]);
+ public function districts(Request $request)
+{
+    $data = $request->validate([
+        'province_id' => ['required', 'integer'],
+    ]);
 
-        return response()->json(
-            $this->ghn->getDistricts((int) $data['province_id'])
-        );
-    }
+    $response = $this->ghn->getDistricts(
+        (int) $data['province_id']
+    );
 
-    public function wards(Request $request)
-    {
-        $data = $request->validate([
-            'district_id' => ['required', 'integer'],
-        ]);
+    $districts = $this->normalizeGhnList($response);
 
-        return response()->json(
-            $this->ghn->getWards((int) $data['district_id'])
-        );
-    }
+    return response()->json($districts);
+}
+
+  public function wards(Request $request)
+{
+    $data = $request->validate([
+        'district_id' => ['required', 'integer'],
+    ]);
+
+    $response = $this->ghn->getWards(
+        (int) $data['district_id']
+    );
+
+    $wards = $this->normalizeGhnList($response);
+
+    return response()->json($wards);
+}
 
     public function calculateShippingFee(Request $request)
     {
@@ -236,7 +244,7 @@ class CheckoutController extends Controller
             'to_ward_code' => ['required', 'string'],
             'address' => ['required', 'string', 'max:500'],
             'note' => ['nullable', 'string', 'max:1000'],
-            'payment_method' => ['required', 'in:cod,bank'],
+            'payment_method' => ['required', 'in:cod,bank,zalopay,stripe'],
         ], [
             'full_name.required' => 'Vui lòng nhập họ và tên.',
             'phone.required' => 'Vui lòng nhập số điện thoại.',
@@ -368,11 +376,10 @@ class CheckoutController extends Controller
 
                 'status' => 'pending',
 
-                // Form dùng "bank", DB dùng "qr"
+                // Form dùng "bank", DB dùng "qr". Các phương thức khác giữ nguyên.
                 'payment_method' => match ($data['payment_method']) {
-                    'bank' => 'qr',
-                    'momo' => 'momo',
-                    default => 'cod',
+                  'bank' => 'qr',
+                  default => $data['payment_method'],
                 },
                 'payment_status' => 'unpaid',
 
@@ -462,11 +469,21 @@ class CheckoutController extends Controller
         */
 
         if ($data['payment_method'] === 'cod') {
-            return redirect()
-                ->route('checkout.success')
-                ->with('cod_success', true);
+            return redirect()->route('checkout.success');
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | ZaloPay
+        |--------------------------------------------------------------------------
+        */
+
+        if ($data['payment_method'] === 'zalopay') {
+            return redirect()->route('zalopay.create');
+        }
+        if ($data['payment_method'] === 'stripe') {
+         return redirect()->route('stripe.create');
+         }
         /*
         |--------------------------------------------------------------------------
         | Chuyển khoản ngân hàng / SePay
@@ -476,14 +493,12 @@ class CheckoutController extends Controller
         Cache::put(
             'checkout_order_' . $paymentCode,
             [
-                'code' => $paymentCode,
-                // Quan trọng: nối mã MK với order thật trong DB
-                'order_id' => $dbOrder->id,
+                'order_id' => (string) $dbOrder->id,
                 'order_code' => $dbOrder->code,
                 'total' => (int) $total,
                 'status' => 'pending',
             ],
-            now()->addMinutes(20)
+            now()->addMinutes(15)
         );
 
         return redirect()->route('checkout.qr');
@@ -498,10 +513,10 @@ class CheckoutController extends Controller
         }
 
         $items = $this->cart->items();
-        $subtotal = $order['subtotal'];
-        $shippingFee = $order['shipping_fee'];
-        $pointsDiscount = $order['points_discount'] ?? 0;
-        $total = $order['total'];
+        $subtotal = (int) ($order['subtotal'] ?? 0);
+        $shippingFee = (int) ($order['shipping_fee'] ?? 0);
+        $pointsDiscount = (int) ($order['points_discount'] ?? 0);
+        $total = (int) ($order['total'] ?? 0);
 
         $bankId = config('services.vietqr.bank_id', '970422');
 
