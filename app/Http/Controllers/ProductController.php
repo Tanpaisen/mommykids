@@ -14,7 +14,6 @@ class ProductController extends Controller
             ->active()
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
-            ->limit(6)
             ->get()
             ->map->toCardArray();
 

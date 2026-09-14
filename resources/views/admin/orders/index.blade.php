@@ -51,11 +51,19 @@
                     <td class="px-4 py-3 font-semibold">{{ number_format($order->total) }}đ</td>
                     <td class="px-4 py-3">
                         @if($order->shipment?->ghn_order_code)
-                            <span class="font-mono text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                                {{ $order->shipment->ghn_order_code }}
-                            </span>
+                            <span class="font-mono text-indigo-600">{{ $order->shipment->ghn_order_code }}</span>
+                            {{-- Trạng thái in - thêm id để JS cập nhật --}}
+                            <div><span class="text-gray-500 text-green-600 block text-xs">Đã in vận đơn:</span>
+                                <span id="print-status" class="text-xs @if($order->shipment->printed_at) text-green-600 @else text-gray-400 @endif">
+                                    @if($order->shipment->printed_at)
+                                         {{ $order->shipment->printed_at->format('H:i d/m/Y') }}
+                                    @else
+                                        Chưa tạo
+                                    @endif
+                                </span>
+                            </div>
                         @else
-                            <span class="text-gray-400 text-xs">Chưa tạo</span>
+                            <span class="text-gray-400">Chưa tạo</span>
                         @endif
                     </td>
                     <td class="px-4 py-3">
