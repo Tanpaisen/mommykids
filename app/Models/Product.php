@@ -12,6 +12,17 @@ class Product extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function booted(): void
+    {
+        $clearCache = function (Product $product) {
+            Cache::forget('product_' . $product->id);
+            Cache::forget('related_' . $product->id);
+        };
+
+        static::saved($clearCache);
+        static::deleted($clearCache);
+    }
+
     protected $fillable = [
         'category_id',
         'name',

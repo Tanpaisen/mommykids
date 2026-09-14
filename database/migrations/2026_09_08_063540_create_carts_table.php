@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            
+
             // Chỉ tạo cột lưu ID, KHÔNG tạo ràng buộc khóa ngoại cứng
             $table->unsignedBigInteger('user_id')->nullable();
-            
+
             $table->enum('status', ['active', 'checked_out', 'abandoned'])->default('active');
             $table->timestamps();
         });

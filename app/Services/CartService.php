@@ -315,12 +315,8 @@ class CartService
         ]);
     }
 
-    /**
-     * ============================================================
-     * XÓA SẢN PHẨM KHỎI GIỎ
-     * ============================================================
-     */
-    public function remove(int $cartItemId): void
+    // ── Xóa item ────────────────────────────────────────────────
+    public function remove(string|int $cartItemId): void
     {
         /*
          * Chỉ xóa item thuộc cart hiện tại.
