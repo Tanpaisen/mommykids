@@ -144,4 +144,9 @@ class User extends Authenticatable
             'percent'   => $percent,
         ];
     }
+
+    public function savedVouchers()
+    {
+        return $this->belongsToMany(Voucher::class, 'voucher_users', 'user_id', 'voucher_id');
+    }
 }

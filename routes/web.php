@@ -15,6 +15,8 @@ use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Payment\ZaloPayController;
 use App\Http\Controllers\Payment\StripeController;
+use App\Http\Controllers\Client\VoucherController;
+
 /*
 |--------------------------------------------------------------------------
 | Client Storefront Routes
@@ -38,6 +40,9 @@ Route::get('/gio-hang', [CartController::class, 'index'])
 Route::get('/thong-bao', [NotificationController::class, 'index'])
     ->middleware('auth')
     ->name('notifications.index');
+
+Route::get('/khuyen-mai', [VoucherController::class, 'index'])
+    ->name('vouchers.index');
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +132,9 @@ Route::prefix('api')->group(function () {
 
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])
         ->name('api.verify-otp');
+
+    Route::post('/vouchers/save', [VoucherController::class, 'saveVoucher'])
+        ->name('api.vouchers.save');
 });
 
 Route::get('/payments/zalopay/create', [ZaloPayController::class, 'create'])

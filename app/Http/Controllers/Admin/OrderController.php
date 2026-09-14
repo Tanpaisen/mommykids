@@ -182,6 +182,9 @@ class OrderController extends Controller
 
         try {
             $url = $this->ghn->getPrintUrl([$order->shipment->ghn_order_code]);
+
+            $order->shipment->update(['printed_at' => now()]);
+            
             return redirect($url);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
