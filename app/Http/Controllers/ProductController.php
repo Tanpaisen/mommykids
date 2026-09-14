@@ -6,6 +6,11 @@ use App\Models\Product;
 
 class ProductController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Chi tiết sản phẩm
+    |--------------------------------------------------------------------------
+    */
     public function show(Product $product)
     {
         $product->load([
@@ -31,11 +36,45 @@ class ProductController extends Controller
             ->map
             ->toCardArray();
 
-        return view('client.product', [
-            'product' => $product,
-            'brand' => $brand,
-            'attributes' => $attributes,
-            'related' => $related,
-        ]);
+        return view(
+            'client.product',
+            compact(
+                'product',
+                'brand',
+                'attributes',
+                'related'
+            )
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sản phẩm nổi bật
+    |--------------------------------------------------------------------------
+    |
+    | Chỉ lấy sản phẩm đang bán và được Admin đánh dấu is_featured = true.
+    | Trang riêng phân trang 12 sản phẩm mỗi trang.
+    |
+    */
+    public function featured()
+    {
+        $products = Product::query()
+            ->active()
+            ->featured()
+            ->latest()
+            ->paginate(12);
+
+        /*
+         * Component <x-product-card> hiện đang nhận dữ liệu dạng array
+         * từ Product::toCardArray(), nên chuyển collection trong paginator.
+         */
+        $products->getCollection()->transform(
+            fn (Product $product) => $product->toCardArray()
+        );
+
+        return view(
+            'client.products.featured',
+            compact('products')
+        );
     }
 }

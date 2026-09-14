@@ -82,15 +82,27 @@
                     @error('description')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                 </div>
 
-                <div class="lg:col-span-2 flex items-center justify-between gap-4 border border-admin-border rounded-xl px-4 py-4 bg-admin-bg/30">
+                <div class="lg:col-span-2 flex flex-col gap-4 border border-admin-border rounded-xl px-4 py-4 bg-admin-bg/30 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <p class="text-sm font-semibold text-ink">Trạng thái sản phẩm</p>
-                        <p class="text-xs text-ink-soft mt-1">Cho phép sản phẩm hiển thị phía khách hàng.</p>
+                        <p class="text-xs text-ink-soft mt-1">Quản lý trạng thái hiển thị và đánh dấu sản phẩm nổi bật.</p>
                     </div>
-                    <label class="inline-flex items-center gap-2 cursor-pointer shrink-0">
-                        <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $product->is_active)) class="w-5 h-5 accent-coral">
-                        <span class="text-sm font-medium text-ink">Đang bán</span>
-                    </label>
+
+                    <div class="flex flex-wrap items-center gap-x-6 gap-y-3 shrink-0">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="is_active" value="1"
+                                   @checked(old('is_active', $product->is_active))
+                                   class="w-5 h-5 accent-coral">
+                            <span class="text-sm font-medium text-ink">Đang bán</span>
+                        </label>
+
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="is_featured" value="1"
+                                   @checked(old('is_featured', $product->is_featured))
+                                   class="w-5 h-5 accent-coral">
+                            <span class="text-sm font-medium text-ink">Sản phẩm nổi bật</span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </section>

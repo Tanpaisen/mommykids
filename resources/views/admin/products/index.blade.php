@@ -180,6 +180,13 @@
             >
                 Đã ẩn
             </option>
+
+            <option
+                value="featured"
+                @selected(request('status') === 'featured')
+            >
+                ⭐ Sản phẩm nổi bật
+            </option>
         </select>
 
 
@@ -477,53 +484,75 @@
                         {{-- STATUS --}}
                         <td class="px-5 py-4">
 
-                            @if ($product->is_active)
+                            <div class="flex flex-wrap items-center gap-2">
 
-                                <span
-                                    class="inline-flex
-                                           items-center gap-2
-                                           rounded-full
-                                           bg-green-50
-                                           text-green-600
-                                           px-3 py-1.5
-                                           text-xs
-                                           font-semibold"
-                                >
+                                @if ($product->is_active)
 
                                     <span
-                                        class="w-2 h-2
+                                        class="inline-flex
+                                               items-center gap-2
                                                rounded-full
-                                               bg-green-500"
-                                    ></span>
+                                               bg-green-50
+                                               text-green-600
+                                               px-3 py-1.5
+                                               text-xs
+                                               font-semibold"
+                                    >
 
-                                    Đang bán
+                                        <span
+                                            class="w-2 h-2
+                                                   rounded-full
+                                                   bg-green-500"
+                                        ></span>
 
-                                </span>
+                                        Đang bán
 
-                            @else
+                                    </span>
 
-                                <span
-                                    class="inline-flex
-                                           items-center gap-2
-                                           rounded-full
-                                           bg-gray-100
-                                           text-gray-500
-                                           px-3 py-1.5
-                                           text-xs
-                                           font-semibold"
-                                >
+                                @else
 
                                     <span
-                                        class="w-2 h-2
+                                        class="inline-flex
+                                               items-center gap-2
                                                rounded-full
-                                               bg-gray-400"
-                                    ></span>
+                                               bg-gray-100
+                                               text-gray-500
+                                               px-3 py-1.5
+                                               text-xs
+                                               font-semibold"
+                                    >
 
-                                    Đã ẩn
+                                        <span
+                                            class="w-2 h-2
+                                                   rounded-full
+                                                   bg-gray-400"
+                                        ></span>
 
-                                </span>
+                                        Đã ẩn
 
-                            @endif
+                                    </span>
+
+                                @endif
+
+
+                                @if ($product->is_featured)
+
+                                    <span
+                                        class="inline-flex
+                                               items-center gap-1.5
+                                               rounded-full
+                                               bg-amber-50
+                                               text-amber-600
+                                               px-3 py-1.5
+                                               text-xs
+                                               font-semibold"
+                                    >
+                                        ⭐ Nổi bật
+                                    </span>
+
+                                @endif
+
+                            </div>
 
                         </td>
 

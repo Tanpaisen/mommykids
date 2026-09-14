@@ -21,7 +21,15 @@ use App\Http\Controllers\Client\VoucherController;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', [HomeController::class, 'index'])
+    ->name('home');
+
+/*
+ * Trang riêng hiển thị toàn bộ sản phẩm được Admin
+ * đánh dấu là "Sản phẩm nổi bật".
+ */
+Route::get('/san-pham-noi-bat', [ProductController::class, 'featured'])
+    ->name('products.featured');
 
 Route::get('/danh-muc/{category:slug}', [CategoryController::class, 'show'])
     ->name('category.show');
@@ -108,7 +116,6 @@ Route::post(
     [CheckoutController::class, 'calculateShippingFee']
 )->name('checkout.shipping-fee');
 
-
 /*
 |--------------------------------------------------------------------------
 | Cart & OTP API Routes
@@ -149,4 +156,5 @@ require __DIR__ . '/auth/admin.php';
 | Admin Module Routes Include
 |--------------------------------------------------------------------------
 */
+
 require __DIR__ . '/admin.php';

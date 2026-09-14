@@ -79,6 +79,16 @@ class ProductController extends Controller
         }
 
         /*
+         * Lọc sản phẩm nổi bật.
+         */
+        if ($request->status === 'featured') {
+            $query->where(
+                'products.is_featured',
+                true
+            );
+        }
+
+        /*
          * Sắp hết hàng.
          */
         if ($request->boolean('low_stock')) {
@@ -203,6 +213,9 @@ class ProductController extends Controller
          */
         $validated['is_active'] =
             $request->boolean('is_active');
+
+        $validated['is_featured'] =
+            $request->boolean('is_featured');
 
         /*
         |--------------------------------------------------------------------------
@@ -395,6 +408,9 @@ class ProductController extends Controller
          */
         $validated['is_active'] =
             $request->boolean('is_active');
+
+        $validated['is_featured'] =
+            $request->boolean('is_featured');
 
         /*
         |--------------------------------------------------------------------------
@@ -966,6 +982,11 @@ class ProductController extends Controller
              * Status.
              */
             'is_active' => [
+                'nullable',
+                'boolean',
+            ],
+
+            'is_featured' => [
                 'nullable',
                 'boolean',
             ],
