@@ -15,11 +15,12 @@
             'icon' => '📦',
             'can' => 'catalog.view',
             'items' => [
-                ['label' => 'Giai đoạn của bé', 'route' => 'admin.stages.index'],
-                ['label' => 'Danh mục & Thuộc tính', 'route' => 'admin.categories.index'],
-                ['label' => 'Sản phẩm', 'route' => 'admin.products.index'],
-            ],
-        ],
+             ['label' => 'Giai đoạn của bé', 'route' => 'admin.stages.index'],
+             ['label' => 'Danh mục & Thuộc tính', 'route' => 'admin.categories.index'],
+              ['label' => 'Sản phẩm', 'route' => 'admin.products.index'],
+            ['label' => 'Đánh giá sản phẩm', 'route' => 'admin.reviews.index'],
+    ],
+],
         [
             'label' => 'Cẩm nang & Tương tác',
             'icon' => '📚',
