@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
@@ -71,6 +72,13 @@ class User extends Authenticatable
     public function pointLogs()
     {
         return $this->hasMany(PointLog::class)->latest();
+    }
+
+    public function productReviews(): HasMany
+    {
+        return $this->hasMany(
+            \App\Models\ProductReview::class
+        );
     }
 
     public function getTierNameAttribute(): string
@@ -163,6 +171,11 @@ class User extends Authenticatable
 
     public function savedVouchers()
     {
-        return $this->belongsToMany(Voucher::class, 'voucher_users', 'user_id', 'voucher_id');
+        return $this->belongsToMany(
+            Voucher::class,
+            'voucher_users',
+            'user_id',
+            'voucher_id'
+        );
     }
 }

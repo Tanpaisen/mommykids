@@ -660,6 +660,629 @@
     @endif
 
     {{-- =========================================================
+        PRODUCT REVIEWS
+    ========================================================== --}}
+    <section id="product-reviews" class="product-reviews-section">
+
+        <div class="product-reviews-heading">
+            <div>
+                <span class="product-reviews-eyebrow">
+                    Ý kiến khách hàng
+                </span>
+
+                <h2>Đánh giá sản phẩm</h2>
+
+                <p>
+                    Chia sẻ trải nghiệm của bạn về
+                    {{ $product->name }}.
+                </p>
+            </div>
+
+            @if ($reviewCount > 0)
+                <div class="product-reviews-heading-count">
+                    {{ $reviewCount }} đánh giá
+                </div>
+            @endif
+        </div>
+
+        {{-- ================================================
+            REVIEW SUMMARY
+        ================================================= --}}
+        <div class="product-review-summary">
+
+            <div class="product-review-score-card">
+                <strong class="product-review-score">
+                    {{ number_format($averageRating, 1, ',', '.') }}
+                </strong>
+
+                <span class="product-review-score-max">
+                    / 5
+                </span>
+
+                <div class="product-review-summary-stars"
+                     aria-label="{{ $averageRating }} trên 5 sao">
+
+                    @for ($star = 1; $star <= 5; $star++)
+                        <span class="{{ $star <= round($averageRating) ? 'is-active' : '' }}">
+                            ★
+                        </span>
+                    @endfor
+                </div>
+
+                <p>
+                    @if ($reviewCount > 0)
+                        Dựa trên {{ $reviewCount }} đánh giá
+                    @else
+                        Chưa có đánh giá nào
+                    @endif
+                </p>
+            </div>
+
+            <div class="product-rating-distribution">
+                @foreach ($ratingDistribution as $rating => $distribution)
+                    <div class="product-rating-row">
+                        <div class="product-rating-label">
+                            <strong>{{ $rating }}</strong>
+                            <span>★</span>
+                        </div>
+
+                        <div class="product-rating-track">
+                            <div
+                                class="product-rating-fill"
+                                style="width: {{ $distribution['percentage'] }}%"
+                            ></div>
+                        </div>
+
+                        <span class="product-rating-percent">
+                            {{ $distribution['percentage'] }}%
+                        </span>
+
+                        <span class="product-rating-count">
+                            ({{ $distribution['count'] }})
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+
+        </div>
+
+        {{-- ================================================
+            SUCCESS / ERROR
+        ================================================= --}}
+        @if (session('success'))
+            <div class="product-review-alert is-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if ($errors->has('review'))
+            <div class="product-review-alert is-error">
+                {{ $errors->first('review') }}
+            </div>
+        @endif
+
+        {{-- ================================================
+            WRITE REVIEW
+        ================================================= --}}
+        <div class="product-review-form-card">
+
+            @guest
+                <div class="product-review-login">
+                    <div class="product-review-login-icon">
+                        ★
+                    </div>
+
+                    <div>
+                        <strong>Đăng nhập để viết đánh giá</strong>
+
+                        <p>
+                            Bạn cần đăng nhập tài khoản MommyKids
+                            trước khi đánh giá sản phẩm.
+                        </p>
+                    </div>
+                </div>
+            @else
+                {{-- Chưa từng mua hoặc đơn chưa giao thành công --}}
+                @if (!$hasPurchasedProduct)
+                    <div class="product-review-purchase-required">
+                        <div class="product-review-purchase-icon">
+                            🛒
+                        </div>
+
+                        <div>
+                           <strong>
+    Chỉ khách hàng đã mua và nhận sản phẩm mới có thể đánh giá
+</strong>
+
+<p>
+    Bạn có thể viết đánh giá sau khi đơn hàng
+    chứa sản phẩm này được giao thành công.
+</p>
+                        </div>
+                    </div>
+
+                {{-- Đã mua và đã có review: cho phép chỉnh sửa review hiện tại --}}
+                @elseif ($userReview)
+                    <div class="product-review-already">
+                        <div class="product-review-already-icon">
+                            ✓
+                        </div>
+
+                        <div>
+                            <strong>
+                                Bạn đã đánh giá sản phẩm này
+                            </strong>
+
+                            <p>
+                                Cảm ơn bạn đã chia sẻ trải nghiệm về sản phẩm.
+                            </p>
+                        </div>
+                    </div>
+
+                    @php
+                        $reviewEditOpen =
+                            $errors->has('rating') ||
+                            $errors->has('comment') ||
+                            $errors->has('images') ||
+                            $errors->has('images.*');
+                    @endphp
+
+                    <details
+                        class="product-review-edit"
+                        {{ $reviewEditOpen ? 'open' : '' }}
+                    >
+                        <summary class="product-review-edit-toggle">
+                            <span class="product-review-edit-toggle-icon" aria-hidden="true">
+                                ✎
+                            </span>
+
+                            <span>Chỉnh sửa đánh giá</span>
+                        </summary>
+
+                        <div class="product-review-edit-panel">
+                            <div class="product-review-form-heading">
+                                <div>
+                                    <h3>Chỉnh sửa đánh giá</h3>
+
+                                    <p>
+                                        Cập nhật số sao, nội dung hoặc hình ảnh
+                                        dựa trên trải nghiệm hiện tại của bạn.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <form
+                                action="{{ route('products.reviews.update', [$product, $userReview]) }}"
+                                method="POST"
+                                enctype="multipart/form-data"
+                                class="product-review-form"
+                            >
+                                @csrf
+                                @method('PATCH')
+
+                                {{-- Rating hiện tại --}}
+                                <div class="product-review-field">
+                                    <label class="product-review-field-label">
+                                        Đánh giá của bạn
+                                        <span>*</span>
+                                    </label>
+
+                                    <div class="product-review-star-input">
+                                        @for ($rating = 5; $rating >= 1; $rating--)
+                                            <input
+                                                type="radio"
+                                                id="review-edit-rating-{{ $rating }}"
+                                                name="rating"
+                                                value="{{ $rating }}"
+                                                {{
+                                                    (int) old('rating', $userReview->rating) === $rating
+                                                        ? 'checked'
+                                                        : ''
+                                                }}
+                                            >
+
+                                            <label
+                                                for="review-edit-rating-{{ $rating }}"
+                                                title="{{ $rating }} sao"
+                                                aria-label="{{ $rating }} sao"
+                                            >
+                                                ★
+                                            </label>
+                                        @endfor
+                                    </div>
+
+                                    @error('rating')
+                                        <p class="product-review-field-error">
+                                            {{ $message }}
+                                        </p>
+                                    @enderror
+                                </div>
+
+                                {{-- Comment hiện tại --}}
+                                <div class="product-review-field">
+                                    <label
+                                        class="product-review-field-label"
+                                        for="review-edit-comment"
+                                    >
+                                        Nội dung đánh giá
+                                        <small>Không bắt buộc</small>
+                                    </label>
+
+                                    <textarea
+                                        id="review-edit-comment"
+                                        name="comment"
+                                        rows="5"
+                                        maxlength="2000"
+                                        placeholder="Chia sẻ trải nghiệm thực tế của bạn về sản phẩm..."
+                                    >{{ old('comment', $userReview->comment) }}</textarea>
+
+                                    <div class="product-review-field-help">
+                                        Tối đa 2000 ký tự.
+                                    </div>
+
+                                    @error('comment')
+                                        <p class="product-review-field-error">
+                                            {{ $message }}
+                                        </p>
+                                    @enderror
+                                </div>
+
+                                {{-- Ảnh review hiện tại --}}
+                                @if (!empty($userReview->images))
+                                    <div class="product-review-field">
+                                        <span class="product-review-field-label">
+                                            Hình ảnh hiện tại
+                                        </span>
+
+                                        <div class="product-review-edit-current-images">
+                                            @foreach ($userReview->images as $reviewImage)
+                                                <a
+                                                    href="{{ $imageUrl($reviewImage) }}"
+                                                    target="_blank"
+                                                    rel="noopener"
+                                                >
+                                                    <img
+                                                        src="{{ $imageUrl($reviewImage) }}"
+                                                        alt="Ảnh đánh giá hiện tại"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                    >
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- Ảnh mới --}}
+                                <div class="product-review-field">
+                                    <label
+                                        class="product-review-field-label"
+                                        for="review-edit-images"
+                                    >
+                                        Thay hình ảnh
+                                        <small>Không bắt buộc</small>
+                                    </label>
+
+                                    <label
+                                        class="product-review-upload"
+                                        for="review-edit-images"
+                                    >
+                                        <span class="product-review-upload-icon">
+                                            +
+                                        </span>
+
+                                        <span>
+                                            <strong>Chọn hình ảnh mới</strong>
+
+                                            <small>
+                                                Không chọn ảnh mới thì giữ nguyên ảnh hiện tại.
+                                                Nếu chọn, bộ ảnh hiện tại sẽ được thay thế.
+                                                Tối đa 5 ảnh · 4MB/ảnh.
+                                            </small>
+                                        </span>
+                                    </label>
+
+                                    <input
+                                        id="review-edit-images"
+                                        class="product-review-file-input"
+                                        type="file"
+                                        name="images[]"
+                                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                        multiple
+                                    >
+
+                                    @error('images')
+                                        <p class="product-review-field-error">
+                                            {{ $message }}
+                                        </p>
+                                    @enderror
+
+                                    @error('images.*')
+                                        <p class="product-review-field-error">
+                                            {{ $message }}
+                                        </p>
+                                    @enderror
+                                </div>
+
+                                <div class="product-review-edit-actions">
+                                    <button
+                                        type="button"
+                                        class="product-review-edit-cancel"
+                                        onclick="this.closest('details').removeAttribute('open')"
+                                    >
+                                        Hủy
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        class="product-review-submit"
+                                    >
+                                        Cập nhật đánh giá
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </details>
+
+                {{-- Đã mua + delivered + chưa review --}}
+                @elseif ($canReview)
+                    <div class="product-review-form-heading">
+                        <div>
+                            <h3>Viết đánh giá của bạn</h3>
+
+                            <p>
+                                Chọn số sao và chia sẻ trải nghiệm
+                                thực tế của bạn.
+                            </p>
+                        </div>
+                    </div>
+
+                    <form
+                        action="{{ route('products.reviews.store', $product) }}"
+                        method="POST"
+                        enctype="multipart/form-data"
+                        class="product-review-form"
+                    >
+                        @csrf
+
+                        {{-- Rating --}}
+                        <div class="product-review-field">
+                            <label class="product-review-field-label">
+                                Đánh giá của bạn
+                                <span>*</span>
+                            </label>
+
+                            <div class="product-review-star-input">
+                                @for ($rating = 5; $rating >= 1; $rating--)
+                                    <input
+                                        type="radio"
+                                        id="review-rating-{{ $rating }}"
+                                        name="rating"
+                                        value="{{ $rating }}"
+                                        {{ (int) old('rating') === $rating ? 'checked' : '' }}
+                                    >
+
+                                    <label
+                                        for="review-rating-{{ $rating }}"
+                                        title="{{ $rating }} sao"
+                                        aria-label="{{ $rating }} sao"
+                                    >
+                                        ★
+                                    </label>
+                                @endfor
+                            </div>
+
+                            @error('rating')
+                                <p class="product-review-field-error">
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        {{-- Comment --}}
+                        <div class="product-review-field">
+                            <label
+                                class="product-review-field-label"
+                                for="review-comment"
+                            >
+                                Nội dung đánh giá
+                                <small>Không bắt buộc</small>
+                            </label>
+
+                            <textarea
+                                id="review-comment"
+                                name="comment"
+                                rows="5"
+                                maxlength="2000"
+                                placeholder="Chia sẻ trải nghiệm thực tế của bạn về sản phẩm..."
+                            >{{ old('comment') }}</textarea>
+
+                            <div class="product-review-field-help">
+                                Tối đa 2000 ký tự.
+                            </div>
+
+                            @error('comment')
+                                <p class="product-review-field-error">
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        {{-- Images --}}
+                        <div class="product-review-field">
+                            <label
+                                class="product-review-field-label"
+                                for="review-images"
+                            >
+                                Hình ảnh
+                                <small>Không bắt buộc</small>
+                            </label>
+
+                            <label
+                                class="product-review-upload"
+                                for="review-images"
+                            >
+                                <span class="product-review-upload-icon">
+                                    +
+                                </span>
+
+                                <span>
+                                    <strong>Thêm hình ảnh</strong>
+
+                                    <small>
+                                        JPG, JPEG, PNG, WEBP · tối đa
+                                        5 ảnh · 4MB/ảnh
+                                    </small>
+                                </span>
+                            </label>
+
+                            <input
+                                id="review-images"
+                                class="product-review-file-input"
+                                type="file"
+                                name="images[]"
+                                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                multiple
+                            >
+
+                            @error('images')
+                                <p class="product-review-field-error">
+                                    {{ $message }}
+                                </p>
+                            @enderror
+
+                            @error('images.*')
+                                <p class="product-review-field-error">
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        <div class="product-review-form-actions">
+                            <button
+                                type="submit"
+                                class="product-review-submit"
+                            >
+                                Gửi đánh giá
+                            </button>
+                        </div>
+                    </form>
+                @endif
+            @endguest
+
+        </div>
+
+        {{-- ================================================
+            REVIEW LIST
+        ================================================= --}}
+        <div class="product-review-list">
+
+            <div class="product-review-list-heading">
+                <h3>
+                    Đánh giá từ khách hàng
+                </h3>
+
+                @if ($reviewCount > 0)
+                    <span>
+                        {{ $reviewCount }} đánh giá
+                    </span>
+                @endif
+            </div>
+
+            @forelse ($reviews as $review)
+                <article class="product-review-item">
+
+                    <div class="product-review-avatar">
+                        {{
+                            mb_strtoupper(
+                                mb_substr(
+                                    $review->user?->name ?? 'K',
+                                    0,
+                                    1
+                                )
+                            )
+                        }}
+                    </div>
+
+                    <div class="product-review-body">
+
+                        <div class="product-review-user-row">
+                            <div>
+                                <strong class="product-review-user-name">
+                                    {{ $review->user?->name ?? 'Khách hàng' }}
+                                </strong>
+
+                                <div
+                                    class="product-review-item-stars"
+                                    aria-label="{{ $review->rating }} trên 5 sao"
+                                >
+                                    @for ($star = 1; $star <= 5; $star++)
+                                        <span class="{{ $star <= $review->rating ? 'is-active' : '' }}">
+                                            ★
+                                        </span>
+                                    @endfor
+                                </div>
+                            </div>
+
+                            <time
+                                datetime="{{ $review->created_at?->toDateString() }}"
+                            >
+                                {{ $review->created_at?->format('d/m/Y') }}
+                            </time>
+                        </div>
+
+                        @if ($review->comment)
+                            <p class="product-review-comment">
+                                {{ $review->comment }}
+                            </p>
+                        @endif
+
+                        @if (!empty($review->images))
+                            <div class="product-review-images">
+                                @foreach ($review->images as $reviewImage)
+                                    <a
+                                        href="{{ $imageUrl($reviewImage) }}"
+                                        target="_blank"
+                                        rel="noopener"
+                                    >
+                                        <img
+                                            src="{{ $imageUrl($reviewImage) }}"
+                                            alt="Ảnh đánh giá của {{ $review->user?->name ?? 'khách hàng' }}"
+                                            loading="lazy"
+                                            decoding="async"
+                                        >
+                                    </a>
+                                @endforeach
+                            </div>
+                        @endif
+
+                    </div>
+                </article>
+            @empty
+                <div class="product-review-empty">
+                    <span>☆</span>
+
+                    <strong>
+                        Chưa có đánh giá nào
+                    </strong>
+
+                    <p>
+                        Hãy là người đầu tiên chia sẻ trải nghiệm
+                        về sản phẩm này.
+                    </p>
+                </div>
+            @endforelse
+
+            @if ($reviews->hasPages())
+                <div class="product-review-pagination">
+                    {{ $reviews->fragment('product-reviews')->links() }}
+                </div>
+            @endif
+
+        </div>
+    </section>
+
+    {{-- =========================================================
         IMAGE MODAL
     ========================================================== --}}
     @if ($mainImage)
