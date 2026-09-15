@@ -88,8 +88,8 @@ class OrderController extends Controller
     /** Tạo vận đơn GHN */
     public function createShipment(Request $request, Order $order)
     {
-        if ($order->shipment?->ghn_order_code) {
-            return back()->with('error', 'Đơn này đã có mã vận đơn GHN.');
+        if ($order->shipment?->ghn_order_code && $order->shipment->status !== 'cancel') {
+            return back()->with('error', 'Đơn này đã có mã vận đơn GHN đang hoạt động.');
         }
 
         $request->validate([
@@ -138,6 +138,7 @@ class OrderController extends Controller
                 'width'                => $request->integer('width'),
                 'height'               => $request->integer('height'),
                 'status'               => 'pending',
+                'printed_at'           => null,
                 'expected_delivery_at' => isset($result['expected_delivery_time'])
                     ? \Carbon\Carbon::parse($result['expected_delivery_time'])
                     : null,
@@ -184,7 +185,7 @@ class OrderController extends Controller
             $url = $this->ghn->getPrintUrl([$order->shipment->ghn_order_code]);
 
             $order->shipment->update(['printed_at' => now()]);
-            
+
             return redirect($url);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());

@@ -51,17 +51,17 @@
                     <td class="px-4 py-3 font-semibold">{{ number_format($order->total) }}đ</td>
                     <td class="px-4 py-3">
                         @if($order->shipment?->ghn_order_code)
-                            <span class="font-mono text-indigo-600">{{ $order->shipment->ghn_order_code }}</span>
-                            {{-- Trạng thái in - thêm id để JS cập nhật --}}
-                            <div><span class="text-gray-500 text-green-600 block text-xs">Đã in vận đơn:</span>
-                                <span id="print-status" class="text-xs @if($order->shipment->printed_at) text-green-600 @else text-gray-400 @endif">
-                                    @if($order->shipment->printed_at)
-                                         {{ $order->shipment->printed_at->format('H:i d/m/Y') }}
-                                    @else
-                                        Chưa tạo
-                                    @endif
-                                </span>
-                            </div>
+                            <span class="font-mono {{ $order->shipment->status === 'cancel' ? 'text-gray-400 line-through' : 'text-indigo-600' }}">
+                                {{ $order->shipment->ghn_order_code }}
+                            </span>
+                            @if($order->shipment->status === 'cancel')
+                                <span class="block text-xs text-red-400">❌ Đã huỷ vận đơn</span>
+                            @elseif($order->shipment->printed_at)
+                                <span class="block text-xs text-green-600">✅ Đã in vận đơn:</span>
+                                <span class="block text-xs text-green-600">{{ $order->shipment->printed_at->format('H:i d/m/Y') }}</span>
+                            @else
+                                <span class="block text-xs text-orange-500">⚠️ Chưa in</span>
+                            @endif
                         @else
                             <span class="text-gray-400">Chưa tạo</span>
                         @endif
