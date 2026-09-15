@@ -991,6 +991,14 @@
                                         multiple
                                     >
 
+                                    <div
+                                        id="review-edit-images-status"
+                                        class="product-review-field-help"
+                                        aria-live="polite"
+                                    >
+                                        Chưa chọn ảnh mới
+                                    </div>
+
                                     @error('images')
                                         <p class="product-review-field-error">
                                             {{ $message }}
@@ -1144,6 +1152,14 @@
                                 accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                                 multiple
                             >
+
+                            <div
+                                id="review-images-status"
+                                class="product-review-field-help"
+                                aria-live="polite"
+                            >
+                                Chưa chọn ảnh
+                            </div>
 
                             @error('images')
                                 <p class="product-review-field-error">
@@ -1308,5 +1324,53 @@
         </div>
     @endif
 </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function bindReviewImageStatus(inputId, statusId, emptyText) {
+                const input = document.getElementById(inputId);
+                const status = document.getElementById(statusId);
+
+                if (!input || !status) {
+                    return;
+                }
+
+                input.addEventListener('change', function () {
+                    const files = input.files ? Array.from(input.files) : [];
+                    const count = files.length;
+
+                    if (count === 0) {
+                        status.textContent = emptyText;
+                        return;
+                    }
+
+                    const fileNames = files
+                        .map(function (file) {
+                            return file.name;
+                        })
+                        .join(', ');
+
+                    status.textContent =
+                        'Đã chọn ' +
+                        count +
+                        ' ảnh' +
+                        (fileNames ? ': ' + fileNames : '');
+                });
+            }
+
+            bindReviewImageStatus(
+                'review-images',
+                'review-images-status',
+                'Chưa chọn ảnh'
+            );
+
+            bindReviewImageStatus(
+                'review-edit-images',
+                'review-edit-images-status',
+                'Chưa chọn ảnh mới'
+            );
+        });
+    </script>
 
 @endsection
