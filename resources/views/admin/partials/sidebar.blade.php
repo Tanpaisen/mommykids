@@ -7,7 +7,7 @@
             'icon' => '📊',
             'can' => 'dashboard.view',
             'items' => [
-                ['label' => 'Tổng quan', 'route' => 'admin.dashboard'],
+                ['label' => 'Tổng quan', 'route' => 'admin.dashboard', 'url' => '/admin'],
             ],
         ],
         [
@@ -15,9 +15,9 @@
             'icon' => '📦',
             'can' => 'catalog.view',
             'items' => [
-                ['label' => 'Giai đoạn của bé', 'route' => 'admin.stages.index'],
-                ['label' => 'Danh mục & Thuộc tính', 'route' => 'admin.categories.index'],
-                ['label' => 'Sản phẩm', 'route' => 'admin.products.index'],
+                ['label' => 'Giai đoạn của bé', 'route' => 'admin.stages.index', 'url' => '/admin/stages'],
+                ['label' => 'Danh mục & Thuộc tính', 'route' => 'admin.categories.index', 'url' => '/admin/categories'],
+                ['label' => 'Sản phẩm', 'route' => 'admin.products.index', 'url' => '/admin/products'],
             ],
         ],
         [
@@ -25,18 +25,18 @@
             'icon' => '📚',
             'can' => 'handbook.view',
             'items' => [
-                ['label' => 'Bài viết Cẩm nang', 'route' => 'admin.articles.index'],
-                ['label' => 'Trung tâm Hỏi đáp', 'route' => 'admin.comments.index'],
+                ['label' => 'Bài viết Cẩm nang', 'route' => 'admin.handbook-categories.index', 'url' => '/admin/cam-nang'],
+                ['label' => 'Trung tâm Hỏi đáp', 'route' => 'hoi-dap.index', 'url' => '/admin/hoi-dap'],
             ],
         ],
-                [
+        [
             'label' => 'Đơn hàng & Dòng tiền',
             'icon' => '🚚',
             'can' => 'orders.view',
             'items' => [
-                ['label' => 'Đơn hàng',            'route' => 'admin.orders.index'],
-                ['label' => 'Vận chuyển (GHN)',     'route' => 'admin.shipments.index'],
-                ['label' => 'Đổi trả & Hoàn tiền', 'route' => 'admin.refunds.index'],
+                ['label' => 'Đơn hàng',           'route' => 'admin.orders.index', 'url' => '/admin/orders'],
+                ['label' => 'Vận chuyển (GHN)',     'route' => 'admin.shipments.index', 'url' => '/admin/shipments'],
+                ['label' => 'Đổi trả & Hoàn tiền', 'route' => 'admin.refunds.index', 'url' => '/admin/refunds'],
             ],
         ],
         [
@@ -44,9 +44,9 @@
             'icon' => '👥',
             'can' => 'crm.view',
             'items' => [
-                ['label' => 'Khách hàng', 'route' => 'admin.clients.index'],
-                ['label' => 'Voucher',    'route' => 'admin.vouchers.index'],
-                ['label' => 'Banner',     'route' => 'admin.banners.index'],
+                ['label' => 'Khách hàng', 'route' => 'admin.clients.index', 'url' => '/admin/clients'],
+                ['label' => 'Voucher',    'route' => 'admin.vouchers.index', 'url' => '/admin/vouchers'],
+                ['label' => 'Banner',     'route' => 'admin.banners.index', 'url' => '/admin/banners'],
             ],
         ],
         [
@@ -54,13 +54,12 @@
             'icon' => '⚙️',
             'can' => 'roles.manage',
             'items' => [
-                ['label' => 'Tài khoản quản trị', 'route' => 'admin.admins.index'],
-                ['label' => 'Nhóm quyền',         'route' => 'admin.roles.index'],
-                ['label' => 'Phân quyền',         'route' => 'admin.permissions.index'],
+                ['label' => 'Tài khoản quản trị', 'route' => 'admin.admins.index', 'url' => '/admin/admins'],
+                ['label' => 'Nhóm quyền',         'route' => 'admin.roles.index', 'url' => '/admin/roles'],
+                ['label' => 'Phân quyền',         'route' => 'admin.permissions.index', 'url' => '/admin/permissions'],
             ],
         ],
     ];
-
 @endphp
 
 <aside id="admin-sidebar"
@@ -68,7 +67,7 @@
               -translate-x-full lg:translate-x-0 transition-transform duration-300 overflow-y-auto">
 
     <div class="flex items-center justify-between px-5 h-16 border-b border-white/10">
-        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2">
+        <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : url('/admin') }}" class="flex items-center gap-2">
             <span class="w-8 h-8 rounded-blob bg-coral flex items-center justify-center font-display font-bold">M</span>
             <span class="font-display font-bold">MommyKids <span class="text-white/50 font-body font-normal text-xs">Admin</span></span>
         </a>
@@ -76,47 +75,28 @@
     </div>
 
     <nav class="py-3">
-        {{-- @foreach ($menu as $group)
-            @can($group['can'])
-                <div class="px-3 py-2">
-                    <p class="px-2 text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-1">
-                        {{ $group['icon'] }} {{ $group['label'] }}
-                    </p>
-                    <ul>
-                        @foreach ($group['items'] as $item)
-                            @can($item['can'] ?? $group['can'])
-                                <li>
-                                    <a href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}"
-                                       class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
-                                              {{ request()->routeIs($item['route'].'*') ? 'bg-coral text-white font-semibold' : 'text-white/75 hover:bg-admin-sidebar-hover hover:text-white' }}">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
-                                        {{ $item['label'] }}
-                                    </a>
-                                </li>
-                            @endcan
-                        @endforeach
-                    </ul>
-                </div>
-            @endcan
-        @endforeach --}}
         @foreach ($menu as $group)
-    <div class="px-3 py-2">
-        <p class="px-2 text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-1">
-            {{ $group['icon'] }} {{ $group['label'] }}
-        </p>
-        <ul>
-            @foreach ($group['items'] as $item)
-                <li>
-                    <a href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}"
-                       class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
-                              {{ request()->routeIs($item['route'].'*') ? 'bg-coral text-white font-semibold' : 'text-white/75 hover:bg-admin-sidebar-hover hover:text-white' }}">
-                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
-                        {{ $item['label'] }}
-                    </a>
-                </li>
-            @endforeach
-        </ul>
-    </div>
-@endforeach
+            <div class="px-3 py-2">
+                <p class="px-2 text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-1">
+                    {{ $group['icon'] }} {{ $group['label'] }}
+                </p>
+                <ul>
+                    @foreach ($group['items'] as $item)
+                        @php
+                            $itemUrl = Route::has($item['route']) ? route($item['route']) : url($item['url'] ?? '#');
+                            $isActive = request()->routeIs($item['route'].'*') || request()->is(ltrim($item['url'] ?? '', '/').'*');
+                        @endphp
+                        <li>
+                            <a href="{{ $itemUrl }}"
+                               class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
+                                      {{ $isActive ? 'bg-coral text-white font-semibold' : 'text-white/75 hover:bg-admin-sidebar-hover hover:text-white' }}">
+                                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
+                                {{ $item['label'] }}
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endforeach
     </nav>
 </aside>
