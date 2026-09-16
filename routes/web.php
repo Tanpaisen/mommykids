@@ -16,7 +16,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Payment\ZaloPayController;
 use App\Http\Controllers\Payment\StripeController;
 use App\Http\Controllers\Client\VoucherController;
-
+use App\Http\Controllers\Client\OrderController as ClientOrderController;
 /*
 |--------------------------------------------------------------------------
 | Client Storefront Routes
@@ -44,6 +44,7 @@ Route::get('/thong-bao', [NotificationController::class, 'index'])
 Route::get('/khuyen-mai', [VoucherController::class, 'index'])
     ->name('vouchers.index');
 
+
 /*
 |--------------------------------------------------------------------------
 | Profile Routes
@@ -62,6 +63,21 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/quy-dinh-chinh-sach', [ProfileController::class, 'policy'])
         ->name('profile.policy');
+
+    Route::get(
+        '/ho-so/don-hang',
+        [ClientOrderController::class, 'index']
+    )->name('profile.orders.index');
+
+    Route::get(
+        '/ho-so/don-hang/{order}',
+        [ClientOrderController::class, 'show']
+    )->name('profile.orders.show');
+
+    Route::post(
+        '/ho-so/don-hang/{order}/yeu-cau-huy',
+        [ClientOrderController::class, 'requestCancellation']
+    )->name('profile.orders.cancel-request');
 });
 
 /*
