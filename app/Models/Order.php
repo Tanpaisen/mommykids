@@ -18,6 +18,8 @@ class Order extends Model
         'ghn_province_id','ghn_district_id','ghn_ward_code',
         'subtotal','shipping_fee','discount','total',
         'status','payment_method','payment_status','note',
+        'points_used',
+        'points_discount',
     ];
 
 

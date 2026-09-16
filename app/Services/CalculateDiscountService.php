@@ -42,15 +42,19 @@ class CalculateDiscountService
                 break;
 
             case 'free_shipping':
-                // LUẬT 3: Mã miễn phí vận chuyển.
-                // Giới hạn giảm ship lấy từ max_discount_amount (nếu có) hoặc discount_value
-                $maxShippingDiscount = $voucher->max_discount_amount ?: $voucher->discount_value;
-                
-                // Số tiền giảm tối đa chỉ bằng đúng phí ship thực tế.
-                // VD: Phí ship 25K, mã giảm ship 30K -> Chỉ giảm 25K.
-                $discountAmount = min($shippingFee, $maxShippingDiscount);
-                break;
+    $maxShippingDiscount = (int) $voucher->max_discount_amount;
 
+    if ($maxShippingDiscount > 0) {
+        $discountAmount = min(
+            $shippingFee,
+            $maxShippingDiscount
+        );
+    } else {
+        // 0 = miễn toàn bộ phí vận chuyển thực tế
+        $discountAmount = $shippingFee;
+    }
+
+    break;
             default:
                 throw new Exception('Loại mã giảm giá không được hệ thống hỗ trợ.');
         }

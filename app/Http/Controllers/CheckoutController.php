@@ -2,20 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
+use App\Models\Voucher;
+use App\Models\VoucherUsage;
+use App\Services\CalculateDiscountService;
 use App\Services\CartService;
 use App\Services\GHNService;
+use App\Services\VoucherValidationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Cache;
-use App\Models\Order;
+use Throwable;
 
 class CheckoutController extends Controller
 {
     public function __construct(
         protected CartService $cart,
-        protected GHNService $ghn
+        protected GHNService $ghn,
+        protected VoucherValidationService $voucherValidation,
+        protected CalculateDiscountService $discountCalculator,
     ) {}
 
     public function index()
@@ -31,38 +39,48 @@ class CheckoutController extends Controller
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
         $shippingFee = 0;
-        
-        // Lấy thông tin điểm sử dụng từ session
-        $usedPoints = session('used_points', 0);
-        $pointsDiscount = session('point_discount', 0);
-        
-        $total = max(0, $subtotal + $shippingFee - $pointsDiscount);
+        $usedPoints = (int) session('used_points', 0);
+        $pointsDiscount = (int) session('point_discount', 0);
+
+        $voucherBreakdown = $this->calculateVoucherBreakdown(
+            $items,
+            (int) $subtotal,
+            $shippingFee,
+            $user,
+            false,
+            false
+        );
+
+        $pointsDiscount = min(
+            $pointsDiscount,
+            max(0, (int) $subtotal - $voucherBreakdown['order_discount'])
+        );
+
+        $total = max(
+            0,
+            (int) $subtotal
+            - $voucherBreakdown['order_discount']
+            + $shippingFee
+            - $voucherBreakdown['shipping_discount']
+            - $pointsDiscount
+        );
 
         $provinceResponse = $this->ghn->getProvinces();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Chuẩn hóa dữ liệu tỉnh/thành GHN
-        |--------------------------------------------------------------------------
-        */
-
-        // Nếu GHN trả: ['data' => [...]]
         if (
-            isset($provinceResponse['data'])
-            && is_array($provinceResponse['data'])
+            isset($provinceResponse['data']) &&
+            is_array($provinceResponse['data'])
         ) {
             $provinceResponse = $provinceResponse['data'];
         }
 
-        // Nếu GHN vô tình trả một tỉnh duy nhất: ['ProvinceID' => ..., 'ProvinceName' => ...]
         if (
-            isset($provinceResponse['ProvinceID'])
-            && isset($provinceResponse['ProvinceName'])
+            isset($provinceResponse['ProvinceID']) &&
+            isset($provinceResponse['ProvinceName'])
         ) {
             $provinceResponse = [$provinceResponse];
         }
 
-        // Chỉ giữ item hợp lệ
         $provinces = collect($provinceResponse)
             ->filter(function ($province) {
                 return is_array($province)
@@ -72,6 +90,21 @@ class CheckoutController extends Controller
             ->values()
             ->all();
 
+        $checkoutVouchers = session('checkout_vouchers', []);
+
+        // Chỉ hiển thị các voucher hiện có trong ví của người dùng và
+        // đang hợp lệ với giỏ hàng hiện tại. Người dùng không cần nhớ mã.
+        $availableOrderVouchers = $this->getAvailableCheckoutVouchers(
+            $user,
+            $items,
+            'order'
+        );
+        $availableShippingVouchers = $this->getAvailableCheckoutVouchers(
+            $user,
+            $items,
+            'shipping'
+        );
+
         return view('checkout.index', compact(
             'user',
             'items',
@@ -80,39 +113,43 @@ class CheckoutController extends Controller
             'usedPoints',
             'pointsDiscount',
             'total',
-            'provinces'
+            'provinces',
+            'voucherBreakdown',
+            'checkoutVouchers',
+            'availableOrderVouchers',
+            'availableShippingVouchers'
         ));
     }
 
- public function districts(Request $request)
-{
-    $data = $request->validate([
-        'province_id' => ['required', 'integer'],
-    ]);
+    public function districts(Request $request)
+    {
+        $data = $request->validate([
+            'province_id' => ['required', 'integer'],
+        ]);
 
-    $response = $this->ghn->getDistricts(
-        (int) $data['province_id']
-    );
+        session()->forget('checkout_shipping_fee');
 
-    $districts = $this->normalizeGhnList($response);
+        $response = $this->ghn->getDistricts((int) $data['province_id']);
 
-    return response()->json($districts);
-}
+        return response()->json(
+            $this->normalizeGhnList($response)
+        );
+    }
 
-  public function wards(Request $request)
-{
-    $data = $request->validate([
-        'district_id' => ['required', 'integer'],
-    ]);
+    public function wards(Request $request)
+    {
+        $data = $request->validate([
+            'district_id' => ['required', 'integer'],
+        ]);
 
-    $response = $this->ghn->getWards(
-        (int) $data['district_id']
-    );
+        session()->forget('checkout_shipping_fee');
 
-    $wards = $this->normalizeGhnList($response);
+        $response = $this->ghn->getWards((int) $data['district_id']);
 
-    return response()->json($wards);
-}
+        return response()->json(
+            $this->normalizeGhnList($response)
+        );
+    }
 
     public function calculateShippingFee(Request $request)
     {
@@ -121,14 +158,17 @@ class CheckoutController extends Controller
             'ward_code' => ['required', 'string'],
         ]);
 
-        $subtotal = $this->cart->total();
-        $weight = 500;
+        $items = $this->cart->items();
+        $subtotal = (int) $this->cart->total();
+        $weight = method_exists($this->cart, 'totalWeightGrams')
+            ? max(500, (int) $this->cart->totalWeightGrams())
+            : 500;
 
         $feeData = $this->ghn->calculateFee(
             (int) $data['district_id'],
             $data['ward_code'],
             $weight,
-            (int) $subtotal
+            $subtotal
         );
 
         $shippingFee = $this->extractShippingFee($feeData);
@@ -140,19 +180,217 @@ class CheckoutController extends Controller
             ], 422);
         }
 
-        $pointsDiscount = session('point_discount', 0);
-        $finalTotal = max(0, $subtotal + $shippingFee - $pointsDiscount);
+        session(['checkout_shipping_fee' => $shippingFee]);
+
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        $voucherBreakdown = $this->calculateVoucherBreakdown(
+            $items,
+            $subtotal,
+            $shippingFee,
+            $user,
+            false,
+            false
+        );
+$pointsDiscount = min(
+    (int) session('point_discount', 0),
+    max(0, $subtotal - $voucherBreakdown['order_discount'])
+);
+
+$finalTotal = max(
+    0,
+    $subtotal
+    - $voucherBreakdown['order_discount']
+    + $shippingFee
+    - $voucherBreakdown['shipping_discount']
+    - $pointsDiscount
+);
+
+return response()->json([
+    'subtotal' => $subtotal,
+    'shipping_fee' => $shippingFee,
+    'order_voucher_discount' => $voucherBreakdown['order_discount'],
+    'shipping_voucher_discount' => $voucherBreakdown['shipping_discount'],
+    'points_discount' => $pointsDiscount,
+    'total' => $finalTotal,
+    'voucher_messages' => $voucherBreakdown['messages'],
+]);
+}
+
+    /**
+     * Áp dụng đúng 1 voucher vào một trong hai slot: order hoặc shipping.
+     */
+    public function applyVoucher(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng đăng nhập để sử dụng mã ưu đãi.',
+            ], 401);
+        }
+
+        $data = $request->validate([
+            'voucher_id' => ['required', 'string'],
+            'type' => ['required', 'in:order,shipping'],
+        ], [
+            'voucher_id.required' => 'Vui lòng chọn mã ưu đãi.',
+            'type.in' => 'Loại mã ưu đãi không hợp lệ.',
+        ]);
+
+        $type = $data['type'];
+        $user = Auth::user();
+
+        // Checkout chỉ cho dùng voucher đã được người dùng lưu vào ví.
+        // Không tin voucher_id từ frontend: luôn truy vấn lại qua savedVouchers().
+        $voucher = $user->savedVouchers()
+            ->where('vouchers.id', $data['voucher_id'])
+            ->where('vouchers.type', $type)
+            ->first();
+
+        if (!$voucher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã ưu đãi này không có trong ví của bạn hoặc không còn khả dụng.',
+            ], 404);
+        }
+
+        $items = $this->cart->items();
+        $subtotal = (int) $this->cart->total();
+        $shippingFee = (int) session('checkout_shipping_fee', 0);
+
+        try {
+            $validation = $this->voucherValidation->validate(
+                $voucher,
+                $user,
+                $items
+            );
+
+            $discount = $this->discountCalculator->calculate(
+                $voucher,
+                (float) $validation['eligible_subtotal'],
+                (float) $shippingFee
+            );
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+
+        $slots = session('checkout_vouchers', []);
+        $slots[$type] = [
+            'id' => (string) $voucher->id,
+            'code' => $voucher->code,
+            'type' => $voucher->type,
+            'name' => $voucher->name,
+        ];
+        session(['checkout_vouchers' => $slots]);
+
+        $breakdown = $this->calculateVoucherBreakdown(
+            $items,
+            $subtotal,
+            $shippingFee,
+            $user,
+            false,
+            false
+        );
+
+        $pointsDiscount = min(
+            (int) session('point_discount', 0),
+            max(0, $subtotal - $breakdown['order_discount'])
+        );
+
+        $total = max(
+            0,
+            $subtotal
+            - $breakdown['order_discount']
+            + $shippingFee
+            - $breakdown['shipping_discount']
+            - $pointsDiscount
+        );
+
+        $message = $type === 'shipping' && $shippingFee <= 0
+            ? 'Đã lưu mã vận chuyển. Mức giảm sẽ được tính sau khi có phí ship.'
+            : 'Áp dụng mã ưu đãi thành công.';
 
         return response()->json([
-            'subtotal' => $subtotal,
-            'shipping_fee' => $shippingFee,
-            'points_discount' => $pointsDiscount,
-            'total' => $finalTotal,
+            'success' => true,
+            'message' => $message,
+            'voucher' => [
+                'id' => (string) $voucher->id,
+                'code' => $voucher->code,
+                'name' => $voucher->name,
+                'type' => $voucher->type,
+                'discount' => $discount,
+            ],
+            'pricing' => [
+                'subtotal' => $subtotal,
+                'shipping_fee' => $shippingFee,
+                'order_voucher_discount' => $breakdown['order_discount'],
+                'shipping_voucher_discount' => $breakdown['shipping_discount'],
+                'points_discount' => $pointsDiscount,
+                'total' => $total,
+            ],
+        ]);
+    }
+
+    public function removeVoucher(Request $request)
+    {
+        $data = $request->validate([
+            'type' => ['required', 'in:order,shipping'],
+        ]);
+
+        $slots = session('checkout_vouchers', []);
+        unset($slots[$data['type']]);
+        session(['checkout_vouchers' => $slots]);
+
+        $items = $this->cart->items();
+        $subtotal = (int) $this->cart->total();
+        $shippingFee = (int) session('checkout_shipping_fee', 0);
+
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        $breakdown = $this->calculateVoucherBreakdown(
+            $items,
+            $subtotal,
+            $shippingFee,
+            $user,
+            false,
+            false
+        );
+
+        $pointsDiscount = min(
+            (int) session('point_discount', 0),
+            max(0, $subtotal - $breakdown['order_discount'])
+        );
+
+        $total = max(
+            0,
+            $subtotal
+            - $breakdown['order_discount']
+            + $shippingFee
+            - $breakdown['shipping_discount']
+            - $pointsDiscount
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã gỡ mã ưu đãi.',
+            'pricing' => [
+                'subtotal' => $subtotal,
+                'shipping_fee' => $shippingFee,
+                'order_voucher_discount' => $breakdown['order_discount'],
+                'shipping_voucher_discount' => $breakdown['shipping_discount'],
+                'points_discount' => $pointsDiscount,
+                'total' => $total,
+            ],
         ]);
     }
 
     /**
-     * Áp dụng điểm tích lũy vào đơn hàng (AJAX)
+     * Áp dụng điểm tích lũy vào đơn hàng (AJAX).
      */
     public function applyPoints(Request $request)
     {
@@ -166,26 +404,52 @@ class CheckoutController extends Controller
 
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
+
         if (!$user) {
-            return response()->json(['message' => 'Vui lòng đăng nhập để dùng điểm.'], 401);
+            return response()->json([
+                'message' => 'Vui lòng đăng nhập để dùng điểm.',
+            ], 401);
         }
 
         $requestedPoints = (int) $request->input('points');
 
-        if ($requestedPoints > $user->points) {
+        if ($requestedPoints > (int) $user->points) {
             return response()->json([
                 'message' => 'Bạn chỉ có tối đa ' . number_format($user->points) . ' điểm.',
             ], 422);
         }
 
-        $subtotal = $this->cart->total();
-        $pointRate = 1000; // 1 điểm = 1.000 VNĐ
+        $items = $this->cart->items();
+        $subtotal = (int) $this->cart->total();
+        $shippingFee = (int) session('checkout_shipping_fee', 0);
+
+        $breakdown = $this->calculateVoucherBreakdown(
+            $items,
+            $subtotal,
+            $shippingFee,
+            $user,
+            false,
+            false
+        );
+
+        $pointRate = 1000;
         $calculatedDiscount = $requestedPoints * $pointRate;
 
-        // Giới hạn giảm giá không vượt quá tổng tạm tính giỏ hàng
-        if ($calculatedDiscount > $subtotal) {
-            $requestedPoints = (int) ceil($subtotal / $pointRate);
-            $calculatedDiscount = $subtotal;
+        // Giữ hành vi cũ: điểm chỉ giảm trên tiền hàng, không ăn vào phí ship.
+        $maxPointDiscount = max(
+            0,
+            $subtotal - $breakdown['order_discount']
+        );
+
+        if ($calculatedDiscount > $maxPointDiscount) {
+            $requestedPoints = (int) floor($maxPointDiscount / $pointRate);
+            $calculatedDiscount = $requestedPoints * $pointRate;
+        }
+
+        if ($requestedPoints <= 0 || $calculatedDiscount <= 0) {
+            return response()->json([
+                'message' => 'Giá trị đơn hàng còn lại không đủ để sử dụng điểm.',
+            ], 422);
         }
 
         session([
@@ -193,18 +457,25 @@ class CheckoutController extends Controller
             'point_discount' => $calculatedDiscount,
         ]);
 
+        $total = max(
+            0,
+            $subtotal
+            - $breakdown['order_discount']
+            + $shippingFee
+            - $breakdown['shipping_discount']
+            - $calculatedDiscount
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Đã áp dụng điểm tích lũy thành công!',
             'used_points' => $requestedPoints,
             'points_discount' => $calculatedDiscount,
             'discount_fmt' => number_format($calculatedDiscount) . 'đ',
+            'total' => $total,
         ]);
     }
 
-    /**
-     * Hủy sử dụng điểm tích lũy (AJAX)
-     */
     public function removePoints()
     {
         session()->forget(['used_points', 'point_discount']);
@@ -218,7 +489,7 @@ class CheckoutController extends Controller
     public function store(Request $request)
     {
         $items = $this->cart->items();
-        $subtotal = $this->cart->total();
+        $subtotal = (int) $this->cart->total();
 
         if ($items->isEmpty()) {
             return redirect()->route('cart.index')
@@ -227,10 +498,10 @@ class CheckoutController extends Controller
 
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
-        $usedPoints = session('used_points', 0);
-        $pointsDiscount = session('point_discount', 0);
+        $usedPoints = (int) session('used_points', 0);
+        $requestedPointsDiscount = (int) session('point_discount', 0);
 
-        if ($user && $usedPoints > $user->points) {
+        if ($user && $usedPoints > (int) $user->points) {
             return back()->withInput()
                 ->with('error', 'Số điểm tích lũy của bạn không đủ để thực hiện giao dịch.');
         }
@@ -244,7 +515,7 @@ class CheckoutController extends Controller
             'to_ward_code' => ['required', 'string'],
             'address' => ['required', 'string', 'max:500'],
             'note' => ['nullable', 'string', 'max:1000'],
-            'payment_method' => ['required', 'in:cod,bank,zalopay,stripe'],
+            'payment_method' => ['required', 'in:cod,bank,zalopay,stripe,paypal'],
         ], [
             'full_name.required' => 'Vui lòng nhập họ và tên.',
             'phone.required' => 'Vui lòng nhập số điện thoại.',
@@ -256,55 +527,33 @@ class CheckoutController extends Controller
             'payment_method.required' => 'Vui lòng chọn phương thức thanh toán.',
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Tính phí vận chuyển
-        |--------------------------------------------------------------------------
-        */
-
-        $weight = 500;
+        $weight = method_exists($this->cart, 'totalWeightGrams')
+            ? max(500, (int) $this->cart->totalWeightGrams())
+            : 500;
 
         $feeData = $this->ghn->calculateFee(
             (int) $data['to_district_id'],
             $data['to_ward_code'],
             $weight,
-            (int) $subtotal
+            $subtotal
         );
 
         $shippingFee = $this->extractShippingFee($feeData);
 
         if ($shippingFee <= 0) {
-            return back()
-                ->withInput()
+            return back()->withInput()
                 ->with(
                     'error',
                     'Không thể tính phí vận chuyển GHN. Vui lòng kiểm tra lại địa chỉ.'
                 );
         }
 
-        // Tính lại tổng tiền sau khi đã có phí ship và giảm giá điểm tích lũy
-        $total = max(0, $subtotal + $shippingFee - $pointsDiscount);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Lấy tên tỉnh / huyện / xã từ GHN
-        |--------------------------------------------------------------------------
-        */
-
-        $provinces = $this->normalizeGhnList(
-            $this->ghn->getProvinces()
-        );
-
+        $provinces = $this->normalizeGhnList($this->ghn->getProvinces());
         $districts = $this->normalizeGhnList(
-            $this->ghn->getDistricts(
-                (int) $data['province_id']
-            )
+            $this->ghn->getDistricts((int) $data['province_id'])
         );
-
         $wards = $this->normalizeGhnList(
-            $this->ghn->getWards(
-                (int) $data['to_district_id']
-            )
+            $this->ghn->getWards((int) $data['to_district_id'])
         );
 
         $provinceName = $this->findGhnName(
@@ -329,102 +578,157 @@ class CheckoutController extends Controller
         );
 
         if (!$provinceName || !$districtName || !$wardName) {
-            return back()
-                ->withInput()
-                ->with(
-                    'error',
-                    'Không thể xác định đầy đủ địa chỉ giao hàng.'
-                );
+            return back()->withInput()
+                ->with('error', 'Không thể xác định đầy đủ địa chỉ giao hàng.');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Tạo Order + Order Items trong database
-        |--------------------------------------------------------------------------
-        */
+        try {
+            $checkoutResult = DB::transaction(function () use (
+                $data,
+                $items,
+                $subtotal,
+                $shippingFee,
+                $requestedPointsDiscount,
+                $provinceName,
+                $districtName,
+                $wardName,
+                $user
+            ) {
+                // Re-validate voucher ngay trước khi tạo đơn và khóa row voucher
+                // để hạn chế race condition về lượt dùng/ngân sách.
+                $voucherBreakdown = $this->calculateVoucherBreakdown(
+                    $items,
+                    $subtotal,
+                    $shippingFee,
+                    $user,
+                    true,
+                    true
+                );
 
-        $dbOrder = DB::transaction(function () use (
-            $data,
-            $items,
-            $subtotal,
-            $shippingFee,
-            $total,
-            $provinceName,
-            $districtName,
-            $wardName
-        ) {
-            $order = Order::create([
-                'user_id' => Auth::id(),
+                $pointsDiscount = min(
+                    $requestedPointsDiscount,
+                    max(0, $subtotal - $voucherBreakdown['order_discount'])
+                );
 
-                'recipient_name' => $data['full_name'],
-                'recipient_phone' => $data['phone'],
-                'recipient_email' => $data['email'] ?? null,
+                // 1 điểm = 1.000đ, vì vậy không tiêu một phần điểm.
+                $pointsDiscount = intdiv(max(0, $pointsDiscount), 1000) * 1000;
+                $effectiveUsedPoints = intdiv($pointsDiscount, 1000);
 
-                'province_name' => $provinceName,
-                'district_name' => $districtName,
-                'ward_name' => $wardName,
-                'address_detail' => $data['address'],
+                $total = max(
+                    0,
+                    $subtotal
+                    - $voucherBreakdown['order_discount']
+                    + $shippingFee
+                    - $voucherBreakdown['shipping_discount']
+                    - $pointsDiscount
+                );
 
-                'ghn_province_id' => (int) $data['province_id'],
-                'ghn_district_id' => (int) $data['to_district_id'],
-                'ghn_ward_code' => $data['to_ward_code'],
+                $aggregateDiscount =
+                    $voucherBreakdown['order_discount']
+                    + $voucherBreakdown['shipping_discount']
+                    + $pointsDiscount;
 
-                'subtotal' => (int) $subtotal,
-                'shipping_fee' => (int) $shippingFee,
-                'discount' => 0, // Bạn có thể update trường discount này nếu có cột lưu point discount
-                'total' => (int) $total,
+                $order = Order::create([
+                    'user_id' => Auth::id(),
+                    'recipient_name' => $data['full_name'],
+                    'recipient_phone' => $data['phone'],
+                    'recipient_email' => $data['email'] ?? null,
+                    'province_name' => $provinceName,
+                    'district_name' => $districtName,
+                    'points_used' => $effectiveUsedPoints,
+                    'points_discount' => $pointsDiscount,
+                    'ward_name' => $wardName,
+                    'address_detail' => $data['address'],
+                    'ghn_province_id' => (int) $data['province_id'],
+                    'ghn_district_id' => (int) $data['to_district_id'],
+                    'ghn_ward_code' => $data['to_ward_code'],
+                    'subtotal' => $subtotal,
+                    'shipping_fee' => $shippingFee,
+                    'discount' => $aggregateDiscount,
+                    'total' => $total,
+                    'status' => 'pending',
+                    'payment_method' => match ($data['payment_method']) {
+                        'bank' => 'qr',
+                        default => $data['payment_method'],
+                    },
+                    'payment_status' => 'unpaid',
+                    'note' => $data['note'] ?? null,
+                ]);
 
-                'status' => 'pending',
+                foreach ($items as $item) {
+                    $product = $item->product;
 
-                // Form dùng "bank", DB dùng "qr". Các phương thức khác giữ nguyên.
-                'payment_method' => match ($data['payment_method']) {
-                  'bank' => 'qr',
-                  default => $data['payment_method'],
-                },
-                'payment_status' => 'unpaid',
+                    if (!$product) {
+                        continue;
+                    }
 
-                'note' => $data['note'] ?? null,
-            ]);
+                    $price = (int) $product->price;
+                    $quantity = (int) $item->quantity;
 
-            foreach ($items as $item) {
-                $product = $item->product;
-
-                if (!$product) {
-                    continue;
+                    $order->items()->create([
+                        'product_id' => $product->id,
+                        'product_name' => $product->name,
+                        'product_sku' => $product->sku ?? null,
+                        'price' => $price,
+                        'quantity' => $quantity,
+                        'subtotal' => $price * $quantity,
+                    ]);
                 }
 
-                $price = (int) $product->price;
-                $quantity = (int) $item->quantity;
+                if ($user) {
+                    foreach ($voucherBreakdown['details'] as $detail) {
+                        /** @var Voucher $voucher */
+                        $voucher = $detail['voucher'];
+                        $discount = (int) $detail['discount'];
 
-                $order->items()->create([
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'product_sku' => $product->sku ?? null,
-                    'price' => $price,
-                    'quantity' => $quantity,
-                    'subtotal' => $price * $quantity,
-                ]);
-            }
+                        if ($discount <= 0 && $voucher->type !== 'shipping') {
+                            continue;
+                        }
 
-            return $order;
-        });
+                        // Khi khách bấm Đặt hàng, chỉ GIỮ CHỖ voucher.
+                        // Chưa tăng used_count cho tới khi đơn COD được xác nhận
+                        // hoặc thanh toán online đã thực sự thành công.
+                        $voucher->usages()->create([
+                            'user_id' => $user->id,
+                            'order_id' => $order->id,
+                            'voucher_code' => $voucher->code,
+                            'voucher_name' => $voucher->name,
+                            'discount_type' => $voucher->discount_type,
+                            'discount_value' => (int) $voucher->discount_value,
+                            'order_subtotal' => $subtotal,
+                            'shipping_fee' => $shippingFee,
+                            'discount_amount' => $discount,
+                            'final_total' => $total,
+                            'status' => 'reserved',
+                            'reserved_until' => now()->addMinutes(15),
+                        ]);
+                    }
+                }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Mã thanh toán dùng cho QR / SePay
-        |--------------------------------------------------------------------------
-        */
+                return [
+                    'order' => $order,
+                    'voucher_breakdown' => $voucherBreakdown,
+                    'points_discount' => $pointsDiscount,
+                    'used_points' => $effectiveUsedPoints,
+                    'total' => $total,
+                ];
+            });
+        } catch (Throwable $e) {
+            return back()->withInput()
+                ->with('error', $e->getMessage());
+        }
+
+        /** @var Order $dbOrder */
+        $dbOrder = $checkoutResult['order'];
+        $voucherBreakdown = $checkoutResult['voucher_breakdown'];
+        $pointsDiscount = (int) $checkoutResult['points_discount'];
+        $usedPoints = (int) $checkoutResult['used_points'];
+        $total = (int) $checkoutResult['total'];
 
         $paymentCode = 'MK' . now()->format('ymdHis');
 
-        /*
-        |--------------------------------------------------------------------------
-        | Trừ điểm và ghi log điểm tích lũy nếu có sử dụng điểm
-        |--------------------------------------------------------------------------
-        */
-        if ($user && $usedPoints > 0) {
+        if ($user && $usedPoints > 0 && $pointsDiscount > 0) {
             DB::transaction(function () use ($user, $usedPoints, $paymentCode) {
-                /** @var \App\Models\User $user */
                 $user->decrement('points', $usedPoints);
 
                 if (method_exists($user, 'pointLogs')) {
@@ -437,65 +741,53 @@ class CheckoutController extends Controller
             });
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Session dùng cho các trang checkout hiện tại
-        |--------------------------------------------------------------------------
-        */
-
         session([
             'checkout_order' => [
                 'id' => $dbOrder->id,
                 'db_code' => $dbOrder->code,
-                // Giữ code MK để QR + paymentStatus hiện tại tiếp tục hoạt động
                 'code' => $paymentCode,
                 'customer' => $data,
-                'subtotal' => (int) $subtotal,
-                'shipping_fee' => (int) $shippingFee,
+                'subtotal' => $subtotal,
+                'shipping_fee' => $shippingFee,
+                'order_voucher_code' => $voucherBreakdown['order']['code'] ?? null,
+                'order_voucher_discount' => $voucherBreakdown['order_discount'],
+                'shipping_voucher_code' => $voucherBreakdown['shipping']['code'] ?? null,
+                'shipping_voucher_discount' => $voucherBreakdown['shipping_discount'],
                 'points_used' => $usedPoints,
                 'points_discount' => $pointsDiscount,
-                'total' => (int) $total,
+                'total' => $total,
                 'created_at' => now()->toDateTimeString(),
             ],
         ]);
 
-        // Xóa session giảm giá điểm sau khi ghi nhận đơn
-        session()->forget(['used_points', 'point_discount']);
-
-        /*
-        |--------------------------------------------------------------------------
-        | COD
-        |--------------------------------------------------------------------------
-        */
+        session()->forget([
+            'used_points',
+            'point_discount',
+            'checkout_vouchers',
+            'checkout_shipping_fee',
+        ]);
 
         if ($data['payment_method'] === 'cod') {
             return redirect()->route('checkout.success');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | ZaloPay
-        |--------------------------------------------------------------------------
-        */
-
         if ($data['payment_method'] === 'zalopay') {
             return redirect()->route('zalopay.create');
         }
+
         if ($data['payment_method'] === 'stripe') {
-         return redirect()->route('stripe.create');
-         }
-        /*
-        |--------------------------------------------------------------------------
-        | Chuyển khoản ngân hàng / SePay
-        |--------------------------------------------------------------------------
-        */
+            return redirect()->route('stripe.create');
+        }
+        if ($data['payment_method'] === 'paypal') {
+        return redirect()->route('paypal.create');
+        }
 
         Cache::put(
             'checkout_order_' . $paymentCode,
             [
                 'order_id' => (string) $dbOrder->id,
                 'order_code' => $dbOrder->code,
-                'total' => (int) $total,
+                'total' => $total,
                 'status' => 'pending',
             ],
             now()->addMinutes(15)
@@ -519,7 +811,6 @@ class CheckoutController extends Controller
         $total = (int) ($order['total'] ?? 0);
 
         $bankId = config('services.vietqr.bank_id', '970422');
-
         $accountNo = config('services.vietqr.account_no');
         $accountName = config('services.vietqr.account_name', 'MOMMYKIDS');
 
@@ -540,8 +831,16 @@ class CheckoutController extends Controller
         );
 
         return view('checkout.qr', compact(
-            'order', 'items', 'subtotal', 'shippingFee', 'pointsDiscount', 'total',
-            'qrUrl', 'accountNo', 'accountName', 'transferContent'
+            'order',
+            'items',
+            'subtotal',
+            'shippingFee',
+            'pointsDiscount',
+            'total',
+            'qrUrl',
+            'accountNo',
+            'accountName',
+            'transferContent'
         ));
     }
 
@@ -567,223 +866,362 @@ class CheckoutController extends Controller
         return redirect()->route('checkout.success');
     }
 
+
+
     public function sepayWebhook(Request $request)
     {
         $data = $request->all();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Chỉ nhận giao dịch tiền vào
-        |--------------------------------------------------------------------------
-        */
         if (($data['transferType'] ?? null) !== 'in') {
-            return response()->json([
-                'success' => true,
-            ]);
+            return response()->json(['success' => true]);
         }
 
         $amount = (int) ($data['transferAmount'] ?? 0);
 
-        /*
-        |--------------------------------------------------------------------------
-        | SePay có thể trả mã trong "code" hoặc nằm trong "content"
-        |--------------------------------------------------------------------------
-        */
         $paymentText = strtoupper(
-            trim(
-                ($data['code'] ?? '')
-                . ' '
-                . ($data['content'] ?? '')
-            )
+            trim(($data['code'] ?? '') . ' ' . ($data['content'] ?? ''))
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | QR của MommyKids dùng:
-        |
-        | MOMMYKIDS MK260909123456
-        |--------------------------------------------------------------------------
-        */
-        preg_match(
-            '/MK\d{12}/',
-            $paymentText,
-            $matches
-        );
-
+        preg_match('/MK\d{12}/', $paymentText, $matches);
         $orderCode = $matches[0] ?? null;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Không nhận diện được đơn → vẫn trả 200 cho SePay
-        |--------------------------------------------------------------------------
-        */
         if (!$orderCode) {
-            return response()->json([
-                'success' => true,
-            ]);
+            return response()->json(['success' => true]);
         }
 
         $cacheKey = 'checkout_order_' . $orderCode;
-
         $order = Cache::get($cacheKey);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Không còn đơn pending
-        |--------------------------------------------------------------------------
-        */
-        if (!$order) {
-            return response()->json([
-                'success' => true,
-            ]);
+        if (!$order || ($order['status'] ?? null) === 'paid') {
+            return response()->json(['success' => true]);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Đã xử lý webhook này trước đó
-        |--------------------------------------------------------------------------
-        */
-        if (($order['status'] ?? null) === 'paid') {
-            return response()->json([
-                'success' => true,
-            ]);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Kiểm tra đúng số tiền
-        |--------------------------------------------------------------------------
-        */
         if ($amount !== (int) $order['total']) {
-            return response()->json([
-                'success' => true,
-            ]);
+            return response()->json(['success' => true]);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Thanh toán thành công
-        |--------------------------------------------------------------------------
-        */
         $order['status'] = 'paid';
+        $order['paid_at'] = now()->toDateTimeString();
+        $order['transaction_id'] = $data['id'] ?? null;
+        $order['reference_code'] = $data['referenceCode'] ?? null;
+        $order['gateway'] = $data['gateway'] ?? null;
 
-        $order['paid_at'] =
-            now()->toDateTimeString();
+        Cache::put($cacheKey, $order, now()->addMinutes(30));
 
-        $order['transaction_id'] =
-            $data['id'] ?? null;
-
-        $order['reference_code'] =
-            $data['referenceCode'] ?? null;
-
-        $order['gateway'] =
-            $data['gateway'] ?? null;
-
-        Cache::put(
-            $cacheKey,
-            $order,
-            now()->addMinutes(30)
-        );
-
-        return response()->json([
-            'success' => true,
-        ]);
+        return response()->json(['success' => true]);
     }
 
     public function paymentStatus(string $code)
     {
         $order = session('checkout_order');
 
-        if (
-            !$order ||
-            ($order['code'] ?? null) !== $code
-        ) {
-            return response()->json([
-                'paid' => false,
-            ], 404);
+        if (!$order || ($order['code'] ?? null) !== $code) {
+            return response()->json(['paid' => false], 404);
         }
 
-        $payment = Cache::get(
-            'checkout_order_' . $code
-        );
+        $payment = Cache::get('checkout_order_' . $code);
 
-        if (
-            $payment &&
-            ($payment['status'] ?? null) === 'paid'
-        ) {
-            /*
-            |--------------------------------------------------------------------------
-            | Lưu thông tin thanh toán vào session của khách
-            |--------------------------------------------------------------------------
-            */
-
+        if ($payment && ($payment['status'] ?? null) === 'paid') {
             session([
                 'checkout_payment' => [
                     'status' => 'paid',
-
-                    'transaction_id' =>
-                        $payment['transaction_id'] ?? null,
-
-                    'paid_at' =>
-                        $payment['paid_at']
-                        ?? now()->toDateTimeString(),
-
+                    'transaction_id' => $payment['transaction_id'] ?? null,
+                    'paid_at' => $payment['paid_at'] ?? now()->toDateTimeString(),
                     'bank' => 'MB Bank',
-
-                    'amount' =>
-                        $order['total'],
-
-                    'content' =>
-                        'MOMMYKIDS ' . $code,
+                    'amount' => $order['total'],
+                    'content' => 'MOMMYKIDS ' . $code,
                 ],
             ]);
 
             return response()->json([
                 'paid' => true,
-
-                'redirect' =>
-                    route('checkout.success'),
+                'redirect' => route('checkout.success'),
             ]);
         }
 
-        return response()->json([
-            'paid' => false,
-        ]);
+        return response()->json(['paid' => false]);
     }
 
     public function success()
-    {
-        $order = session('checkout_order');
+{
+    $order = session('checkout_order');
 
-        if (!$order) {
-            return redirect()->route('checkout.index');
+    if (!$order) {
+        return redirect()->route('checkout.index');
+    }
+
+    $dbOrderId = $order['id'] ?? $order['order_id'] ?? null;
+    $dbOrder = $dbOrderId ? Order::find($dbOrderId) : null;
+
+    $isCompleted =
+        $dbOrder &&
+        (
+            $dbOrder->payment_method === 'cod' ||
+            $dbOrder->payment_status === 'paid'
+        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chốt voucher khi đơn đã hoàn tất
+    |--------------------------------------------------------------------------
+    */
+    if ($isCompleted) {
+        $this->finalizeReservedVoucherUsages($dbOrder);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PHẢI lấy items trước khi xóa giỏ
+    |--------------------------------------------------------------------------
+    | Để trang "Thanh toán thành công" vẫn hiển thị sản phẩm vừa mua.
+    */
+    $items = $this->cart->items();
+
+    $subtotal = (int) ($order['subtotal'] ?? 0);
+    $shippingFee = (int) ($order['shipping_fee'] ?? 0);
+    $pointsDiscount = (int) ($order['points_discount'] ?? 0);
+    $total = (int) ($order['total'] ?? 0);
+    $payment = session('checkout_payment');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Xóa giỏ sau khi đặt/thanh toán thành công
+    |--------------------------------------------------------------------------
+    */
+    if ($isCompleted) {
+        $this->cart->clear();
+    }
+
+    return view('checkout.success', compact(
+        'order',
+        'items',
+        'subtotal',
+        'shippingFee',
+        'pointsDiscount',
+        'total',
+        'payment'
+    ));
+}
+
+    /**
+     * Lấy các voucher người dùng đã lưu/có trong ví và còn dùng được
+     * với giỏ hàng hiện tại. Danh sách này chỉ phục vụ UI chọn voucher;
+     * applyVoucher() vẫn xác thực lại toàn bộ ở backend.
+     */
+    private function getAvailableCheckoutVouchers(
+        $user,
+        Collection $items,
+        string $type
+    ): Collection {
+        if (!$user) {
+            return collect();
         }
 
-        $items = $this->cart->items();
-        $subtotal = $order['subtotal'];
-        $shippingFee = $order['shipping_fee'];
-        $pointsDiscount = $order['points_discount'] ?? 0;
-        $total = $order['total'];
-        $payment = session('checkout_payment');
+        $vouchers = $user->savedVouchers()
+            ->where('vouchers.type', $type)
+            ->orderByDesc('vouchers.priority')
+            ->orderBy('vouchers.expires_at')
+            ->get();
 
-        return view('checkout.success', compact(
-            'order', 'items', 'subtotal', 'shippingFee', 'pointsDiscount', 'total', 'payment'
-        ));
+        return $vouchers
+            ->filter(function (Voucher $voucher) use ($user, $items) {
+                try {
+                    $this->voucherValidation->validate(
+                        $voucher,
+                        $user,
+                        $items
+                    );
+
+                    return true;
+                } catch (Throwable $e) {
+                    return false;
+                }
+            })
+            ->map(function (Voucher $voucher) {
+                $benefit = match ($voucher->discount_type) {
+                    'percent' => 'Giảm ' . (int) $voucher->discount_value . '%'
+                        . ($voucher->max_discount_amount
+                            ? ' · tối đa ' . number_format((int) $voucher->max_discount_amount, 0, ',', '.') . 'đ'
+                            : ''),
+                    'fixed' => 'Giảm ' . number_format((int) $voucher->discount_value, 0, ',', '.') . 'đ',
+                    'free_shipping' => (int) $voucher->max_discount_amount > 0
+    ? 'Giảm phí ship tối đa '
+        . number_format(
+            (int) $voucher->max_discount_amount,
+            0,
+            ',',
+            '.'
+        ) . 'đ'
+    : 'Miễn phí vận chuyển',
+                    default => 'Ưu đãi',
+                };
+
+                return [
+                    'id' => (string) $voucher->id,
+                    'code' => $voucher->code,
+                    'name' => $voucher->name,
+                    'benefit' => $benefit,
+                    'expires_at' => $voucher->expires_at?->format('d/m/Y'),
+                ];
+            })
+            ->values();
     }
-    
+
+    /**
+     * Tính lại cả hai slot voucher từ session. Không tin số discount lưu ở frontend/session.
+     * Khi $strict=true, voucher invalid sẽ throw để chặn tạo Order.
+     * Khi $lock=true, khóa row voucher trong transaction checkout.
+     */
+    private function calculateVoucherBreakdown(
+        Collection $items,
+        int $subtotal,
+        int $shippingFee,
+        $user,
+        bool $strict,
+        bool $lock
+    ): array {
+        $result = [
+            'order_discount' => 0,
+            'shipping_discount' => 0,
+            'order' => null,
+            'shipping' => null,
+            'details' => [],
+            'messages' => [],
+        ];
+
+        $slots = session('checkout_vouchers', []);
+        $changed = false;
+
+        foreach (['order', 'shipping'] as $type) {
+            $slot = $slots[$type] ?? null;
+
+            if (!$slot || empty($slot['id'])) {
+                continue;
+            }
+
+            $query = Voucher::query()
+                ->whereKey($slot['id']);
+
+            if ($lock) {
+                $query->lockForUpdate();
+            }
+
+            $voucher = $query->first();
+
+            try {
+                if (!$voucher || $voucher->type !== $type) {
+                    throw new \RuntimeException('Mã ưu đãi đã thay đổi hoặc không còn tồn tại.');
+                }
+
+                if (
+                    !$user ||
+                    !$user->savedVouchers()
+                        ->where('vouchers.id', $voucher->id)
+                        ->exists()
+                ) {
+                    throw new \RuntimeException('Mã ưu đãi này không còn trong ví của bạn.');
+                }
+
+                $validation = $this->voucherValidation->validate(
+                    $voucher,
+                    $user,
+                    $items
+                );
+
+                $discount = $this->discountCalculator->calculate(
+                    $voucher,
+                    (float) $validation['eligible_subtotal'],
+                    (float) $shippingFee
+                );
+
+                if (
+                    $voucher->total_budget !== null &&
+                    ((int) $validation['total_discounted'] + (int) $discount) > (int) $voucher->total_budget
+                ) {
+                    throw new \RuntimeException('Ngân sách còn lại của mã ưu đãi không đủ cho đơn hàng này.');
+                }
+
+                $key = $type === 'order'
+                    ? 'order_discount'
+                    : 'shipping_discount';
+
+                $result[$key] = (int) $discount;
+                $result[$type] = [
+                    'id' => (string) $voucher->id,
+                    'code' => $voucher->code,
+                    'name' => $voucher->name,
+                ];
+                $result['details'][$type] = [
+                    'voucher' => $voucher,
+                    'discount' => (int) $discount,
+                    'eligible_subtotal' => (int) $validation['eligible_subtotal'],
+                ];
+            } catch (Throwable $e) {
+                if ($strict) {
+                    throw $e;
+                }
+
+                unset($slots[$type]);
+                $changed = true;
+                $result['messages'][$type] = $e->getMessage();
+            }
+        }
+
+        if ($changed) {
+            session(['checkout_vouchers' => $slots]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Chốt các voucher đã reserve của một đơn hàng.
+     * Idempotent: chỉ xử lý usage đang ở trạng thái reserved, nên gọi lại không
+     * làm tăng used_count lần thứ hai.
+     */
+    private function finalizeReservedVoucherUsages(Order $order): void
+    {
+        DB::transaction(function () use ($order) {
+            $usages = VoucherUsage::query()
+                ->where('order_id', $order->id)
+                ->where('status', 'reserved')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($usages as $usage) {
+                $voucher = Voucher::query()
+                    ->whereKey($usage->voucher_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$voucher) {
+                    $usage->update([
+                        'status' => 'cancelled',
+                        'cancelled_at' => now(),
+                        'cancel_reason' => 'Voucher không còn tồn tại khi chốt đơn.',
+                    ]);
+
+                    continue;
+                }
+
+                $usage->update([
+                    'status' => 'applied',
+                    'reserved_until' => null,
+                    'applied_at' => now(),
+                ]);
+
+                $voucher->increment('used_count');
+            }
+        });
+    }
+
     private function normalizeGhnList(array $response): array
     {
-        if (
-            isset($response['data'])
-            && is_array($response['data'])
-        ) {
+        if (isset($response['data']) && is_array($response['data'])) {
             return $response['data'];
         }
 
-        if (
-            isset($response[0])
-            && is_array($response[0])
-        ) {
+        if (isset($response[0]) && is_array($response[0])) {
             return $response;
         }
 
@@ -806,8 +1244,8 @@ class CheckoutController extends Controller
             }
 
             if (
-                isset($item[$idKey])
-                && (string) $item[$idKey] === (string) $wantedId
+                isset($item[$idKey]) &&
+                (string) $item[$idKey] === (string) $wantedId
             ) {
                 return isset($item[$nameKey])
                     ? (string) $item[$nameKey]
@@ -816,8 +1254,8 @@ class CheckoutController extends Controller
         }
 
         return null;
-    }   
-    
+    }
+
     private function extractShippingFee(array $feeData): int
     {
         if (isset($feeData['total'])) {
