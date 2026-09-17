@@ -27,7 +27,7 @@
                 <h2>Chi tiết thanh toán</h2>
                 <div class="mk-info-row"><span>Số tiền</span><strong class="mk-pink">{{ number_format($payment['amount']) }}đ</strong></div>
                 <div class="mk-info-row"><span>Ngân hàng</span><strong>{{ $payment['bank'] }}</strong></div>
-                <div class="mk-info-row"><span>Mã giao dịch</span><strong>{{ $payment['transaction_id'] }}</strong></div>
+                <div class="mk-info-row"><span>Mã giao dịch</span><strong class="mk-transaction-id">{{ $payment['transaction_id'] }}</strong></div>
                 <div class="mk-info-row"><span>Nội dung chuyển khoản</span><strong>{{ $payment['content'] }}</strong></div>
             </section>
         @endif
@@ -63,11 +63,49 @@
 .mk-success-hero h1{font-size:30px;margin:0}.mk-success-hero p{color:#81777d}
 .mk-card{background:#fff;border:1px solid #f0e1e4;border-radius:18px;padding:24px;margin-top:18px;box-shadow:0 8px 28px rgba(70,40,45,.05)}
 .mk-card h2{font-size:19px;margin:0 0 16px}.mk-title-row{display:flex;justify-content:space-between;align-items:center}.mk-badge{background:#e8fbef;color:#2e9d5b;border-radius:20px;padding:6px 10px;font-size:12px;font-weight:700}
-.mk-info-row{display:flex;justify-content:space-between;gap:20px;padding:9px 0}.mk-info-row span{color:#81777d}.mk-info-row strong{text-align:right}.mk-green{color:#2faf65}.mk-pink,.mk-total strong{color:#ff536e}
+.mk-info-row{
+    display:grid;
+    grid-template-columns:170px minmax(0,1fr);
+    gap:20px;
+    padding:9px 0;
+    align-items:start;
+}
+
+.mk-info-row span{
+    color:#81777d;
+}
+
+.mk-info-row strong{
+    min-width:0;
+    text-align:right;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+}
+
+.mk-transaction-id{
+    max-width:100%;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    word-break:break-all;
+    line-height:1.5;
+}.mk-green{color:#2faf65}.mk-pink,.mk-total strong{color:#ff536e}
 .mk-product{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center;padding:12px 0}.mk-product img{width:58px;height:58px;object-fit:cover;border-radius:10px;background:#fff0f2}.mk-product small{display:block;color:#81777d}.mk-product b{white-space:nowrap}
 .mk-card hr{border:0;border-top:1px solid #f0e1e4;margin:12px 0}.mk-total{font-size:18px}.mk-total strong{font-size:22px}
 .mk-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.mk-actions a{text-align:center;text-decoration:none;border-radius:10px;padding:14px;font-weight:700}
 .mk-outline{border:1px solid #ff536e;color:#ff536e;background:#fff}.mk-primary{background:#ff536e;color:#fff}
-@media(max-width:600px){.mk-actions{grid-template-columns:1fr}.mk-info-row{align-items:flex-start}}
+@media(max-width:600px){
+    .mk-actions{
+        grid-template-columns:1fr;
+    }
+
+    .mk-info-row{
+        grid-template-columns:120px minmax(0,1fr);
+        gap:12px;
+    }
+
+    .mk-transaction-id{
+        font-size:13px;
+    }
+}
 </style>
 @endsection

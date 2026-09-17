@@ -79,4 +79,17 @@ return [
     'success_url' => env('STRIPE_SUCCESS_URL'),
     'cancel_url' => env('STRIPE_CANCEL_URL'),
 ],
+
+'paypal' => [
+    'enabled' => env('PAYPAL_ENABLED', false),
+    'mode' => env('PAYPAL_MODE', 'sandbox'),
+    'client_id' => env('PAYPAL_CLIENT_ID'),
+    'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+    'base_url' => env(
+        'PAYPAL_BASE_URL',
+        'https://api-m.sandbox.paypal.com'
+    ),
+    'currency' => env('PAYPAL_CURRENCY', 'USD'),
+'vnd_per_usd' => (float) env('PAYPAL_VND_PER_USD', 25000),
+],
 ];

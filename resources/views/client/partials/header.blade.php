@@ -71,19 +71,35 @@
             <a href="/cam-nang" class="text-ink-soft hover:text-coral transition-colors font-medium">Cẩm nang</a>
             <a href="#" class="hover:text-coral">Hotline: 1800 6886</a>
             <span class="ml-auto"></span>
-            @auth
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('profile.edit') ?? '#' }}" class="hover:text-coral font-medium">
-                        Xin chào, {{ auth()->user()->name }}
-                    </a>
-                    <span class="text-ink-soft/40">|</span>
-                    <form method="POST" action="{{ route('logout') ?? '#' }}" class="inline">
-                        @csrf
-                        <button type="submit" class="hover:text-coral font-semibold text-coral cursor-pointer">
-                            Đăng xuất
-                        </button>
-                    </form>
-                </div>
+           @auth
+    <div class="flex items-center gap-2">
+
+        <a href="{{ route('profile.edit') }}"
+           class="hover:text-coral font-medium">
+            Xin chào, {{ auth()->user()->name }}
+        </a>
+
+        <span class="text-ink-soft/40">|</span>
+
+        <a href="{{ route('profile.orders.index') }}"
+           class="hover:text-coral font-semibold">
+            📦 Đơn hàng của tôi
+        </a>
+
+        <span class="text-ink-soft/40">|</span>
+
+        <form method="POST"
+              action="{{ route('logout') }}"
+              class="inline">
+            @csrf
+
+            <button type="submit"
+                    class="hover:text-coral font-semibold text-coral cursor-pointer">
+                Đăng xuất
+            </button>
+        </form>
+
+    </div>
             @else
                 <button type="button" onclick="openLoginModal()" class="hover:text-coral font-semibold text-coral cursor-pointer">
                     Đăng nhập ngay

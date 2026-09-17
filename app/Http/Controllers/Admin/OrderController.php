@@ -13,26 +13,101 @@ class OrderController extends Controller
     public function __construct(private GHNService $ghn) {}
 
     /** Danh sách đơn hàng */
-    public function index(Request $request)
-    {
-        $orders = Order::with(['user', 'shipment'])
-            ->when($request->search, fn($q, $s) =>
-                $q->where('code', 'like', "%$s%")
-                  ->orWhere('recipient_name', 'like', "%$s%")
-                  ->orWhere('recipient_phone', 'like', "%$s%")
-            )
-            ->when($request->status, fn($q, $s) => $q->where('status', $s))
-            ->latest()
-            ->paginate(20)
-            ->withQueryString();
 
-        return view('admin.orders.index', compact('orders'));
+public function index(Request $request)
+{
+    $query = Order::query()
+        ->with(['user', 'shipment'])
+        ->withCount('items');
+
+    if ($search = trim((string) $request->input('search'))) {
+        $query->where(function ($q) use ($search) {
+            $q->where('code', 'like', "%{$search}%")
+                ->orWhere('recipient_name', 'like', "%{$search}%")
+                ->orWhere('recipient_phone', 'like', "%{$search}%")
+                ->orWhere('recipient_email', 'like', "%{$search}%");
+        });
     }
+
+    if ($status = $request->input('status')) {
+        $query->where('status', $status);
+    }
+
+    if ($paymentStatus = $request->input('payment_status')) {
+        $query->where('payment_status', $paymentStatus);
+    }
+
+    if ($paymentMethod = $request->input('payment_method')) {
+        $query->where('payment_method', $paymentMethod);
+    }
+
+    if ($from = $request->input('from')) {
+        $query->whereDate('created_at', '>=', $from);
+    }
+
+    if ($to = $request->input('to')) {
+        $query->whereDate('created_at', '<=', $to);
+    }
+
+    $orders = $query
+        ->latest()
+        ->paginate(20)
+        ->withQueryString();
+
+    $stats = [
+        'total' => Order::count(),
+
+        'pending' => Order::where(
+            'status',
+            'pending'
+        )->count(),
+
+        'processing' => Order::where(
+            'status',
+            'processing'
+        )->count(),
+
+        'shipping' => Order::where(
+            'status',
+            'shipping'
+        )->count(),
+
+        'delivered' => Order::where(
+            'status',
+            'delivered'
+        )->count(),
+
+        'paid' => Order::where(
+            'payment_status',
+            'paid'
+        )->count(),
+
+        'revenue' => Order::where(
+            'payment_status',
+            'paid'
+        )
+            ->whereNotIn('status', [
+                'cancelled',
+                'refunded',
+            ])
+            ->sum('total'),
+    ];
+
+    return view(
+        'admin.orders.index',
+        compact('orders', 'stats')
+    );
+}
 
     /** Chi tiết đơn + tab vận chuyển */
     public function show(Order $order)
     {
-        $order->load(['items.product', 'shipment', 'user']);
+    $order->load([
+    'items.product',
+    'shipment',
+    'user',
+    'voucherUsages.voucher',
+]);
 
         $ghnData = null;
 
@@ -53,16 +128,79 @@ class OrderController extends Controller
     }
 
     /** Cập nhật trạng thái đơn */
-    public function updateStatus(Request $request, Order $order)
-    {
-        $request->validate([
-            'status' => 'required|in:pending,confirmed,processing,shipping,delivered,cancelled,refunded',
-        ]);
 
-        $order->update(['status' => $request->status]);
+public function updateStatus(Request $request, Order $order)
+{
+    $data = $request->validate([
+        'status' => [
+            'required',
+            'in:pending,confirmed,processing,shipping,delivered,cancelled',
+        ],
+    ]);
 
-        return back()->with('success', 'Cập nhật trạng thái thành công.');
+    $transitions = [
+        'pending' => [
+            'confirmed',
+            'cancelled',
+        ],
+
+        'confirmed' => [
+            'processing',
+            'cancelled',
+        ],
+
+        'processing' => [
+        'cancelled',
+        ],
+        'shipping' => [
+            'delivered',
+        ],
+
+        'delivered' => [],
+
+        'cancelled' => [],
+
+        'refunded' => [],
+    ];
+
+    $nextStatus = $data['status'];
+
+    if (
+        !in_array(
+            $nextStatus,
+            $transitions[$order->status] ?? [],
+            true
+        )
+    ) {
+        return back()->with(
+            'error',
+            'Không thể chuyển trạng thái đơn hàng từ '
+            . $order->status
+            . ' sang '
+            . $nextStatus
+            . '.'
+        );
     }
+
+    $order->status = $nextStatus;
+
+    /*
+     * COD được xem là đã thu tiền khi giao thành công.
+     */
+    if (
+        $nextStatus === 'delivered'
+        && $order->payment_method === 'cod'
+    ) {
+        $order->payment_status = 'paid';
+    }
+
+    $order->save();
+
+    return back()->with(
+        'success',
+        'Cập nhật trạng thái đơn hàng thành công.'
+    );
+}
 
     // ─── GHN ─────────────────────────────────────────────────────────────────
 
@@ -88,6 +226,12 @@ class OrderController extends Controller
     /** Tạo vận đơn GHN */
     public function createShipment(Request $request, Order $order)
     {
+        if ($order->status !== 'processing') {
+    return back()->with(
+        'error',
+        'Chỉ có thể tạo vận đơn khi đơn hàng đang ở trạng thái Đang xử lý.'
+    );
+}
         if ($order->shipment?->ghn_order_code) {
             return back()->with('error', 'Đơn này đã có mã vận đơn GHN.');
         }
@@ -147,62 +291,73 @@ class OrderController extends Controller
 
         // Cập nhật trạng thái đơn
         $order->update([
-            'status'       => 'shipping',
-            'shipping_fee' => $result['total_fee'] ?? $order->shipping_fee,
-        ]);
+    'status' => 'shipping',
+]);
 
         return back()->with('success', "Tạo vận đơn thành công! Mã GHN: {$result['order_code']}");
     }
 
     /** Tra cứu trạng thái GHN realtime */
     public function trackShipment(Order $order)
-    {
-        if (! $order->shipment?->ghn_order_code) {
-            return back()->with('error', 'Đơn chưa có mã vận đơn GHN.');
-        }
-
-        $data = $this->ghn->trackOrder($order->shipment->ghn_order_code);
-
-        if (! empty($data['status'])) {
-            $order->shipment->update([
-                'status'       => strtolower($data['status']),
-                'ghn_response' => $data,
-            ]);
-        }
-
-        return back()->with('success', 'Đã cập nhật trạng thái vận đơn.');
+{
+    if (! $order->shipment?->ghn_order_code) {
+        return back()->with(
+            'error',
+            'Đơn chưa có mã vận đơn GHN.'
+        );
     }
 
-    /** In vận đơn — redirect tới URL PDF của GHN */
-    public function printLabel(Order $order)
-    {
-        if (! $order->shipment?->ghn_order_code) {
-            return back()->with('error', 'Đơn chưa có mã vận đơn GHN.');
+    $data = $this->ghn->trackOrder(
+        $order->shipment->ghn_order_code
+    );
+
+    if (! empty($data['status'])) {
+        $ghnStatus = strtolower($data['status']);
+
+        // Cập nhật trạng thái vận đơn
+        $order->shipment->update([
+            'status' => $ghnStatus,
+            'ghn_response' => $data,
+        ]);
+
+        /*
+         * Đồng bộ GHN -> trạng thái đơn hàng.
+         */
+        if (in_array($ghnStatus, [
+            'ready_to_pick',
+            'picking',
+            'picked',
+            'storing',
+            'transporting',
+            'sorting',
+            'delivering',
+            'money_collect_delivering',
+        ], true)) {
+            $order->status = 'shipping';
         }
 
-        try {
-            $url = $this->ghn->getPrintUrl([$order->shipment->ghn_order_code]);
+        if ($ghnStatus === 'delivered') {
+            $order->status = 'delivered';
 
-            $order->shipment->update(['printed_at' => now()]);
-            
-            return redirect($url);
-        } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+            // COD chỉ được coi là đã thanh toán khi giao thành công
+            if ($order->payment_method === 'cod') {
+                $order->payment_status = 'paid';
+            }
         }
+
+        if (in_array($ghnStatus, [
+            'cancel',
+            'cancelled',
+        ], true)) {
+            $order->status = 'cancelled';
+        }
+
+        $order->save();
     }
 
-    /** Huỷ vận đơn GHN */
-    public function cancelShipment(Order $order)
-    {
-        if (! $order->shipment?->ghn_order_code) {
-            return back()->with('error', 'Đơn chưa có mã vận đơn GHN.');
-        }
-
-        $this->ghn->cancelOrder($order->shipment->ghn_order_code);
-
-        $order->shipment->update(['status' => 'cancel']);
-        $order->update(['status' => 'cancelled']);
-
-        return back()->with('success', 'Đã huỷ vận đơn GHN.');
-    }
+    return back()->with(
+        'success',
+        'Đã cập nhật trạng thái vận đơn GHN.'
+    );
+}
 }

@@ -123,6 +123,15 @@ class CartService
             ->where('id', $cartItemId)
             ->delete();
     }
+/**
+ * Xóa toàn bộ sản phẩm trong giỏ hàng hiện tại.
+ */
+public function clear(): void
+{
+    $this->getCart()
+        ->items()
+        ->delete();
+}
 
     // ── Merge giỏ guest vào user sau login ──────────────────────
     public function mergeGuestCart(string|int $userId): void
