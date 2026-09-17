@@ -5236,3 +5236,411 @@ body.product-detail-active::-webkit-scrollbar {
     }
 }
 
+/* =========================================================
+   MOMMYKIDS - DIAPER DETAIL FINAL
+   Chỉ áp dụng cho .product-diaper-detail.
+   Không ảnh hưởng milk.blade.php.
+========================================================= */
+
+.product-diaper-detail {
+    display: grid;
+    gap: .78rem;
+}
+
+.product-diaper-detail .product-content-card {
+    min-height: 0;
+}
+
+.product-diaper-detail .product-description-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-diaper-detail .product-description-text {
+    margin: 0;
+    color: #514a56;
+    font-size: .72rem;
+    line-height: 1.58;
+}
+
+.product-diaper-detail .product-benefit-strip {
+    margin-top: .72rem;
+}
+
+.product-diaper-detail .product-benefit-item {
+    min-height: 88px;
+    padding: .62rem .34rem;
+}
+
+.product-diaper-detail .product-benefit-icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    margin-bottom: .1rem;
+}
+
+.product-diaper-detail .product-benefit-icon svg {
+    display: block;
+    width: 1.72rem;
+    height: 1.72rem;
+    max-width: 1.72rem;
+    max-height: 1.72rem;
+    fill: none;
+    stroke: currentColor;
+}
+
+.product-diaper-detail .product-benefit-item strong {
+    font-size: .6rem;
+    line-height: 1.24;
+}
+
+.product-diaper-detail .product-benefit-item span {
+    margin-top: .1rem;
+    font-size: .5rem;
+    line-height: 1.28;
+}
+
+.product-diaper-detail .product-trust-banner {
+    margin-top: .65rem;
+    padding: .56rem .68rem;
+}
+
+.product-diaper-detail .product-trust-banner-content strong {
+    font-size: .57rem;
+}
+
+.product-diaper-detail .product-trust-banner-content span {
+    margin-top: .08rem;
+    font-size: .49rem;
+    line-height: 1.3;
+}
+
+
+/* =========================================================
+   CHẤT LIỆU & CẤU TẠO
+========================================================= */
+
+.product-diaper-detail .product-diaper-material-card {
+    width: 100%;
+    min-height: 0;
+    padding: .88rem 1rem .82rem;
+    overflow: hidden;
+}
+
+.product-diaper-detail
+.product-diaper-material-card
+.product-section-heading {
+    margin-bottom: .58rem;
+}
+
+.product-diaper-detail .product-diaper-material-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    width: 100%;
+}
+
+.product-diaper-detail .product-diaper-material-item {
+    display: flex;
+    align-items: flex-start;
+    gap: .58rem;
+
+    min-width: 0;
+    min-height: 74px;
+
+    padding: .58rem .72rem;
+
+    border-right: 1px solid #eee4e7;
+    border-bottom: 1px solid #eee4e7;
+
+    background: transparent;
+}
+
+.product-diaper-detail .product-diaper-material-item:nth-child(3n) {
+    border-right: 0;
+}
+
+.product-diaper-detail .product-diaper-material-item:nth-last-child(-n + 3) {
+    border-bottom: 0;
+}
+
+.product-diaper-detail .product-diaper-material-icon {
+    display: grid;
+    place-items: center;
+
+    flex: 0 0 2.05rem;
+
+    width: 2.05rem;
+    height: 2.05rem;
+    min-width: 2.05rem;
+    min-height: 2.05rem;
+
+    margin: 0;
+    padding: 0;
+
+    color: #4f93ff;
+}
+
+.product-diaper-detail .product-diaper-material-icon svg {
+    display: block !important;
+
+    width: 1.55rem !important;
+    height: 1.55rem !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 1.55rem !important;
+    max-height: 1.55rem !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    overflow: visible;
+
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 1.7 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+}
+
+.product-diaper-detail .product-diaper-material-icon svg path,
+.product-diaper-detail .product-diaper-material-icon svg circle,
+.product-diaper-detail .product-diaper-material-icon svg rect,
+.product-diaper-detail .product-diaper-material-icon svg line,
+.product-diaper-detail .product-diaper-material-icon svg polyline,
+.product-diaper-detail .product-diaper-material-icon svg polygon {
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 1.7 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    vector-effect: non-scaling-stroke;
+}
+
+.product-diaper-detail .product-diaper-material-item > div {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.product-diaper-detail .product-diaper-material-item strong {
+    display: block;
+    margin: 0;
+    color: #272330;
+    font-size: .68rem;
+    font-weight: 800;
+    line-height: 1.28;
+}
+
+.product-diaper-detail
+.product-diaper-material-item
+> div
+> span {
+    display: block;
+    margin-top: .12rem;
+    color: #77707c;
+    font-size: .58rem;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+
+/* =========================================================
+   HƯỚNG DẪN SỬ DỤNG
+========================================================= */
+
+.product-diaper-detail .product-guide-card {
+    min-height: 0;
+    padding: .84rem 1rem .76rem;
+    overflow: hidden;
+}
+
+.product-diaper-detail
+.product-guide-card
+.product-section-heading {
+    margin-bottom: .32rem;
+}
+
+.product-diaper-detail .product-guide-steps {
+    padding: .28rem .35rem .08rem;
+}
+
+.product-diaper-detail .product-step-icon {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: .22rem;
+}
+
+.product-diaper-detail .product-step-icon svg {
+    display: block;
+    width: 1.58rem;
+    height: 1.58rem;
+    max-width: 1.58rem;
+    max-height: 1.58rem;
+    fill: none;
+    stroke: currentColor;
+}
+
+.product-diaper-detail .product-guide-step strong {
+    font-size: .69rem;
+}
+
+.product-diaper-detail .product-guide-step p {
+    max-width: 12rem;
+    margin-top: .17rem;
+    font-size: .61rem;
+    line-height: 1.4;
+}
+
+.product-diaper-detail .product-step-arrow {
+    padding-top: .88rem;
+}
+
+
+/* =========================================================
+   BẢO QUẢN + LƯU Ý
+========================================================= */
+
+.product-diaper-detail .product-bottom-info-grid {
+    gap: .72rem;
+}
+
+.product-diaper-detail
+.product-bottom-info-grid
+.product-info-box {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: .62rem .8rem .58rem !important;
+}
+
+
+/* =========================================================
+   RELATED SAU DETAIL RIÊNG CHO BỈM/TÃ
+========================================================= */
+
+.product-related-after-detail {
+    margin-top: .78rem;
+}
+
+
+/* =========================================================
+   DESKTOP
+========================================================= */
+
+@media (min-width: 901px) {
+    .product-diaper-detail .product-content-grid {
+        grid-template-columns:
+            minmax(0, .96fr)
+            minmax(0, 1.04fr);
+
+        gap: .9rem;
+        align-items: stretch;
+    }
+
+    .product-diaper-detail
+    .product-content-grid
+    > .product-content-card {
+        height: 100%;
+    }
+
+    .product-diaper-detail .product-trust-banner {
+        margin-top: auto;
+    }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+    .product-diaper-detail .product-content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-diaper-detail .product-diaper-material-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .product-diaper-detail .product-diaper-material-item,
+    .product-diaper-detail .product-diaper-material-item:nth-child(3n),
+    .product-diaper-detail .product-diaper-material-item:nth-last-child(-n + 3) {
+        border-right: 0;
+        border-bottom: 1px solid #eee4e7;
+    }
+
+    .product-diaper-detail .product-diaper-material-item:nth-child(odd) {
+        border-right: 1px solid #eee4e7;
+    }
+
+    .product-diaper-detail .product-diaper-material-item:nth-last-child(-n + 2) {
+        border-bottom: 0;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 640px) {
+    .product-diaper-detail .product-benefit-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .product-diaper-detail .product-guide-steps {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .75rem;
+    }
+
+    .product-diaper-detail .product-step-arrow {
+        display: none;
+    }
+
+    .product-diaper-detail .product-diaper-material-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-diaper-detail .product-diaper-material-item,
+    .product-diaper-detail .product-diaper-material-item:nth-child(odd),
+    .product-diaper-detail .product-diaper-material-item:nth-last-child(-n + 2) {
+        border-right: 0;
+        border-bottom: 1px solid #eee4e7;
+    }
+
+    .product-diaper-detail .product-diaper-material-item:last-child {
+        border-bottom: 0;
+    }
+}
+
+@media (max-width: 420px) {
+    .product-diaper-detail .product-benefit-strip,
+    .product-diaper-detail .product-guide-steps {
+        grid-template-columns: 1fr;
+    }
+}
+/* =========================================================
+   DIAPER DESCRIPTION - REMOVE EXCESS EMPTY SPACE
+========================================================= */
+
+@media (min-width: 901px) {
+
+    .product-diaper-detail .product-content-grid {
+        align-items: start;
+    }
+
+    .product-diaper-detail
+    .product-content-grid
+    > .product-content-card {
+        height: auto;
+    }
+
+    .product-diaper-detail .product-description-card {
+        align-self: start;
+        height: auto;
+        min-height: 0;
+    }
+
+    .product-diaper-detail .product-trust-banner {
+        margin-top: .65rem;
+    }
+}

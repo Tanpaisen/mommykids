@@ -36,6 +36,9 @@
         ($product->category?->slug === 'sua-cho-be') ||
         (mb_strtolower(trim($product->category?->name ?? '')) === 'sữa cho bé');
 
+    $isDiaperProduct =
+        $product->category?->slug === 'bim-ta-ve-sinh';
+
     /*
      * Demo giao diện Aptamil theo đúng ảnh mẫu hiện tại.
      * Sau này có thể chuyển phần lợi ích này thành dữ liệu quản trị.
@@ -425,7 +428,7 @@
     {{-- =========================================================
         RELATED PRODUCTS
     ========================================================== --}}
-    @if ($relatedItems->isNotEmpty())
+    @if (!$isDiaperProduct && $relatedItems->isNotEmpty())
         <section class="product-related">
             <div class="product-related-header">
                 <h2>Sản phẩm tương tự</h2>
@@ -530,15 +533,25 @@
         Các danh mục khác tạm giữ giao diện chung, sẽ tách tiếp sau.
     ========================================================== --}}
     @if ($isMilkProduct)
-        @include('client.product-details.milk', [
-            'brandTag' => $brandTag,
-            'attributeTags' => $attributeTags,
-            'usageSteps' => $usageSteps,
-            'storageItems' => $storageItems,
-            'warningItems' => $warningItems,
-            'ageText' => $ageText,
-        ])
-    @else
+    @include('client.product-details.milk', [
+        'brandTag' => $brandTag,
+        'attributeTags' => $attributeTags,
+        'usageSteps' => $usageSteps,
+        'storageItems' => $storageItems,
+        'warningItems' => $warningItems,
+        'ageText' => $ageText,
+    ])
+
+@elseif ($isDiaperProduct)
+    @include('client.product-details.diaper', [
+        'brandTag' => $brandTag,
+        'attributeTags' => $attributeTags,
+        'usageSteps' => $usageSteps,
+        'storageItems' => $storageItems,
+        'warningItems' => $warningItems,
+    ])
+
+@else
         <section class="product-long-content">
             <div class="product-content-grid">
 
@@ -660,6 +673,109 @@
     @endif
 
     {{-- =========================================================
+        RELATED PRODUCTS - RIÊNG BỈM/TÃ ĐẶT SAU PHẦN CHI TIẾT
+        Các category khác giữ nguyên vị trí cũ.
+    ========================================================== --}}
+    @if ($isDiaperProduct && $relatedItems->isNotEmpty())
+        <section class="product-related product-related-after-detail">
+            <div class="product-related-header">
+                <h2>Sản phẩm liên quan</h2>
+
+                @if ($product->category)
+                    <a href="{{ route('category.show', $product->category->slug) }}">
+                        Xem thêm →
+                    </a>
+                @endif
+            </div>
+
+            <div class="product-related-wrap">
+                <button
+                    id="product-related-prev"
+                    class="product-related-arrow product-related-prev"
+                    type="button"
+                    aria-label="Xem sản phẩm trước"
+                >
+                    ‹
+                </button>
+
+                <div id="product-related-track" class="product-related-track">
+                    @foreach ($relatedItems as $item)
+                        @php
+                            $relatedImage = $imageUrl($item['image'] ?? null);
+                        @endphp
+
+                        <article class="product-related-card">
+                            @if (!empty($item['discount']))
+                                <span class="product-related-discount">
+                                    -{{ $item['discount'] }}%
+                                </span>
+                            @endif
+
+                            <a
+                                class="product-related-image"
+                                href="{{ $item['url'] }}"
+                            >
+                                @if ($relatedImage)
+                                    <img
+                                        src="{{ $relatedImage }}"
+                                        alt="{{ $item['name'] }}"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                @else
+                                    <span class="product-related-fallback">🖼️</span>
+                                @endif
+                            </a>
+
+                            <a
+                                class="product-related-name"
+                                href="{{ $item['url'] }}"
+                            >
+                                {{ $item['name'] }}
+                            </a>
+
+                            <div class="product-related-price-row">
+                                <div>
+                                    <strong>
+                                        {{ number_format($item['price'], 0, ',', '.') }}đ
+                                    </strong>
+
+                                    @if (
+                                        !empty($item['old_price']) &&
+                                        $item['old_price'] > $item['price']
+                                    )
+                                        <span>
+                                            {{ number_format($item['old_price'], 0, ',', '.') }}đ
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <button
+                                    class="product-related-add"
+                                    type="button"
+                                    data-product-id="{{ $item['id'] }}"
+                                    aria-label="Thêm {{ $item['name'] }} vào giỏ hàng"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+
+                <button
+                    id="product-related-next"
+                    class="product-related-arrow product-related-next"
+                    type="button"
+                    aria-label="Xem sản phẩm tiếp theo"
+                >
+                    ›
+                </button>
+            </div>
+        </section>
+    @endif
+
+    {{-- =========================================================
         PRODUCT REVIEWS
     ========================================================== --}}
     <section id="product-reviews" class="product-reviews-section">
@@ -764,24 +880,9 @@
         {{-- ================================================
             WRITE REVIEW
         ================================================= --}}
+        @auth
         <div class="product-review-form-card">
 
-            @guest
-                <div class="product-review-login">
-                    <div class="product-review-login-icon">
-                        ★
-                    </div>
-
-                    <div>
-                        <strong>Đăng nhập để viết đánh giá</strong>
-
-                        <p>
-                            Bạn cần đăng nhập tài khoản MommyKids
-                            trước khi đánh giá sản phẩm.
-                        </p>
-                    </div>
-                </div>
-            @else
                 {{-- Chưa từng mua hoặc đơn chưa giao thành công --}}
                 @if (!$hasPurchasedProduct)
                     <div class="product-review-purchase-required">
@@ -1184,9 +1285,10 @@
                         </div>
                     </form>
                 @endif
-            @endguest
 
         </div>
+        @endauth
+
 
         {{-- ================================================
             REVIEW LIST
