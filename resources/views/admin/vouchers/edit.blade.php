@@ -182,6 +182,13 @@
                 <input type="checkbox" name="auto_apply" id="auto_apply" value="1" {{ $voucher->auto_apply ? 'checked' : '' }} class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
                 <label for="auto_apply" class="ml-2 text-sm text-gray-700">Tự động áp dụng ở Giỏ hàng</label>
             </div>
+            <div class="flex items-center">
+                <input type="checkbox" name="require_save_to_user" id="require_save_to_user" value="1" class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
+                <label for="require_save_to_user" class="ml-2 text-sm text-gray-700" title="Bỏ chọn = Hệ thống tự hiển thị khi đủ điều kiện, KHÔNG cần khách lưu">
+                    Phải lưu vào tài khoản mới dùng
+                    <span class="text-gray-400 text-xs block">Bỏ chọn = Tự xuất hiện khi thanh toán</span>
+                </label>
+            </div>
         </div>
 
         <div class="flex justify-end gap-4 border-t pt-6">

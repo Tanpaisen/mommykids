@@ -31,18 +31,27 @@ class VoucherController extends Controller
             'code'                 => 'required|string|max:50|unique:vouchers,code',
             'name'                 => 'required|string|max:255',
             'description'          => 'nullable|string',
+
+            'is_public'           => 'nullable|boolean',
+            'auto_apply'          => 'nullable|boolean',
+            // 'is_stackable'        => 'nullable|boolean',
+            // 'priority'            => 'nullable|integer|min:0',
+            // 'channel'             => 'nullable|in:all,web,app',
+
             'discount_type'        => 'required|in:percent,fixed,free_shipping',
             'discount_value'       => 'required|numeric|min:0',
             'max_discount_amount'  => 'nullable|numeric|min:0',
             'min_order_amount'     => 'nullable|numeric|min:0',
             'total_quantity'       => 'nullable|integer|min:1',
             'usage_limit_per_user' => 'required|integer|min:1',
+            'total_budget'        => 'nullable|numeric|min:0',
             'starts_at'            => 'nullable|date',
             'expires_at'           => 'nullable|date|after_or_equal:starts_at',
+            'require_save_to_user' => 'nullable|boolean',
             
             // Các trường Đối tượng & Phạm vi
             'apply_to'             => 'required|in:all,new_user,specific_tiers,specific_users',
-            'status'               => 'required|in:draft,active',
+            'status'               => 'required|in:draft,scheduled,active,paused,expired',
             'scope'                => 'required|in:all,specific_categories',
             'tiers'                => 'nullable|array',
             'tiers.*'              => 'in:member,silver,gold,diamond',
@@ -68,8 +77,12 @@ class VoucherController extends Controller
         $validated['code'] = Str::upper($validated['code']);
         
         // Xử lý các Checkbox
-        $validated['is_public'] = $request->has('is_public');
-        $validated['auto_apply'] = $request->has('auto_apply');
+        $validated['is_public'] = $request->boolean('is_public', true);
+        $validated['auto_apply'] = $request->boolean('auto_apply', false);
+        // $validated['is_stackable'] = $request->boolean('is_stackable', false);
+        // $validated['priority'] = $request->input('priority', 0);
+        // $validated['channel'] = $request->input('channel', 'all');
+        $validated['owner_type'] = $request->input('owner_type', 'platform');
 
         // BẮT BUỘC: Xóa các trường ảo trước khi lưu vào bảng chính
         unset($validated['tiers'], $validated['category_ids'], $validated['user_emails'], $validated['scope']);
@@ -92,7 +105,7 @@ class VoucherController extends Controller
             $userIds = User::whereIn('email', $emails)->pluck('id')->toArray();
             
             if (!empty($userIds)) {
-                $voucher->allowedUsers()->syncWithoutDetaching($userIds);
+                $voucher->savedUsers()->syncWithoutDetaching($userIds);
             }
         }
 
@@ -110,12 +123,12 @@ class VoucherController extends Controller
 
     public function edit(string $id)
     {
-        $voucher = Voucher::with(['conditions', 'allowedUsers'])->findOrFail($id);
+        $voucher = Voucher::with(['conditions', 'savedUsers'])->findOrFail($id);
         $categories = Category::where('is_active', 1)->orderBy('sort_order')->get();
 
         $selectedTiers = $voucher->conditions->where('type', 'tier')->pluck('value')->toArray();
         $selectedCategories = $voucher->conditions->where('type', 'category')->pluck('value')->toArray();
-        $selectedEmails = $voucher->allowedUsers->pluck('email')->implode(', ');
+        $selectedEmails = $voucher->savedUsers->pluck('email')->implode(', ');
 
         $currentScope = count($selectedCategories) > 0 ? 'specific_categories' : 'all';
 
@@ -132,17 +145,24 @@ class VoucherController extends Controller
             'type'                 => 'required|in:order,shipping',
             'code'                 => 'required|string|max:50|unique:vouchers,code,' . $id,
             'name'                 => 'required|string|max:255',
+            'is_public'            => 'nullable|boolean',
+            'auto_apply'           => 'nullable|boolean',
+            // 'is_stackable'         => 'nullable|boolean',
+            // 'priority'            => 'nullable|integer|min:0',
+            // 'channel'             => 'nullable|in:all,web,app',
             'description'          => 'nullable|string',
+
             'discount_type'        => 'required|in:percent,fixed,free_shipping',
             'discount_value'       => 'required|numeric|min:0',
             'max_discount_amount'  => 'nullable|numeric|min:0',
             'min_order_amount'     => 'nullable|numeric|min:0',
             'total_quantity'       => 'nullable|integer|min:1',
             'usage_limit_per_user' => 'required|integer|min:1',
+            'total_budget'         => 'nullable|numeric|min:0',
             'starts_at'            => 'nullable|date',
             'expires_at'           => 'nullable|date|after_or_equal:starts_at',
             'apply_to'             => 'required|in:all,new_user,specific_tiers,specific_users',
-            'status'               => 'required|in:draft,active',
+            'status'               => 'required|in:draft,scheduled,active,paused,expired',
             'scope'                => 'required|in:all,specific_categories',
             'tiers'                => 'nullable|array',
             'tiers.*'              => 'in:member,silver,gold,diamond',
@@ -162,7 +182,7 @@ class VoucherController extends Controller
         $validated['code'] = Str::upper($validated['code']);
         $validated['is_public'] = $request->has('is_public');
         $validated['auto_apply'] = $request->has('auto_apply');
-
+        $validated['require_save_to_user'] = $request->boolean('require_save_to_user', false);
         // BẮT BUỘC: Xóa các trường ảo trước khi update
         unset($validated['tiers'], $validated['category_ids'], $validated['user_emails'], $validated['scope']);
 
@@ -193,9 +213,9 @@ class VoucherController extends Controller
         if ($request->apply_to === 'specific_users' && $request->filled('user_emails')) {
             $emails = array_map('trim', explode(',', $request->user_emails));
             $userIds = User::whereIn('email', $emails)->pluck('id')->toArray();
-            $voucher->allowedUsers()->sync($userIds);
+            $voucher->savedUsers()->sync($userIds);
         } else {
-            $voucher->allowedUsers()->detach();
+            $voucher->savedUsers()->detach();
         }
 
         return redirect()->route('admin.vouchers.index')->with('success', 'Đã cập nhật Voucher thành công!');

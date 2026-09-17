@@ -195,7 +195,7 @@
 
         <!-- 6. TÙY CHỌN NÂNG CAO -->
         <h3 class="text-lg font-bold text-gray-800 mb-4 pb-2 border-b mt-8">6. Tùy chọn nâng cao</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="flex items-center">
                 <input type="checkbox" name="is_public" id="is_public" value="1" checked class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
                 <label for="is_public" class="ml-2 text-sm text-gray-700">Công khai trên kho Voucher</label>
@@ -203,6 +203,13 @@
             <div class="flex items-center">
                 <input type="checkbox" name="auto_apply" id="auto_apply" value="1" class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
                 <label for="auto_apply" class="ml-2 text-sm text-gray-700">Tự động áp dụng ở Giỏ hàng</label>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" name="require_save_to_user" id="require_save_to_user" value="1" class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
+                <label for="require_save_to_user" class="ml-2 text-sm text-gray-700" title="Bỏ chọn = Hệ thống tự hiển thị khi đủ điều kiện, KHÔNG cần khách lưu">
+                    Phải lưu vào tài khoản mới dùng
+                    <span class="text-gray-400 text-xs block">Bỏ chọn = Tự xuất hiện khi thanh toán</span>
+                </label>
             </div>
         </div>
         
