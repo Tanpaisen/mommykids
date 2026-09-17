@@ -23,9 +23,6 @@ class Voucher extends Model
         'metadata'     => 'array', 
     ];
 
-    /**
-     * Lấy danh sách các điều kiện áp dụng (Sản phẩm, Danh mục, Hạng thẻ...)
-     */
     public function conditions()
     {
         return $this->hasMany(VoucherCondition::class);
@@ -36,13 +33,9 @@ class Voucher extends Model
      */
     public function savedUsers()
     {
-        // Quan hệ nhiều-nhiều qua bảng trung gian voucher_users
         return $this->belongsToMany(User::class, 'voucher_users');
     }
 
-    /**
-     * Lịch sử sử dụng của voucher này
-     */
     public function usages()
     {
         return $this->hasMany(VoucherUsage::class);

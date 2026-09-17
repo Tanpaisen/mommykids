@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\ShipmentController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('permission:orders.view')
     ->prefix('don-hang')

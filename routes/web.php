@@ -16,6 +16,10 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Payment\ZaloPayController;
 use App\Http\Controllers\Payment\StripeController;
 use App\Http\Controllers\Client\VoucherController;
+use App\Http\Controllers\Payment\PayPalController;
+use App\Http\Controllers\Client\OrderController as ClientOrderController;
+use App\Http\Controllers\Admin\HandbookCategoryController;
+use App\Http\Controllers\Client\HandbookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,12 +41,16 @@ Route::get('/tim-kiem', [SearchController::class, 'index'])
 Route::get('/gio-hang', [CartController::class, 'index'])
     ->name('cart.index');
 
+// ROUTE CẨM NANG PHÍA CLIENT
+Route::get('/cam-nang/{slug?}', [HandbookController::class, 'index'])->name('handbook.show');
+
 Route::get('/thong-bao', [NotificationController::class, 'index'])
     ->middleware('auth')
     ->name('notifications.index');
 
 Route::get('/khuyen-mai', [VoucherController::class, 'index'])
     ->name('vouchers.index');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -62,6 +70,21 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/quy-dinh-chinh-sach', [ProfileController::class, 'policy'])
         ->name('profile.policy');
+
+    Route::get(
+        '/ho-so/don-hang',
+        [ClientOrderController::class, 'index']
+    )->name('profile.orders.index');
+
+    Route::get(
+        '/ho-so/don-hang/{order}',
+        [ClientOrderController::class, 'show']
+    )->name('profile.orders.show');
+
+    Route::post(
+        '/ho-so/don-hang/{order}/yeu-cau-huy',
+        [ClientOrderController::class, 'requestCancellation']
+    )->name('profile.orders.cancel-request');
 });
 
 /*
@@ -70,7 +93,6 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 | Tạm thời không yêu cầu đăng nhập để test thanh toán.
 */
-
 Route::get('/thanh-toan', [CheckoutController::class, 'index'])
     ->name('checkout.index');
 
@@ -93,6 +115,7 @@ Route::get(
     [CheckoutController::class, 'paymentStatus']
 )->name('checkout.payment-status');
 
+
 /*
 |--------------------------------------------------------------------------
 | GHN Checkout API
@@ -109,6 +132,12 @@ Route::post(
     '/checkout/shipping-fee',
     [CheckoutController::class, 'calculateShippingFee']
 )->name('checkout.shipping-fee');
+
+Route::post('/checkout/vouchers/apply', [CheckoutController::class, 'applyVoucher'])
+    ->name('checkout.vouchers.apply');
+
+Route::post('/checkout/vouchers/remove', [CheckoutController::class, 'removeVoucher'])
+    ->name('checkout.vouchers.remove');
 
 
 /*
@@ -166,12 +195,20 @@ Route::get(
     [StripeController::class, 'success']
 )->name('stripe.success');
 
+Route::get('/payments/paypal/create', [PayPalController::class, 'create'])
+    ->name('paypal.create');
+
+Route::get('/payments/paypal/capture', [PayPalController::class, 'capture'])
+    ->name('paypal.capture');
+
+Route::get('/payments/paypal/cancel', [PayPalController::class, 'cancel'])
+    ->name('paypal.cancel');
+
 /*
 |--------------------------------------------------------------------------
 | Authentication Routes Includes
 |--------------------------------------------------------------------------
 */
-
 require __DIR__ . '/auth/client.php';
 require __DIR__ . '/auth/admin.php';
 
