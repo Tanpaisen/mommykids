@@ -594,5 +594,5 @@ class EnrichBottleProducts extends Command
             'submessage' => $submessage,
         ];
     }
-    
+
 }
