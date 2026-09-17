@@ -18,6 +18,9 @@ use App\Http\Controllers\Payment\StripeController;
 use App\Http\Controllers\Client\VoucherController;
 use App\Http\Controllers\Payment\PayPalController;
 use App\Http\Controllers\Client\OrderController as ClientOrderController;
+use App\Http\Controllers\Admin\HandbookCategoryController;
+use App\Http\Controllers\Client\HandbookController;
+
 /*
 |--------------------------------------------------------------------------
 | Client Storefront Routes
@@ -37,6 +40,9 @@ Route::get('/tim-kiem', [SearchController::class, 'index'])
 
 Route::get('/gio-hang', [CartController::class, 'index'])
     ->name('cart.index');
+
+// ROUTE CẨM NANG PHÍA CLIENT
+Route::get('/cam-nang/{slug?}', [HandbookController::class, 'index'])->name('handbook.show');
 
 Route::get('/thong-bao', [NotificationController::class, 'index'])
     ->middleware('auth')

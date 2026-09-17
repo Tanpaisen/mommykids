@@ -68,6 +68,7 @@
             <a href="#" class="hover:text-coral">Hàng mới</a>
             <a href="#" class="hover:text-coral">Voucher</a>
             <a href="#" class="hover:text-coral">Sự kiện</a>
+            <a href="/cam-nang" class="text-ink-soft hover:text-coral transition-colors font-medium">Cẩm nang</a>
             <a href="#" class="hover:text-coral">Hotline: 1800 6886</a>
             <span class="ml-auto"></span>
            @auth
