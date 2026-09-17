@@ -30,7 +30,7 @@
 
     /*
      * Template chi tiết riêng cho nhóm Sữa cho bé.
-     * Các nhóm Bỉm tã / Bình sữa / Vitamin... sẽ tách sau.
+     * Các nhóm Sữa / Bỉm tã / Bình sữa dùng partial riêng theo category.
      */
     $isMilkProduct =
         ($product->category?->slug === 'sua-cho-be') ||
@@ -38,6 +38,9 @@
 
     $isDiaperProduct =
         $product->category?->slug === 'bim-ta-ve-sinh';
+
+    $isBottleProduct =
+        $product->category?->slug === 'binh-sua-phu-kien';
 
     /*
      * Demo giao diện Aptamil theo đúng ảnh mẫu hiện tại.
@@ -529,7 +532,7 @@
 
     {{-- =========================================================
         LONG CONTENT
-        Sữa cho bé dùng partial riêng.
+        Sữa / Bỉm tã / Bình sữa dùng partial riêng.
         Các danh mục khác tạm giữ giao diện chung, sẽ tách tiếp sau.
     ========================================================== --}}
     @if ($isMilkProduct)
@@ -549,6 +552,16 @@
         'usageSteps' => $usageSteps,
         'storageItems' => $storageItems,
         'warningItems' => $warningItems,
+    ])
+
+@elseif ($isBottleProduct)
+    @include('client.product-details.bottle', [
+        'brandTag' => $brandTag,
+        'attributeTags' => $attributeTags,
+        'usageSteps' => $usageSteps,
+        'storageItems' => $storageItems,
+        'warningItems' => $warningItems,
+        'ageText' => $ageText,
     ])
 
 @else

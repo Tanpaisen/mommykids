@@ -5644,3 +5644,808 @@ body.product-detail-active::-webkit-scrollbar {
         margin-top: .65rem;
     }
 }
+
+/* =========================================================
+   BOTTLE DETAIL - FINAL HEIGHT FIX
+========================================================= */
+
+@media (min-width: 901px) {
+    .product-bottle-detail .product-content-grid {
+        align-items: start !important;
+    }
+
+    .product-bottle-detail
+    .product-content-grid
+    > .product-content-card {
+        height: auto !important;
+        min-height: 0 !important;
+        align-self: start !important;
+    }
+
+    .product-bottle-detail .product-description-card {
+        height: auto !important;
+        min-height: 0 !important;
+        align-self: start !important;
+    }
+
+    .product-bottle-detail .product-trust-banner {
+        margin-top: .65rem !important;
+    }
+}
+/* =========================================================
+   MOMMYKIDS - BOTTLE DETAIL PROFESSIONAL POLISH
+   Chỉ scope trong .product-bottle-pro.
+   Không ảnh hưởng Milk / Diaper.
+========================================================= */
+
+.product-bottle-pro {
+    gap: .9rem;
+}
+
+.product-bottle-pro .product-content-card {
+    min-height: 0;
+}
+
+.product-bottle-top-grid {
+    align-items: start !important;
+}
+
+.product-bottle-top-grid > .product-content-card {
+    height: auto !important;
+    min-height: 0 !important;
+    align-self: start !important;
+}
+
+.product-bottle-heading {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .75rem;
+}
+
+.product-bottle-heading-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 1.8rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    color: #ff4267;
+}
+
+.product-bottle-heading-icon svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Spec table: bớt cảm giác bảng Excel */
+.product-bottle-spec-table {
+    border: 0;
+    border-radius: 0;
+}
+
+.product-bottle-spec-table .product-spec-row {
+    grid-template-columns: 9rem minmax(0, 1fr);
+    min-height: 2.55rem;
+    border-bottom: 1px solid #f1e8eb;
+}
+
+.product-bottle-spec-table .product-spec-row:last-child {
+    border-bottom: 0;
+}
+
+.product-bottle-spec-table .product-spec-row strong {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    color: #615a65;
+    font-size: .7rem;
+    font-weight: 700;
+}
+
+.product-bottle-spec-table .product-spec-row > span {
+    display: flex;
+    align-items: center;
+    color: #33303a;
+    font-size: .72rem;
+    font-weight: 600;
+}
+
+/* Description */
+.product-bottle-description-card {
+    min-height: 0 !important;
+    height: auto !important;
+}
+
+.product-bottle-description-card .product-description-text {
+    font-size: .75rem;
+    line-height: 1.65;
+}
+
+.product-bottle-benefit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+    margin-top: .9rem;
+}
+
+.product-bottle-benefit-item {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0;
+    padding: .65rem .7rem;
+    border: 1px solid #f3e3e7;
+    border-radius: .78rem;
+    background: #fffafb;
+}
+
+.product-bottle-benefit-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.15rem;
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 50%;
+    background: #fff0f3;
+    color: #ff4167;
+}
+
+.product-bottle-benefit-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-bottle-benefit-item strong,
+.product-bottle-benefit-item span {
+    display: block;
+}
+
+.product-bottle-benefit-item strong {
+    color: #2e2932;
+    font-size: .68rem;
+    font-weight: 800;
+}
+
+.product-bottle-benefit-item span {
+    margin-top: .1rem;
+    color: #817985;
+    font-size: .58rem;
+    line-height: 1.35;
+}
+
+.product-bottle-trust-banner {
+    margin-top: .7rem !important;
+}
+
+/* Material 2x2 */
+.product-bottle-material-card {
+    padding: 1rem 1.1rem;
+}
+
+.product-bottle-material-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .65rem;
+}
+
+.product-bottle-material-item {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-width: 0;
+    padding: .78rem .85rem;
+    border: 1px solid #f1e7ea;
+    border-radius: .82rem;
+    background: linear-gradient(145deg, #fff, #fffafa);
+}
+
+.product-bottle-material-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.4rem;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: .7rem;
+    background: #fff0f3;
+    color: #ff4167;
+}
+
+.product-bottle-material-icon svg {
+    width: 1.35rem;
+    height: 1.35rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-bottle-material-item strong,
+.product-bottle-material-item span {
+    display: block;
+}
+
+.product-bottle-material-item strong {
+    color: #302b34;
+    font-size: .7rem;
+    font-weight: 800;
+}
+
+.product-bottle-material-item span {
+    margin-top: .12rem;
+    color: #7b7480;
+    font-size: .59rem;
+    line-height: 1.4;
+}
+
+/* Timeline */
+.product-bottle-guide-card {
+    padding: 1rem 1.1rem 1.05rem;
+}
+
+.product-bottle-timeline {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .7rem;
+    position: relative;
+}
+
+.product-bottle-step {
+    position: relative;
+    min-width: 0;
+    padding: .25rem .45rem .1rem;
+}
+
+.product-bottle-step:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 1.55rem;
+    right: -.45rem;
+    width: .9rem;
+    height: 1px;
+    background: #ffc4d0;
+}
+
+.product-bottle-step-top {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-bottom: .45rem;
+}
+
+.product-bottle-step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 2rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .65rem;
+    background: #fff0f3;
+    color: #ff4167;
+    font-size: .72rem;
+    font-weight: 900;
+}
+
+.product-bottle-step-icon {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    color: #ff4167;
+}
+
+.product-bottle-step-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-bottle-step strong {
+    display: block;
+    color: #2f2a33;
+    font-size: .7rem;
+    font-weight: 800;
+}
+
+.product-bottle-step p {
+    margin: .2rem 0 0;
+    color: #706976;
+    font-size: .59rem;
+    line-height: 1.42;
+}
+
+/* Cleaning / storage / warning */
+.product-bottle-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .7rem;
+}
+
+.product-bottle-info-card {
+    min-width: 0;
+    padding: .85rem .9rem;
+    border: 1px solid #f0e5e8;
+    border-radius: .85rem;
+    background: #fff;
+    box-shadow: 0 8px 20px -22px rgba(43, 37, 48, .28);
+}
+
+.product-bottle-info-card.is-warning {
+    border-color: #f4dfb5;
+    background: #fffdf8;
+}
+
+.product-bottle-info-title {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin-bottom: .55rem;
+}
+
+.product-bottle-info-title h3 {
+    margin: 0;
+    color: #302b34;
+    font-size: .76rem;
+    font-weight: 800;
+}
+
+.product-bottle-info-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 1.7rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    color: #ff4167;
+}
+
+.product-bottle-info-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-bottle-info-card ul {
+    margin: 0;
+    padding-left: 1rem;
+}
+
+.product-bottle-info-card li {
+    margin: .32rem 0;
+    color: #625b67;
+    font-size: .61rem;
+    line-height: 1.45;
+}
+
+.product-bottle-info-card li::marker {
+    color: #ff4167;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .product-bottle-material-grid,
+    .product-bottle-benefit-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-bottle-timeline {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .product-bottle-step::after {
+        display: none;
+    }
+
+    .product-bottle-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .product-bottle-spec-table .product-spec-row {
+        grid-template-columns: 7.5rem minmax(0, 1fr);
+    }
+
+    .product-bottle-timeline {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   MOMMYKIDS - BOTTLE MATERIAL + USAGE PROFESSIONAL V2
+   Scope riêng cho bottle.blade.php.
+   Không ảnh hưởng Milk / Diaper.
+========================================================= */
+
+.product-bottle-pro .product-bottle-materials-pro,
+.product-bottle-pro .product-bottle-usage-pro {
+    position: relative;
+    overflow: hidden;
+    padding: 1.05rem 1.1rem 1.1rem;
+    border: 1px solid #f0e4e7;
+    border-radius: 1rem;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,250,251,.96));
+    box-shadow: 0 14px 34px -30px rgba(52, 41, 48, .34);
+}
+
+.product-bottle-pro .product-bottle-materials-pro::before,
+.product-bottle-pro .product-bottle-usage-pro::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 1.1rem;
+    right: 1.1rem;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff5a7c, #ffc5d0 55%, transparent);
+}
+
+.product-bottle-pro .product-bottle-pro-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .95rem;
+}
+
+.product-bottle-pro .product-bottle-pro-heading-main {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0;
+}
+
+.product-bottle-pro .product-bottle-pro-heading-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.45rem;
+    width: 2.45rem;
+    height: 2.45rem;
+    border: 1px solid #f6d8df;
+    border-radius: .8rem;
+    background: linear-gradient(145deg, #fff1f4, #ffe9ee);
+    color: #ff4167;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+.product-bottle-pro .product-bottle-pro-heading-icon svg {
+    width: 1.3rem;
+    height: 1.3rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-bottle-pro .product-bottle-pro-heading h2 {
+    margin: .12rem 0 0;
+    color: #1f2942;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.product-bottle-pro .product-bottle-pro-kicker {
+    display: block;
+    color: #ff4167;
+    font-size: .56rem;
+    font-weight: 800;
+    letter-spacing: .085em;
+    line-height: 1;
+}
+
+.product-bottle-pro .product-bottle-pro-heading > p {
+    flex: 0 1 24rem;
+    max-width: 24rem;
+    margin: .2rem 0 0;
+    color: #817985;
+    font-size: .62rem;
+    line-height: 1.55;
+    text-align: right;
+}
+
+/* =========================
+   MATERIALS / STRUCTURE
+========================= */
+
+.product-bottle-pro .product-bottle-materials-pro-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .72rem;
+}
+
+.product-bottle-pro .product-bottle-material-pro-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .78rem;
+    align-items: center;
+    min-width: 0;
+    min-height: 6.3rem;
+    padding: .8rem .85rem;
+    overflow: hidden;
+    border: 1px solid #eee4e7;
+    border-radius: .86rem;
+    background: #fff;
+    box-shadow: 0 10px 24px -26px rgba(43,37,48,.5);
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+.product-bottle-pro .product-bottle-material-pro-item::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2px;
+    background: linear-gradient(90deg, #ff6684, #ffd4dc 70%, transparent);
+    opacity: .65;
+}
+
+.product-bottle-pro .product-bottle-material-pro-item:hover {
+    transform: translateY(-2px);
+    border-color: #f3ccd5;
+    box-shadow: 0 16px 32px -28px rgba(255, 65, 103, .55);
+}
+
+.product-bottle-pro .product-bottle-material-pro-top {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    min-width: 3.25rem;
+}
+
+.product-bottle-pro .product-bottle-material-pro-index {
+    position: absolute;
+    top: -.28rem;
+    left: -.18rem;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 .2rem;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    background: #ff4167;
+    color: #fff;
+    font-size: .5rem;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 6px 14px -8px rgba(255,65,103,.65);
+}
+
+.product-bottle-pro .product-bottle-material-pro-icon {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid #f6dde3;
+    border-radius: .8rem;
+    background: #fff3f5;
+    color: #ff4167;
+}
+
+.product-bottle-pro .product-bottle-material-pro-icon svg {
+    width: 1.4rem;
+    height: 1.4rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-bottle-pro .product-bottle-material-pro-content {
+    min-width: 0;
+}
+
+.product-bottle-pro .product-bottle-material-pro-content strong,
+.product-bottle-pro .product-bottle-material-pro-content span {
+    display: block;
+}
+
+.product-bottle-pro .product-bottle-material-pro-content strong {
+    color: #2a2530;
+    font-size: .73rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.product-bottle-pro .product-bottle-material-pro-content span {
+    margin-top: .22rem;
+    color: #7b7480;
+    font-size: .61rem;
+    line-height: 1.5;
+}
+
+/* =========================
+   USAGE TIMELINE
+========================= */
+
+.product-bottle-pro .product-bottle-usage-pro-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .68rem;
+}
+
+.product-bottle-pro .product-bottle-usage-pro-step {
+    position: relative;
+    min-width: 0;
+}
+
+.product-bottle-pro .product-bottle-usage-pro-rail {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 1.85rem;
+    margin-bottom: .45rem;
+}
+
+.product-bottle-pro .product-bottle-usage-pro-number {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 1.65rem;
+    border-radius: .5rem;
+    background: linear-gradient(135deg, #ff5a79, #ff3f67);
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 900;
+    letter-spacing: .02em;
+    box-shadow: 0 8px 18px -12px rgba(255,63,103,.72);
+}
+
+.product-bottle-pro .product-bottle-usage-pro-line {
+    position: absolute;
+    left: 2.3rem;
+    right: -.85rem;
+    top: 50%;
+    height: 1px;
+    background:
+        repeating-linear-gradient(
+            90deg,
+            #f2b8c5 0 8px,
+            transparent 8px 13px
+        );
+}
+
+.product-bottle-pro .product-bottle-usage-pro-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .62rem;
+    align-items: flex-start;
+    min-height: 7.5rem;
+    padding: .78rem;
+    border: 1px solid #eee4e7;
+    border-radius: .82rem;
+    background:
+        linear-gradient(160deg, #fff, #fffafb);
+    box-shadow: 0 10px 24px -27px rgba(43,37,48,.52);
+}
+
+.product-bottle-pro .product-bottle-usage-pro-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.35rem;
+    width: 2.35rem;
+    height: 2.35rem;
+    border: 1px solid #f6dce2;
+    border-radius: 50%;
+    background: #fff1f4;
+    color: #ff4167;
+}
+
+.product-bottle-pro .product-bottle-usage-pro-icon svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-bottle-pro .product-bottle-usage-pro-content {
+    min-width: 0;
+}
+
+.product-bottle-pro .product-bottle-usage-pro-label {
+    display: block;
+    margin-bottom: .12rem;
+    color: #ff4167;
+    font-size: .51rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+}
+
+.product-bottle-pro .product-bottle-usage-pro-content strong {
+    display: block;
+    color: #2b2630;
+    font-size: .71rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.product-bottle-pro .product-bottle-usage-pro-content p {
+    margin: .23rem 0 0;
+    color: #746d79;
+    font-size: .59rem;
+    line-height: 1.48;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1100px) {
+    .product-bottle-pro .product-bottle-pro-heading {
+        display: block;
+    }
+
+    .product-bottle-pro .product-bottle-pro-heading > p {
+        max-width: none;
+        margin: .55rem 0 0 3.1rem;
+        text-align: left;
+    }
+
+    .product-bottle-pro .product-bottle-usage-pro-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .product-bottle-pro .product-bottle-usage-pro-line {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .product-bottle-pro .product-bottle-materials-pro,
+    .product-bottle-pro .product-bottle-usage-pro {
+        padding: .9rem;
+    }
+
+    .product-bottle-pro .product-bottle-materials-pro::before,
+    .product-bottle-pro .product-bottle-usage-pro::before {
+        left: .9rem;
+        right: .9rem;
+    }
+
+    .product-bottle-pro .product-bottle-materials-pro-grid,
+    .product-bottle-pro .product-bottle-usage-pro-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-bottle-pro .product-bottle-pro-heading > p {
+        margin-left: 0;
+    }
+
+    .product-bottle-pro .product-bottle-material-pro-item,
+    .product-bottle-pro .product-bottle-usage-pro-card {
+        min-height: 0;
+    }
+}
