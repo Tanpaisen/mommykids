@@ -6449,3 +6449,1024 @@ body.product-detail-active::-webkit-scrollbar {
         min-height: 0;
     }
 }
+
+/* =========================================================
+   FEEDING / WEANING DETAIL - ĂN DẶM & DINH DƯỠNG
+   Scope riêng, không ảnh hưởng Milk / Diaper / Bottle.
+========================================================= */
+
+.product-feeding-detail {
+    --feeding-accent: #f06f82;
+    --feeding-accent-strong: #e95270;
+    --feeding-accent-soft: #fff1f3;
+    --feeding-cream: #fffaf4;
+    --feeding-green: #6a9f76;
+    --feeding-ink: #202a44;
+    --feeding-muted: #777381;
+    --feeding-border: rgba(226, 139, 154, .24);
+    gap: 1rem;
+}
+
+.product-feeding-detail .product-content-card {
+    border-color: var(--feeding-border);
+}
+
+.product-feeding-top-grid {
+    align-items: stretch;
+}
+
+.product-feeding-heading {
+    display: flex;
+    align-items: center;
+    gap: .72rem;
+    margin-bottom: 1rem;
+}
+
+.product-feeding-heading > div,
+.product-feeding-section-title > div {
+    min-width: 0;
+}
+
+.product-feeding-heading h2,
+.product-feeding-section-title h2 {
+    margin: .12rem 0 0;
+    color: var(--feeding-ink);
+    font-family: var(--font-display);
+    font-size: 1.08rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.product-feeding-eyebrow {
+    display: block;
+    color: var(--feeding-accent);
+    font-size: .61rem;
+    font-weight: 800;
+    letter-spacing: .075em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.product-feeding-heading-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.35rem;
+    width: 2.35rem;
+    height: 2.35rem;
+    border: 1px solid rgba(240, 111, 130, .16);
+    border-radius: .78rem;
+    background: linear-gradient(145deg, #fff6f7, #ffecef);
+    color: var(--feeding-accent-strong);
+    box-shadow: 0 9px 22px -18px rgba(219, 64, 92, .55);
+}
+
+.product-feeding-heading-icon svg {
+    width: 1.18rem;
+    height: 1.18rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-feeding-spec-table {
+    border-color: rgba(238, 215, 219, .9);
+}
+
+.product-feeding-spec-table .product-spec-row {
+    grid-template-columns: 9rem minmax(0, 1fr);
+}
+
+.product-feeding-spec-table .product-spec-row strong {
+    background: linear-gradient(90deg, #fff9f5, #fffafa);
+}
+
+.product-feeding-description-card {
+    min-height: 100%;
+}
+
+.product-feeding-description-text {
+    min-height: 4.25rem;
+}
+
+.product-feeding-benefit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .65rem;
+    margin-top: 1rem;
+}
+
+.product-feeding-benefit-item {
+    display: flex;
+    align-items: center;
+    gap: .66rem;
+    min-width: 0;
+    min-height: 68px;
+    padding: .72rem .75rem;
+    border: 1px solid rgba(240, 111, 130, .11);
+    border-radius: .82rem;
+    background: linear-gradient(145deg, #fff9f9, #fff3f4);
+}
+
+.product-feeding-benefit-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: .72rem;
+    background: #fff;
+    color: var(--feeding-accent-strong);
+    box-shadow: 0 8px 19px -16px rgba(67, 43, 49, .42);
+}
+
+.product-feeding-benefit-icon svg {
+    width: 1.16rem;
+    height: 1.16rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-feeding-benefit-item strong,
+.product-feeding-benefit-item span {
+    display: block;
+}
+
+.product-feeding-benefit-item strong {
+    color: #332f38;
+    font-size: .69rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.product-feeding-benefit-item div > span {
+    margin-top: .16rem;
+    color: #88808c;
+    font-size: .59rem;
+    line-height: 1.42;
+}
+
+.product-feeding-trust-banner {
+    display: flex;
+    align-items: center;
+    gap: .72rem;
+    margin-top: auto;
+    padding: .8rem .88rem;
+    border: 1px solid rgba(118, 159, 118, .14);
+    border-radius: .82rem;
+    background: linear-gradient(90deg, #f7fbf4, #fff9f4);
+}
+
+.product-feeding-trust-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.1rem;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: .7rem;
+    background: #fff;
+    color: var(--feeding-green);
+}
+
+.product-feeding-trust-icon svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-feeding-trust-banner strong,
+.product-feeding-trust-banner span {
+    display: block;
+}
+
+.product-feeding-trust-banner strong {
+    color: #35413a;
+    font-size: .66rem;
+    font-weight: 800;
+}
+
+.product-feeding-trust-banner span {
+    margin-top: .18rem;
+    color: #7c827d;
+    font-size: .58rem;
+    line-height: 1.45;
+}
+
+.product-feeding-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.product-feeding-section-title {
+    display: flex;
+    align-items: center;
+    gap: .72rem;
+    min-width: 0;
+}
+
+.product-feeding-section-head > p {
+    max-width: 22rem;
+    margin: 0;
+    color: #918995;
+    font-size: .62rem;
+    line-height: 1.5;
+    text-align: right;
+}
+
+.product-feeding-ingredient-card,
+.product-feeding-guide-card {
+    position: relative;
+    overflow: hidden;
+    padding: 1.2rem;
+}
+
+.product-feeding-ingredient-card::before,
+.product-feeding-guide-card::before {
+    content: "";
+    position: absolute;
+    top: -5rem;
+    right: -4rem;
+    width: 11rem;
+    height: 11rem;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 225, 230, .48), rgba(255, 255, 255, 0) 67%);
+    pointer-events: none;
+}
+
+.product-feeding-ingredient-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .72rem;
+}
+
+.product-feeding-ingredient-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.55rem minmax(0, 1fr);
+    align-items: center;
+    gap: .72rem;
+    min-height: 88px;
+    padding: .8rem .88rem;
+    overflow: hidden;
+    border: 1px solid rgba(238, 215, 219, .9);
+    border-radius: .9rem;
+    background: linear-gradient(145deg, #fff, #fff9f6);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.product-feeding-ingredient-item:hover {
+    transform: translateY(-2px);
+    border-color: rgba(240, 111, 130, .34);
+    box-shadow: 0 12px 26px -22px rgba(60, 45, 51, .46);
+}
+
+.product-feeding-ingredient-index {
+    position: absolute;
+    top: .55rem;
+    right: .7rem;
+    color: rgba(229, 94, 119, .16);
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: -.06em;
+}
+
+.product-feeding-ingredient-icon {
+    display: grid;
+    place-items: center;
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: .78rem;
+    background: linear-gradient(145deg, #fff0f2, #fff7ef);
+    color: var(--feeding-accent-strong);
+}
+
+.product-feeding-ingredient-icon svg {
+    width: 1.26rem;
+    height: 1.26rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-feeding-ingredient-item strong,
+.product-feeding-ingredient-item div > span {
+    display: block;
+}
+
+.product-feeding-ingredient-item strong {
+    padding-right: 2rem;
+    color: #332f38;
+    font-size: .72rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.product-feeding-ingredient-item div > span {
+    margin-top: .25rem;
+    color: #807985;
+    font-size: .62rem;
+    line-height: 1.48;
+}
+
+.product-feeding-empty-state {
+    padding: 1rem;
+    border: 1px dashed rgba(240, 111, 130, .28);
+    border-radius: .86rem;
+    background: #fffafa;
+}
+
+.product-feeding-empty-state strong,
+.product-feeding-empty-state span {
+    display: block;
+}
+
+.product-feeding-empty-state strong {
+    color: #3c3740;
+    font-size: .72rem;
+}
+
+.product-feeding-empty-state span {
+    margin-top: .25rem;
+    color: #88818c;
+    font-size: .63rem;
+}
+
+.product-feeding-steps {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .72rem;
+}
+
+.product-feeding-step {
+    position: relative;
+    min-width: 0;
+    min-height: 164px;
+    padding: .78rem;
+    border: 1px solid rgba(238, 215, 219, .92);
+    border-radius: .9rem;
+    background: linear-gradient(155deg, #fff, #fff9f7);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.product-feeding-step:hover {
+    transform: translateY(-2px);
+    border-color: rgba(240, 111, 130, .34);
+    box-shadow: 0 12px 24px -22px rgba(60, 45, 51, .48);
+}
+
+.product-feeding-step-head {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    margin-bottom: .82rem;
+}
+
+.product-feeding-step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 2.25rem;
+    width: 2.25rem;
+    height: 1.7rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #f46f86, #e95470);
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 900;
+    letter-spacing: .04em;
+    box-shadow: 0 8px 16px -12px rgba(218, 64, 92, .68);
+}
+
+.product-feeding-step-line {
+    flex: 1;
+    height: 1px;
+    margin: 0 .42rem;
+    background: linear-gradient(90deg, rgba(240, 111, 130, .34), rgba(240, 111, 130, .06));
+}
+
+.product-feeding-step-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .68rem;
+    background: #fff0f2;
+    color: var(--feeding-accent-strong);
+}
+
+.product-feeding-step-icon svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-feeding-step > strong {
+    display: block;
+    color: #302c35;
+    font-size: .72rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.product-feeding-step > p {
+    margin: .38rem 0 0;
+    color: #7e7783;
+    font-size: .61rem;
+    line-height: 1.55;
+}
+
+.product-feeding-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .8rem;
+}
+
+.product-feeding-info-card {
+    min-width: 0;
+    min-height: 168px;
+    padding: .95rem;
+    border: 1px solid rgba(238, 215, 219, .92);
+    border-radius: .92rem;
+    background: linear-gradient(145deg, #fff, #fffaf6);
+    box-shadow: 0 10px 24px -24px rgba(55, 42, 48, .38);
+}
+
+.product-feeding-info-card.is-warning {
+    background: linear-gradient(145deg, #fff, #fff7f6);
+}
+
+.product-feeding-info-card.is-guide {
+    background: linear-gradient(145deg, #fff, #f8fbf4);
+    border-color: rgba(114, 158, 119, .18);
+}
+
+.product-feeding-info-title {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: .72rem;
+}
+
+.product-feeding-info-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: .72rem;
+    background: #fff0f2;
+    color: var(--feeding-accent-strong);
+}
+
+.product-feeding-info-card.is-guide .product-feeding-info-icon {
+    background: #f0f8ef;
+    color: var(--feeding-green);
+}
+
+.product-feeding-info-icon svg {
+    width: 1.12rem;
+    height: 1.12rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-feeding-info-title span:not(.product-feeding-info-icon),
+.product-feeding-info-title h3 {
+    display: block;
+}
+
+.product-feeding-info-title div > span {
+    color: var(--feeding-accent);
+    font-size: .55rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.product-feeding-info-card.is-guide .product-feeding-info-title div > span {
+    color: var(--feeding-green);
+}
+
+.product-feeding-info-title h3 {
+    margin: .12rem 0 0;
+    color: #302c35;
+    font-size: .75rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.product-feeding-info-card ul {
+    display: grid;
+    gap: .42rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.product-feeding-info-card li,
+.product-feeding-info-card > p {
+    position: relative;
+    margin: 0;
+    padding-left: .88rem;
+    color: #77717c;
+    font-size: .61rem;
+    line-height: 1.55;
+}
+
+.product-feeding-info-card li::before,
+.product-feeding-info-card > p::before {
+    content: "";
+    position: absolute;
+    top: .5em;
+    left: 0;
+    width: .34rem;
+    height: .34rem;
+    border-radius: 50%;
+    background: var(--feeding-accent);
+}
+
+.product-feeding-info-card.is-guide li::before,
+.product-feeding-info-card.is-guide > p::before {
+    background: var(--feeding-green);
+}
+
+@media (max-width: 980px) {
+    .product-feeding-benefit-grid,
+    .product-feeding-ingredient-grid,
+    .product-feeding-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .product-feeding-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .product-feeding-section-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .product-feeding-section-head > p {
+        max-width: none;
+        text-align: left;
+    }
+
+    .product-feeding-benefit-grid,
+    .product-feeding-ingredient-grid,
+    .product-feeding-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .product-feeding-spec-table .product-spec-row {
+        grid-template-columns: 7.25rem minmax(0, 1fr);
+    }
+
+    .product-feeding-step {
+        min-height: 0;
+    }
+}
+
+/* =========================================================
+   FEEDING POLISH V2
+   Professional hierarchy: unified overview + lighter cards +
+   real horizontal process timeline. Scoped to feeding only.
+========================================================= */
+
+.product-feeding-detail {
+    gap: 1.15rem;
+}
+
+/* ---------- Unified overview ---------- */
+.product-feeding-detail .product-feeding-overview-card {
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+    border-color: rgba(228, 145, 160, .20);
+    border-radius: 1.1rem;
+    background: #fff;
+    box-shadow: 0 16px 36px -32px rgba(52, 40, 47, .42);
+}
+
+.product-feeding-detail .product-feeding-overview-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f47a8d 0%, #ef6680 48%, rgba(239, 102, 128, .12) 100%);
+}
+
+.product-feeding-detail .product-feeding-overview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+    align-items: stretch;
+}
+
+.product-feeding-detail .product-feeding-overview-spec,
+.product-feeding-detail .product-feeding-overview-description {
+    min-width: 0;
+    padding: 1.28rem 1.32rem 1.35rem;
+}
+
+.product-feeding-detail .product-feeding-overview-description {
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid rgba(231, 219, 222, .8);
+    background: linear-gradient(145deg, #fff 0%, #fffdfc 58%, #fff8f7 100%);
+}
+
+.product-feeding-detail .product-feeding-heading {
+    margin-bottom: .9rem;
+}
+
+.product-feeding-detail .product-feeding-heading-icon {
+    flex-basis: 2.55rem;
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: .86rem;
+    box-shadow: none;
+}
+
+.product-feeding-detail .product-feeding-heading h2,
+.product-feeding-detail .product-feeding-section-title h2 {
+    font-size: 1.12rem;
+}
+
+.product-feeding-detail .product-feeding-eyebrow {
+    font-size: .6rem;
+}
+
+.product-feeding-detail .product-feeding-spec-table {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.product-feeding-detail .product-feeding-spec-table .product-spec-row {
+    grid-template-columns: 8.6rem minmax(0, 1fr);
+    min-height: 2.55rem;
+    border-bottom: 1px solid rgba(231, 222, 224, .78);
+}
+
+.product-feeding-detail .product-feeding-spec-table .product-spec-row:first-child {
+    border-top: 1px solid rgba(231, 222, 224, .78);
+}
+
+.product-feeding-detail .product-feeding-spec-table .product-spec-row strong,
+.product-feeding-detail .product-feeding-spec-table .product-spec-row > span {
+    display: flex;
+    align-items: center;
+    padding: .55rem .7rem;
+    background: transparent;
+    font-size: .69rem;
+    line-height: 1.42;
+}
+
+.product-feeding-detail .product-feeding-spec-table .product-spec-row strong {
+    padding-left: 0;
+    color: #4a444e;
+}
+
+.product-feeding-detail .product-feeding-spec-table .product-spec-row > span {
+    color: #625c67;
+}
+
+.product-feeding-detail .product-feeding-description-text {
+    min-height: 0;
+    color: #5f5964;
+    font-size: .72rem;
+    line-height: 1.72;
+}
+
+.product-feeding-detail .product-feeding-benefit-grid {
+    gap: .7rem;
+    margin-top: 1.05rem;
+}
+
+.product-feeding-detail .product-feeding-benefit-item {
+    min-height: 72px;
+    padding: .76rem .8rem;
+    border: 0;
+    border-radius: .82rem;
+    background: linear-gradient(145deg, #fff7f8, #fffaf7);
+    box-shadow: inset 0 0 0 1px rgba(236, 214, 219, .72);
+}
+
+.product-feeding-detail .product-feeding-benefit-icon {
+    flex: 0 0 2.35rem;
+    width: 2.35rem;
+    height: 2.35rem;
+}
+
+.product-feeding-detail .product-feeding-benefit-item strong {
+    font-size: .72rem;
+}
+
+.product-feeding-detail .product-feeding-benefit-item div > span {
+    font-size: .62rem;
+}
+
+.product-feeding-detail .product-feeding-trust-banner {
+    margin-top: 1rem;
+    border: 0;
+    background: linear-gradient(90deg, #f7fbf4 0%, #fffaf6 100%);
+    box-shadow: inset 0 0 0 1px rgba(122, 158, 121, .14);
+}
+
+/* ---------- Section shells ---------- */
+.product-feeding-detail .product-feeding-ingredient-card,
+.product-feeding-detail .product-feeding-guide-card {
+    padding: 1.3rem 1.35rem 1.38rem;
+    border-color: rgba(228, 145, 160, .18);
+    border-radius: 1.05rem;
+    box-shadow: 0 14px 34px -32px rgba(52, 40, 47, .40);
+}
+
+.product-feeding-detail .product-feeding-section-head {
+    margin-bottom: 1.05rem;
+}
+
+.product-feeding-detail .product-feeding-section-head > p {
+    max-width: 19rem;
+    color: #8c8790;
+    font-size: .64rem;
+}
+
+/* ---------- Ingredients: calmer feature tiles ---------- */
+.product-feeding-detail .product-feeding-ingredient-grid {
+    gap: .78rem;
+}
+
+.product-feeding-detail .product-feeding-ingredient-item {
+    grid-template-columns: 2.65rem minmax(0, 1fr);
+    min-height: 92px;
+    padding: .9rem 1rem;
+    border: 0;
+    border-radius: .9rem;
+    background: #fffafa;
+    box-shadow: inset 0 0 0 1px rgba(235, 218, 221, .82);
+}
+
+.product-feeding-detail .product-feeding-ingredient-item:hover {
+    transform: translateY(-1px);
+    border-color: transparent;
+    box-shadow:
+        inset 0 0 0 1px rgba(239, 144, 160, .32),
+        0 12px 24px -24px rgba(52, 40, 47, .45);
+}
+
+.product-feeding-detail .product-feeding-ingredient-index {
+    top: .7rem;
+    right: .82rem;
+    font-size: 1.48rem;
+    color: rgba(229, 94, 119, .12);
+}
+
+.product-feeding-detail .product-feeding-ingredient-icon {
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: .82rem;
+}
+
+.product-feeding-detail .product-feeding-ingredient-item strong {
+    font-size: .75rem;
+}
+
+.product-feeding-detail .product-feeding-ingredient-item div > span {
+    font-size: .64rem;
+    line-height: 1.5;
+}
+
+/* ---------- Usage: real horizontal timeline ---------- */
+.product-feeding-detail .product-feeding-steps {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    padding-top: .1rem;
+}
+
+.product-feeding-detail .product-feeding-steps::before {
+    content: "";
+    position: absolute;
+    top: 1.25rem;
+    left: 8.5%;
+    right: 8.5%;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(239, 102, 128, .16), rgba(239, 102, 128, .55), rgba(239, 102, 128, .16));
+    z-index: 0;
+}
+
+.product-feeding-detail .product-feeding-step {
+    position: relative;
+    z-index: 1;
+    min-height: 0;
+    padding: 0 .72rem .15rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    text-align: center;
+}
+
+.product-feeding-detail .product-feeding-step:hover {
+    transform: none;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.product-feeding-detail .product-feeding-step-head {
+    position: relative;
+    justify-content: center;
+    margin-bottom: .78rem;
+}
+
+.product-feeding-detail .product-feeding-step-line {
+    display: none;
+}
+
+.product-feeding-detail .product-feeding-step-number {
+    position: absolute;
+    top: -.12rem;
+    left: calc(50% - 2.55rem);
+    z-index: 2;
+    flex: none;
+    width: auto;
+    min-width: 2.05rem;
+    height: 1.4rem;
+    padding: 0 .5rem;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    font-size: .57rem;
+    box-shadow: 0 5px 12px -8px rgba(218, 64, 92, .65);
+}
+
+.product-feeding-detail .product-feeding-step-icon {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 2.55rem;
+    width: 2.55rem;
+    height: 2.55rem;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #fff2f4, #fff8f5);
+    box-shadow:
+        0 0 0 1px rgba(239, 102, 128, .20),
+        0 8px 18px -16px rgba(218, 64, 92, .52);
+}
+
+.product-feeding-detail .product-feeding-step-icon svg {
+    width: 1.12rem;
+    height: 1.12rem;
+}
+
+.product-feeding-detail .product-feeding-step > strong {
+    max-width: 10.5rem;
+    margin: 0 auto;
+    color: #332f38;
+    font-size: .75rem;
+    line-height: 1.35;
+}
+
+.product-feeding-detail .product-feeding-step > p {
+    max-width: 11rem;
+    margin: .38rem auto 0;
+    color: #77717c;
+    font-size: .63rem;
+    line-height: 1.52;
+}
+
+/* ---------- Bottom information cards ---------- */
+.product-feeding-detail .product-feeding-info-grid {
+    gap: .82rem;
+}
+
+.product-feeding-detail .product-feeding-info-card {
+    min-height: 160px;
+    padding: 1rem 1.05rem;
+    border: 0;
+    border-radius: .95rem;
+    background: #fff;
+    box-shadow:
+        inset 0 0 0 1px rgba(232, 216, 220, .86),
+        0 12px 26px -26px rgba(52, 40, 47, .42);
+}
+
+.product-feeding-detail .product-feeding-info-card.is-warning {
+    background: linear-gradient(145deg, #fff 0%, #fff9f7 100%);
+}
+
+.product-feeding-detail .product-feeding-info-card.is-guide {
+    background: linear-gradient(145deg, #fff 0%, #f8fcf5 100%);
+    border-color: transparent;
+    box-shadow:
+        inset 0 0 0 1px rgba(120, 164, 124, .22),
+        0 12px 26px -26px rgba(52, 40, 47, .42);
+}
+
+.product-feeding-detail .product-feeding-info-title h3 {
+    font-size: .78rem;
+}
+
+.product-feeding-detail .product-feeding-info-card li,
+.product-feeding-detail .product-feeding-info-card > p {
+    font-size: .63rem;
+    line-height: 1.58;
+}
+
+@media (max-width: 980px) {
+    .product-feeding-detail .product-feeding-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-feeding-detail .product-feeding-overview-description {
+        border-top: 1px solid rgba(231, 219, 222, .8);
+        border-left: 0;
+    }
+
+    .product-feeding-detail .product-feeding-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem .2rem;
+    }
+
+    .product-feeding-detail .product-feeding-steps::before {
+        display: none;
+    }
+
+    .product-feeding-detail .product-feeding-step {
+        padding: .2rem .7rem .4rem;
+    }
+}
+
+@media (max-width: 700px) {
+    .product-feeding-detail .product-feeding-overview-spec,
+    .product-feeding-detail .product-feeding-overview-description {
+        padding: 1.05rem;
+    }
+
+    .product-feeding-detail .product-feeding-spec-table .product-spec-row {
+        grid-template-columns: 7.25rem minmax(0, 1fr);
+    }
+
+    .product-feeding-detail .product-feeding-ingredient-card,
+    .product-feeding-detail .product-feeding-guide-card {
+        padding: 1.05rem;
+    }
+
+    .product-feeding-detail .product-feeding-steps {
+        grid-template-columns: 1fr;
+        gap: .8rem;
+    }
+
+    .product-feeding-detail .product-feeding-step {
+        display: grid;
+        grid-template-columns: 3rem minmax(0, 1fr);
+        column-gap: .7rem;
+        text-align: left;
+    }
+
+    .product-feeding-detail .product-feeding-step-head {
+        grid-row: 1 / span 2;
+        align-self: start;
+        margin: 0;
+    }
+
+    .product-feeding-detail .product-feeding-step-number {
+        left: -.15rem;
+    }
+
+    .product-feeding-detail .product-feeding-step > strong,
+    .product-feeding-detail .product-feeding-step > p {
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
