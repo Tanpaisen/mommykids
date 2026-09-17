@@ -12,7 +12,7 @@
         </a>
     </div>
 
-    <form action="{{ route('admin.vouchers.update', $voucher->id) }}" method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+    <form action="{{ route('admin.vouchers.update', $voucher->id) }}" method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8" onsubmit="return validateDates()">
         @csrf
         @method('PUT')
 
@@ -99,8 +99,9 @@
                 <input type="datetime-local" name="starts_at" value="{{ old('starts_at', $voucher->starts_at ? date('Y-m-d\TH:i', strtotime($voucher->starts_at)) : '') }}" class="w-full rounded-lg border-gray-300">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kết thúc</label>
-                <input type="datetime-local" name="expires_at" value="{{ old('expires_at', $voucher->expires_at ? date('Y-m-d\TH:i', strtotime($voucher->expires_at)) : '') }}" class="w-full rounded-lg border-gray-300">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Thời gian kết thúc</label>
+                <input type="datetime-local" name="expires_at" value="{{ old('expires_at') }}" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500">
+                @error('expires_at')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
         </div>
 
@@ -330,6 +331,18 @@
         }
         scopeRadios.forEach(radio => radio.addEventListener('change', toggleScopeFields));
         toggleScopeFields();
+
+        // --- KIỂM TRA NGÀY TRƯỚC KHI GỬI ---
+        function validateDates() {
+        const start = document.querySelector('input[name="starts_at"]').value;
+        const end = document.querySelector('input[name="expires_at"]').value;
+        
+        if (start && end && new Date(end) < new Date(start)) {
+            alert('⚠️ Thời gian kết thúc phải sau thời gian bắt đầu!');
+            return false;
+        }
+        return true;
+        }
     });
 </script>
 @endsection

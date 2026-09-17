@@ -17,6 +17,7 @@ class VoucherController extends Controller
             $now = now();
             return Voucher::where('status', 'active')
                 ->where('is_public', true)
+                ->where('require_save_to_user', false)
                 ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
                 ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>=', $now))
                 ->where(fn ($q) => $q->whereNull('total_quantity')->orWhere('total_quantity', '>', 0))
@@ -89,32 +90,5 @@ class VoucherController extends Controller
             'success' => true,
             'message' => 'Đã lưu mã vào ví thành công!'
         ]);
-    }
-
-    // gọi ra danh sách voucher cho màn hình thanh toán
-    public function getAvailableVouchers(Request $request, CartService $cartService)
-    {
-        $user = auth()->user();
-        $subtotal = $cartService->getTotal();
-
-        // === LOẠI A: Voucher ĐÃ LƯU vào tài khoản người dùng ===
-        $savedVouchers = Voucher::whereHas('savedUsers', fn($q) => $q->where('user_id', $user->id))
-            ->active()
-            ->get()
-            ->filter(fn($v) => $v->isApplicable($subtotal, $user->id));
-
-        // === LOẠI B: Voucher CÔNG KHAI — KHÔNG CẦN LƯU, TỰ ĐỘNG TRẢ RA KHI ĐỦ ĐIỀU KIỆN ===
-        $autoVouchers = Voucher::where('require_save_to_user', false)
-            ->where('is_public', true)
-            ->active()
-            ->whereNotIn('id', $savedVouchers->pluck('id')) // Tránh trùng lặp
-            ->get()
-            ->filter(fn($v) => $v->isApplicable($subtotal, $user->id));
-
-        // Gộp 2 nhóm lại
-        return [
-            'saved'       => $savedVouchers,      // Đã lưu → "Voucher của tôi"
-            'recommended' => $autoVouchers,       // Không cần lưu → "Mã khuyến mãi đề xuất"
-        ];
     }
 }

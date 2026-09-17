@@ -79,6 +79,7 @@ class VoucherController extends Controller
         // Xử lý các Checkbox
         $validated['is_public'] = $request->boolean('is_public', true);
         $validated['auto_apply'] = $request->boolean('auto_apply', false);
+        $validated['require_save_to_user'] = $request->boolean('require_save_to_user', false);
         // $validated['is_stackable'] = $request->boolean('is_stackable', false);
         // $validated['priority'] = $request->input('priority', 0);
         // $validated['channel'] = $request->input('channel', 'all');

@@ -29,7 +29,6 @@ return new class extends Migration
             $table->unsignedBigInteger('discount_value')->default(0); 
             $table->unsignedBigInteger('max_discount_amount')->nullable();
             $table->unsignedBigInteger('min_order_amount')->default(0);
-            $table->boolean('require_save_to_user')->default(false)->comment('true=Phải lưu vào tài khoản mới dùng; false=Không cần lưu, tự xuất hiện khi đủ điều kiện');
             
             // QUẢN LÝ LƯỢT DÙNG & NGÂN SÁCH
             $table->unsignedInteger('total_quantity')->nullable();

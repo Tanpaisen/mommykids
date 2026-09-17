@@ -59,17 +59,37 @@ class Voucher extends Model
         return $query->where('require_save_to_user', true);
     }
 
-    // Scope: Voucher áp dụng ngay không cần lưu
-    public function scopeAutoApplyAvailable($query)
+    /**
+     * Kiểm tra người dùng có quyền DÙNG voucher này không
+     */
+    public function canBeUsedBy($user = null): bool
     {
-        return $query->where('require_save_to_user', false)
-            ->where('is_public', true)
-            ->active();
+        // Voucher công khai → ai cũng dùng được
+        if (!$this->require_save_to_user) {
+            return true;
+        }
+
+        // Cần lưu → phải đăng nhập
+        if (!$user) {
+            return false;
+        }
+
+        // → và có trong ví chưa dùng
+        return $this->savedUsers()
+                    ->where('users.id', $user->id)
+                    ->exists();
     }
 
-    // /**
-    //  * KIỂM TRA: Voucher này có áp dụng được cho đơn không?
-    //  */
+    public function canApply($subtotal, $user = null, $userTier = null): bool
+    {
+        return $this->isApplicable($subtotal, $user?->id, $userTier)
+            && $this->canBeUsedBy($user);
+    }
+
+    /**
+     * Kiểm tra voucher có hợp lệ & đủ điều kiện áp dụng không
+     * @return bool
+     */
     public function isApplicable($subtotal, $userId = null, $userTier = null): bool
     {
         $now = now();
@@ -80,26 +100,32 @@ class Voucher extends Model
         if ($this->expires_at && $this->expires_at->lt($now)) return false;
 
         // 2. Giá trị đơn tối thiểu
-        if ($subtotal < $this->min_order_amount) return false;
+        if ($this->min_order_amount && $subtotal < $this->min_order_amount) {
+            return false;
+        }
 
         // 3. Còn lượt dùng toàn hệ thống
-        if ($this->total_quantity && $this->used_count >= $this->total_quantity) return false;
+        if ($this->total_quantity && $this->used_count >= $this->total_quantity) {
+            return false;
+        }
 
         // 4. Giới hạn mỗi người dùng
         if ($userId && $this->usage_limit_per_user > 0) {
             $used = $this->usages()->where('user_id', $userId)->count();
-            if ($used >= $this->usage_limit_per_user) return false;
+            if ($used >= $this->usage_limit_per_user) {
+                return false;
+            }
         }
 
         // 5. Kiểm tra hạng thành viên (nếu có điều kiện tier)
         if ($userTier && $this->conditions()->where('type', 'tier')->exists()) {
             $allowedTiers = $this->conditions()->where('type', 'tier')->pluck('value')->toArray();
-            if (!in_array($userTier, $allowedTiers)) return false;
+            if (!in_array($userTier, $allowedTiers)) {
+                return false;
+            }
         }
 
-        return [
-            'saved' => $savedVouchers,
-            'recommended' => $autoVouchers,
-        ];
+        // ✅ Đủ mọi điều kiện
+        return true;
     }
 }

@@ -12,7 +12,7 @@
         </a>
     </div>
 
-    <form action="{{ route('admin.vouchers.store') }}" method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+    <form action="{{ route('admin.vouchers.store') }}" method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8" onsubmit="return validateDates()">
         @csrf
         
         <!-- THANH ĐIỀU HƯỚNG TABS (KHÔNG LOAD TRANG) -->
@@ -101,6 +101,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Thời gian kết thúc</label>
                 <input type="datetime-local" name="expires_at" value="{{ old('expires_at') }}" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500">
+                @error('expires_at')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror {{-- ✅ Thêm dòng này --}}
             </div>
         </div>
 
@@ -367,6 +368,18 @@
                 // Gộp lại, ví dụ kết quả: KM-X8J9-9432
                 inputVoucherCode.value = 'KM-' + randomStr + '-' + timeStr;
             });
+        }
+
+        // --- KIỂM TRA NGÀY TRƯỚC KHI GỬI ---
+        function validateDates() {
+        const start = document.querySelector('input[name="starts_at"]').value;
+        const end = document.querySelector('input[name="expires_at"]').value;
+        
+        if (start && end && new Date(end) < new Date(start)) {
+            alert('⚠️ Thời gian kết thúc phải sau thời gian bắt đầu!');
+            return false;
+        }
+        return true;
         }
     });
 </script>

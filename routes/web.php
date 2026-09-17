@@ -164,9 +164,6 @@ Route::prefix('api')->group(function () {
 
     Route::post('/vouchers/save', [VoucherController::class, 'saveVoucher'])
         ->name('api.vouchers.save');
-
-    Route::get('/vouchers/available', [VoucherController::class, 'getAvailableVouchers'])
-    ->name('api.vouchers.available');
 });
 
 Route::get('/payments/zalopay/create', [ZaloPayController::class, 'create'])

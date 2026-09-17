@@ -241,18 +241,28 @@ return response()->json([
         $type = $data['type'];
         $user = Auth::user();
 
-        // Checkout chỉ cho dùng voucher đã được người dùng lưu vào ví.
-        // Không tin voucher_id từ frontend: luôn truy vấn lại qua savedVouchers().
-        $voucher = $user->savedVouchers()
-            ->where('vouchers.id', $data['voucher_id'])
-            ->where('vouchers.type', $type)
+        // Cho áp dụng cả voucher đã lưu LẪN voucher loại 2 (công khai, không cần lưu)
+        $voucher = Voucher::where('id', $data['voucher_id'])
+            ->where('type', $type)
+            ->active()
             ->first();
 
         if (!$voucher) {
             return response()->json([
                 'success' => false,
-                'message' => 'Mã ưu đãi này không có trong ví của bạn hoặc không còn khả dụng.',
+                'message' => 'Mã ưu đãi không tồn tại hoặc đã hết hạn.',
             ], 404);
+        }
+
+        // Kiểm tra: phải là đã lưu HOẶC là loại 2 (không cần lưu)
+        $isSaved = $user->savedVouchers()->where('vouchers.id', $voucher->id)->exists();
+        $isAutoApply = !$voucher->require_save_to_user && $voucher->is_public;
+
+        if (!$isSaved && !$isAutoApply) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã ưu đãi này không có trong ví của bạn.',
+            ], 403);
         }
 
         $items = $this->cart->items();
@@ -1017,12 +1027,38 @@ return response()->json([
             return collect();
         }
 
-        $vouchers = $user->savedVouchers()
+        $now = now();
+        $savedIds = $user->savedVouchers()
             ->where('vouchers.type', $type)
-            ->orderByDesc('vouchers.priority')
-            ->orderBy('vouchers.expires_at')
+            ->pluck('vouchers.id');
+
+        $vouchers = Voucher::where('type', $type)
+            ->where(function ($q) use ($savedIds, $now) {
+                // Loại 1: Đã lưu vào tài khoản
+                $q->whereIn('id', $savedIds)
+                // Loại 2: Không cần lưu + công khai + đủ thời gian
+                ->orWhere(function ($q2) use ($now) {
+                    $q2->where('require_save_to_user', false)
+                        ->where('is_public', true)
+                        ->where('status', 'active')
+                        ->where(function ($qTime) use ($now) {
+                            $qTime->whereNull('starts_at')
+                                ->orWhere('starts_at', '<=', $now);
+                        })
+                        ->where(function ($qTime) use ($now) {
+                            $qTime->whereNull('expires_at')
+                                ->orWhere('expires_at', '>=', $now);
+                        })
+                        ->where(fn ($q) => $q
+                            ->whereNull('total_quantity')
+                            ->orWhereColumn('total_quantity', '>', 'used_count')
+                        );
+                });
+            })
+            ->orderBy('expires_at')
             ->get();
 
+        // Lọc tiếp theo điều kiện áp dụng thực tế
         return $vouchers
             ->filter(function (Voucher $voucher) use ($user, $items) {
                 try {
@@ -1031,7 +1067,6 @@ return response()->json([
                         $user,
                         $items
                     );
-
                     return true;
                 } catch (Throwable $e) {
                     return false;
@@ -1045,23 +1080,17 @@ return response()->json([
                             : ''),
                     'fixed' => 'Giảm ' . number_format((int) $voucher->discount_value, 0, ',', '.') . 'đ',
                     'free_shipping' => (int) $voucher->max_discount_amount > 0
-    ? 'Giảm phí ship tối đa '
-        . number_format(
-            (int) $voucher->max_discount_amount,
-            0,
-            ',',
-            '.'
-        ) . 'đ'
-    : 'Miễn phí vận chuyển',
+                        ? 'Giảm phí ship tối đa ' . number_format((int) $voucher->max_discount_amount, 0, ',', '.') . 'đ'
+                        : 'Miễn phí vận chuyển',
                     default => 'Ưu đãi',
                 };
-
                 return [
                     'id' => (string) $voucher->id,
                     'code' => $voucher->code,
                     'name' => $voucher->name,
                     'benefit' => $benefit,
                     'expires_at' => $voucher->expires_at?->format('d/m/Y'),
+                    'is_auto' => !$voucher->require_save_to_user, // Đánh dấu loại tự động
                 ];
             })
             ->values();
@@ -1113,12 +1142,10 @@ return response()->json([
                     throw new \RuntimeException('Mã ưu đãi đã thay đổi hoặc không còn tồn tại.');
                 }
 
-                if (
-                    !$user ||
-                    !$user->savedVouchers()
-                        ->where('vouchers.id', $voucher->id)
-                        ->exists()
-                ) {
+                $isSaved = $user && $user->savedVouchers()->where('vouchers.id', $voucher->id)->exists();
+                $isAutoApply = $voucher && !$voucher->require_save_to_user && $voucher->is_public;
+
+                if (!$isSaved && !$isAutoApply) {
                     throw new \RuntimeException('Mã ưu đãi này không còn trong ví của bạn.');
                 }
 
