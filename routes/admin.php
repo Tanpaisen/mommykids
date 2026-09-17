@@ -16,7 +16,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('auth:admin')->group(function () {
 
         // Trang Dashboard
-        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/', [DashboardController::class, 'index'])
+        ->middleware('permission:dashboard.view')
+        ->name('dashboard');
+        
         // Đăng xuất
         Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
 

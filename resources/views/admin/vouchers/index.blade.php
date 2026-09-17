@@ -1,5 +1,4 @@
 @extends('admin.layouts.app')
-
 @section('content')
 <div class="px-6 py-8">
     <!-- Header -->
@@ -13,35 +12,37 @@
             Tạo Voucher mới
         </a>
     </div>
-
     <!-- Bảng dữ liệu -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wider">
-                        <th class="px-6 py-4 font-medium">Mã Voucher</th>
-                        <th class="px-6 py-4 font-medium">Chương trình</th>
-                        <th class="px-6 py-4 font-medium">Loại giảm</th>
-                        <th class="px-6 py-4 font-medium">Lượt dùng</th>
-                        <th class="px-6 py-4 font-medium">Thời hạn</th>
-                        <th class="px-6 py-4 font-medium">Trạng thái</th>
-                        <th class="px-6 py-4 font-medium text-right">Thao tác</th>
+                        <th class="px-4 py-3 font-medium">Mã Voucher</th>
+                        <th class="px-4 py-3 font-medium">Chương trình</th>
+                        <th class="px-4 py-3 font-medium">Loại giảm</th>
+                        <th class="px-4 py-3 font-medium">Đối tượng</th>
+                        <th class="px-4 py-3 font-medium">Phạm vi</th>
+                        <th class="px-4 py-3 font-medium">Loại voucher</th>
+                        <th class="px-4 py-3 font-medium">Lượt dùng</th>
+                        <th class="px-4 py-3 font-medium">Thời hạn</th>
+                        <th class="px-4 py-3 font-medium">Trạng thái</th>
+                        <th class="px-4 py-3 font-medium text-right">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($vouchers as $voucher)
                     <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="px-6 py-4">
-                            <span class="inline-block px-3 py-1 bg-gray-100 text-gray-800 font-bold rounded text-sm tracking-wider">
+                        <td class="px-4 py-3">
+                            <span class="inline-block px-2 py-1 bg-gray-100 text-gray-800 font-bold rounded text-sm tracking-wider">
                                 {{ $voucher->code }}
                             </span>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-4 py-3">
                             <p class="font-medium text-gray-800 text-sm">{{ $voucher->name }}</p>
                             <p class="text-xs text-gray-500 mt-1">Đơn tối thiểu: {{ number_format($voucher->min_order_amount) }}đ</p>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-4 py-3">
                             @if($voucher->discount_type === 'percent')
                                 <span class="text-sm font-semibold text-blue-600">Giảm {{ $voucher->discount_value }}%</span>
                             @elseif($voucher->discount_type === 'fixed')
@@ -50,14 +51,78 @@
                                 <span class="text-sm font-semibold text-orange-600">Freeship</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-600">
+                        {{-- MỤC 4: Đối tượng & Trạng thái phát hành --}}
+                        <td class="px-4 py-3 text-xs">
+                            <p class="text-gray-700">
+                                @php
+                                    $applyLabels = [
+                                        'all' => 'Tất cả KH',
+                                        'specific_users' => 'Người dùng chỉ định',
+                                        'new_user' => 'Khách mới',
+                                        'specific_tiers' => 'Hạng thành viên'
+                                    ];
+                                    echo $applyLabels[$voucher->apply_to] ?? $voucher->apply_to;
+                                @endphp
+                            </p>
+                            <p class="text-gray-400 mt-1">
+                                @php
+                                    $statusLabels = [
+                                        'draft' => 'Bản nháp',
+                                        'active' => 'Đã phát hành',
+                                        'expired' => 'Hết hạn',
+                                        'paused' => 'Tạm dừng'
+                                    ];
+                                    echo $statusLabels[$voucher->status] ?? $voucher->status;
+                                @endphp
+                            </p>
+                        </td>
+                        {{-- MỤC 5: Phạm vi áp dụng --}}
+                        <td class="px-4 py-3 text-xs">
+                            @php
+                                $hasCategoryCond = $voucher->conditions()->where('type', 'category')->exists();
+                                $hasProductCond = $voucher->conditions()->where('type', 'product')->exists();
+                            @endphp
+                            @if(!$hasCategoryCond && !$hasProductCond)
+                                <span class="text-green-600">Toàn Shop</span>
+                            @else
+                                <span class="text-blue-600">
+                                    @if($hasCategoryCond) Chọn danh mục @endif
+                                    @if($hasCategoryCond && $hasProductCond) + @endif
+                                    @if($hasProductCond) Chọn sản phẩm @endif
+                                </span>
+                            @endif
+                        </td>
+                        {{-- MỤC 6: Tùy chọn nâng cao --}}
+                        <td class="px-4 py-3 text-xs">
+                            <div class="flex flex-col gap-1">
+                                @if($voucher->is_public)
+                                    <span class="inline-flex items-center gap-1 text-green-600">
+                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Công khai
+                                    </span>
+                                @endif
+                                @if($voucher->auto_apply)
+                                    <span class="inline-flex items-center gap-1 text-blue-600">
+                                        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span> Tự động áp dụng
+                                    </span>
+                                @endif
+                                @if($voucher->require_save_to_user)
+                                    <span class="inline-flex items-center gap-1 text-purple-600">
+                                        <span class="w-1.5 h-1.5 bg-purple-500 rounded-full"></span> Phải lưu vào TK
+                                    </span>
+                                @endif
+                                @if(!$voucher->is_public && !$voucher->auto_apply && !$voucher->require_save_to_user)
+                                    <span class="text-gray-400">—</span>
+                                @endif
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
                             {{ $voucher->used_count }} / {{ $voucher->total_quantity ? $voucher->total_quantity : '∞' }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-4 py-3">
                             <p class="text-xs text-gray-600">{{ $voucher->starts_at ? $voucher->starts_at->format('d/m/Y H:i') : 'Ngay lập tức' }}</p>
                             <p class="text-xs text-gray-500 mt-1">Đến: {{ $voucher->expires_at ? $voucher->expires_at->format('d/m/Y H:i') : 'Không giới hạn' }}</p>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-4 py-3">
                             @if($voucher->status === 'active')
                                 <span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Hoạt động</span>
                             @elseif($voucher->status === 'draft')
@@ -68,14 +133,14 @@
                                 <span class="px-2.5 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">{{ ucfirst($voucher->status) }}</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-right">
+                        <td class="px-4 py-3 text-right">
                             <a href="{{ route('admin.vouchers.edit', $voucher->id) }}" class="text-blue-500 hover:text-blue-700 text-sm font-medium mr-3">Sửa</a>
                             <button class="text-red-500 hover:text-red-700 text-sm font-medium">Xóa</button>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="10" class="px-6 py-12 text-center text-gray-500">
                             Chưa có mã giảm giá nào. Hãy tạo mã đầu tiên!
                         </td>
                     </tr>

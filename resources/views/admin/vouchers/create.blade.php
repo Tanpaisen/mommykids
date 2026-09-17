@@ -12,7 +12,7 @@
         </a>
     </div>
 
-    <form action="{{ route('admin.vouchers.store') }}" method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+    <form action="{{ route('admin.vouchers.store') }}" method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8" onsubmit="return validateDates()">
         @csrf
         
         <!-- THANH ĐIỀU HƯỚNG TABS (KHÔNG LOAD TRANG) -->
@@ -101,6 +101,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Thời gian kết thúc</label>
                 <input type="datetime-local" name="expires_at" value="{{ old('expires_at') }}" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500">
+                @error('expires_at')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror {{-- ✅ Thêm dòng này --}}
             </div>
         </div>
 
@@ -195,7 +196,7 @@
 
         <!-- 6. TÙY CHỌN NÂNG CAO -->
         <h3 class="text-lg font-bold text-gray-800 mb-4 pb-2 border-b mt-8">6. Tùy chọn nâng cao</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="flex items-center">
                 <input type="checkbox" name="is_public" id="is_public" value="1" checked class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
                 <label for="is_public" class="ml-2 text-sm text-gray-700">Công khai trên kho Voucher</label>
@@ -203,6 +204,13 @@
             <div class="flex items-center">
                 <input type="checkbox" name="auto_apply" id="auto_apply" value="1" class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
                 <label for="auto_apply" class="ml-2 text-sm text-gray-700">Tự động áp dụng ở Giỏ hàng</label>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" name="require_save_to_user" id="require_save_to_user" value="1" class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
+                <label for="require_save_to_user" class="ml-2 text-sm text-gray-700" title="Bỏ chọn = Hệ thống tự hiển thị khi đủ điều kiện, KHÔNG cần khách lưu">
+                    Phải lưu vào tài khoản mới dùng
+                    <span class="text-gray-400 text-xs block">Bỏ chọn = Tự xuất hiện khi thanh toán</span>
+                </label>
             </div>
         </div>
         
@@ -360,6 +368,18 @@
                 // Gộp lại, ví dụ kết quả: KM-X8J9-9432
                 inputVoucherCode.value = 'KM-' + randomStr + '-' + timeStr;
             });
+        }
+
+        // --- KIỂM TRA NGÀY TRƯỚC KHI GỬI ---
+        function validateDates() {
+        const start = document.querySelector('input[name="starts_at"]').value;
+        const end = document.querySelector('input[name="expires_at"]').value;
+        
+        if (start && end && new Date(end) < new Date(start)) {
+            alert('⚠️ Thời gian kết thúc phải sau thời gian bắt đầu!');
+            return false;
+        }
+        return true;
         }
     });
 </script>

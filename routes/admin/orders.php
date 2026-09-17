@@ -5,11 +5,14 @@ use App\Http\Controllers\Admin\PlaceholderController;
 use App\Http\Controllers\Admin\ShipmentController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('don-hang')->name('orders.')->group(function () {
-    Route::get('/', [OrderController::class, 'index'])->name('index');
-    Route::get('/{order:code}', [OrderController::class, 'show'])->name('show');
-    Route::patch('/{order:code}/status', [OrderController::class, 'updateStatus'])->name('status');
-    Route::post('/tinh-phi-ship', [OrderController::class, 'calcFee'])->name('calc-fee');
+Route::middleware('permission:orders.view')
+    ->prefix('don-hang')
+    ->name('orders.')
+    ->group(function () {
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/{order:code}', [OrderController::class, 'show'])->name('show');
+        Route::patch('/{order:code}/status', [OrderController::class, 'updateStatus'])->name('status');
+        Route::post('/tinh-phi-ship', [OrderController::class, 'calcFee'])->name('calc-fee');
 
     // GHN
     Route::post('/{order:code}/tao-van-don', [OrderController::class, 'createShipment'])->name('shipment.create');
@@ -18,9 +21,13 @@ Route::prefix('don-hang')->name('orders.')->group(function () {
     Route::delete('/{order:code}/huy-van-don', [OrderController::class, 'cancelShipment'])->name('shipment.cancel');
 });
 
-Route::prefix('van-chuyen')->name('shipments.')->group(function () {
-    Route::get('/', [ShipmentController::class, 'index'])->name('index');
-    Route::get('/api', [ShipmentController::class, 'apiIndex'])->name('api');
-});
+Route::middleware('permission:orders.view')
+    ->prefix('van-chuyen')
+    ->name('shipments.')
+    ->group(function () {
+        Route::get('/', [ShipmentController::class, 'index'])->name('index');
+        Route::get('/api', [ShipmentController::class, 'apiIndex'])->name('api');
+    });
 
-Route::get('/doi-tra', fn () => (new PlaceholderController)->index('Đổi trả & Hoàn tiền'))->name('refunds.index');
+Route::middleware('permission:orders.view')
+    ->get('/doi-tra', fn () => (new PlaceholderController)->index('Đổi trả & Hoàn tiền'))->name('refunds.index');

@@ -35,6 +35,7 @@
     {{-- Người nhận / Thanh toán / Trạng thái --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
+        {{-- Người nhận --}}
         <div class="bg-white rounded-xl shadow p-5 space-y-2">
             <h2 class="font-semibold text-gray-700 mb-3">👤 Người nhận</h2>
 
@@ -59,12 +60,7 @@
 
             @php
                 $pointsDiscount = (int) ($order->points_discount ?? 0);
-
-                // orders.discount = voucher discount + points discount
-                $voucherDiscount = max(
-                    0,
-                    (int) $order->discount - $pointsDiscount
-                );
+                $voucherDiscount = max(0, (int) $order->discount - $pointsDiscount);
 
                 $paymentLabels = [
                     'cod' => 'COD',
@@ -104,7 +100,6 @@
                             ({{ number_format($order->points_used) }} điểm)
                         @endif
                     </span>
-
                     <span class="text-green-600 font-medium">
                         -{{ number_format($pointsDiscount, 0, ',', '.') }}đ
                     </span>
@@ -122,9 +117,7 @@
                 <span class="font-semibold">
                     {{ $paymentLabels[$order->payment_method] ?? strtoupper($order->payment_method) }}
                 </span>
-
                 <span class="mx-1">—</span>
-
                 @if($order->payment_status === 'paid')
                     <span class="text-green-600">✅ Đã thanh toán</span>
                 @elseif($order->payment_status === 'refunded')
@@ -135,6 +128,7 @@
             </div>
         </div>
 
+        {{-- Trạng thái đơn --}}
         <div class="bg-white rounded-xl shadow p-5">
             <h2 class="font-semibold text-gray-700 mb-3">📋 Trạng thái đơn</h2>
 
@@ -162,16 +156,8 @@
                         'cancelled' => 'Huỷ đơn',
                     ],
                     'shipping' => app()->environment(['local', 'testing'])
-                      ? [
-                    'delivered' => 'Mô phỏng đã giao',
-                     ]
-                     : (
-                      $order->shipment?->ghn_order_code
-                       ? []
-                    :  [
-                      'delivered' => 'Xác nhận đã giao',
-                        ]
-                    ),
+                      ? ['delivered' => 'Mô phỏng đã giao']
+                      : ($order->shipment?->ghn_order_code ? [] : ['delivered' => 'Xác nhận đã giao']),
                     'delivered' => [],
                     'cancelled' => [],
                     'refunded' => [],
@@ -182,7 +168,6 @@
 
             <div class="mb-4">
                 <span class="text-xs text-gray-500 block mb-1">Trạng thái hiện tại</span>
-
                 <span class="inline-flex px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-semibold">
                     {{ $statusLabels[$order->status] ?? $order->status }}
                 </span>
@@ -192,137 +177,97 @@
                 <form method="POST" action="{{ route('admin.orders.status', $order) }}">
                     @csrf
                     @method('PATCH')
-
                     <label class="text-xs text-gray-500 block mb-2">Chuyển trạng thái</label>
-
-                    <select name="status"
-                            required
-                            class="border rounded-lg px-3 py-2 text-sm w-full mb-3">
-                        <option value="">-- Chọn trạng thái tiếp theo --</option>
-
+                    <select name="status" required class="border rounded-lg px-3 py-2 text-sm w-full mb-3">
+                        <option value="">-- Chọn trạng thái --</option>
                         @foreach($nextStatuses as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select>
-
-                    <button type="submit"
-                            class="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm hover:bg-indigo-700">
+                    <button type="submit" class="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm hover:bg-indigo-700">
                         Cập nhật trạng thái
                     </button>
                 </form>
             @else
                 @if($order->status === 'delivered')
-                    <div class="bg-green-50 text-green-700 rounded-lg px-3 py-2 text-sm">
-                        ✅ Đơn hàng đã hoàn tất.
-                    </div>
+                    <div class="bg-green-50 text-green-700 rounded-lg px-3 py-2 text-sm">✅ Đơn hàng đã hoàn tất.</div>
                 @elseif($order->status === 'cancelled')
-                    <div class="bg-red-50 text-red-600 rounded-lg px-3 py-2 text-sm">
-                        ❌ Đơn hàng đã bị huỷ.
-                    </div>
+                    <div class="bg-red-50 text-red-600 rounded-lg px-3 py-2 text-sm">❌ Đơn hàng đã bị huỷ.</div>
                 @elseif($order->status === 'refunded')
-                    <div class="bg-gray-100 text-gray-600 rounded-lg px-3 py-2 text-sm">
-                        ↩ Đơn hàng đã hoàn tiền.
-                    </div>
-                @elseif(
-                    $order->status === 'shipping'
-                    && $order->shipment?->ghn_order_code
-                )
+                    <div class="bg-gray-100 text-gray-600 rounded-lg px-3 py-2 text-sm">↩ Đơn hàng đã hoàn tiền.</div>
+                @elseif($order->status === 'shipping' && $order->shipment?->ghn_order_code)
                     <div class="bg-blue-50 text-blue-700 rounded-lg px-3 py-2 text-sm">
-                        🚚 Đơn đang được GHN vận chuyển.
-                        Trạng thái sẽ được cập nhật khi tra cứu GHN.
+                        🚚 Đơn đang được GHN vận chuyển.<br>Trạng thái sẽ được cập nhật khi tra cứu GHN.
                     </div>
                 @endif
             @endif
         </div>
     </div>
-{{-- Voucher đã áp dụng --}}
-@if($order->voucherUsages->isNotEmpty())
-    <div class="bg-white rounded-xl shadow p-5">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="font-semibold text-gray-700">
-                🎟 Voucher đã áp dụng
-            </h2>
 
-            <span class="text-xs text-gray-400">
-                {{ $order->voucherUsages->count() }} voucher
-            </span>
-        </div>
+    {{-- Voucher đã áp dụng --}}
+    @if($order->voucherUsages->isNotEmpty())
+        <div class="bg-white rounded-xl shadow p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-gray-700">🎟 Voucher đã áp dụng</h2>
+                <span class="text-xs text-gray-400">{{ $order->voucherUsages->count() }} voucher</span>
+            </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @foreach($order->voucherUsages as $usage)
-                @php
-                    $voucherType = $usage->voucher?->type;
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($order->voucherUsages as $usage)
+                    @php
+                        $voucherType = $usage->voucher?->type;
+                        $typeLabel = match ($voucherType) {
+                            'shipping' => 'Voucher vận chuyển',
+                            'order' => 'Voucher đơn hàng',
+                            default => 'Voucher',
+                        };
 
-                    $typeLabel = match ($voucherType) {
-                        'shipping' => 'Voucher vận chuyển',
-                        'order' => 'Voucher đơn hàng',
-                        default => 'Voucher',
-                    };
+                        $statusLabel = match ($usage->status) {
+                            'reserved' => 'Đang giữ',
+                            'applied' => 'Đã áp dụng',
+                            'completed' => 'Hoàn tất',
+                            'cancelled' => 'Đã huỷ',
+                            default => $usage->status,
+                        };
 
-                    $statusLabel = match ($usage->status) {
-                        'reserved' => 'Đang giữ',
-                        'applied' => 'Đã áp dụng',
-                        'completed' => 'Hoàn tất',
-                        'cancelled' => 'Đã huỷ',
-                        default => $usage->status,
-                    };
+                        $statusClass = match ($usage->status) {
+                            'applied', 'completed' => 'bg-green-100 text-green-700',
+                            'reserved' => 'bg-yellow-100 text-yellow-700',
+                            'cancelled' => 'bg-red-100 text-red-700',
+                            default => 'bg-gray-100 text-gray-700',
+                        };
+                    @endphp
 
-                    $statusClass = match ($usage->status) {
-                        'applied', 'completed' => 'bg-green-100 text-green-700',
-                        'reserved' => 'bg-yellow-100 text-yellow-700',
-                        'cancelled' => 'bg-red-100 text-red-700',
-                        default => 'bg-gray-100 text-gray-700',
-                    };
-                @endphp
-
-                <div class="border border-gray-100 rounded-xl p-4">
-                    <div class="flex items-start justify-between gap-3 mb-3">
-                        <div>
-                            <div class="text-xs text-gray-500">
-                                {{ $typeLabel }}
+                    <div class="border border-gray-100 rounded-xl p-4">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div>
+                                <div class="text-xs text-gray-500">{{ $typeLabel }}</div>
+                                <div class="font-bold text-gray-800 mt-1">{{ $usage->voucher_name }}</div>
+                                <div class="font-mono text-xs text-indigo-600 mt-1">{{ $usage->voucher_code }}</div>
                             </div>
-
-                            <div class="font-bold text-gray-800 mt-1">
-                                {{ $usage->voucher_name }}
-                            </div>
-
-                            <div class="font-mono text-xs text-indigo-600 mt-1">
-                                {{ $usage->voucher_code }}
-                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold {{ $statusClass }}">
+                                {{ $statusLabel }}
+                            </span>
                         </div>
 
-                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold {{ $statusClass }}">
-                            {{ $statusLabel }}
-                        </span>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Giá trị giảm</span>
+                            <span class="font-bold text-green-600">-{{ number_format($usage->discount_amount, 0, ',', '.') }}đ</span>
+                        </div>
+
+                        @if($usage->discount_type === 'free_shipping')
+                            <div class="text-xs text-blue-600 mt-2">🚚 Miễn phí vận chuyển</div>
+                        @endif
+
+                        @if($usage->applied_at)
+                            <div class="text-xs text-gray-400 mt-2">Áp dụng: {{ $usage->applied_at->format('H:i d/m/Y') }}</div>
+                        @endif
                     </div>
-
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">
-                            Giá trị giảm
-                        </span>
-
-                        <span class="font-bold text-green-600">
-                            -{{ number_format($usage->discount_amount, 0, ',', '.') }}đ
-                        </span>
-                    </div>
-
-                    @if($usage->discount_type === 'free_shipping')
-                        <div class="text-xs text-blue-600 mt-2">
-                            🚚 Miễn phí vận chuyển
-                        </div>
-                    @endif
-
-                    @if($usage->applied_at)
-                        <div class="text-xs text-gray-400 mt-2">
-                            Áp dụng:
-                            {{ $usage->applied_at->format('H:i d/m/Y') }}
-                        </div>
-                    @endif
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
-    </div>
-@endif
+    @endif
+
     {{-- Sản phẩm --}}
     <div class="bg-white rounded-xl shadow p-5">
         <h2 class="font-semibold text-gray-700 mb-4">🛒 Sản phẩm đặt mua</h2>
@@ -337,7 +282,6 @@
                         <th class="pb-2 text-right">Thành tiền</th>
                     </tr>
                 </thead>
-
                 <tbody class="divide-y divide-gray-50">
                     @forelse($order->items as $item)
                         <tr>
@@ -347,16 +291,13 @@
                                     <div class="text-gray-400 text-xs">SKU: {{ $item->product_sku }}</div>
                                 @endif
                             </td>
-
                             <td class="py-3 text-right">{{ number_format($item->price) }}đ</td>
                             <td class="py-3 text-right">{{ $item->quantity }}</td>
                             <td class="py-3 text-right font-semibold">{{ number_format($item->subtotal) }}đ</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="py-8 text-center text-gray-400">
-                                Không có sản phẩm trong đơn hàng.
-                            </td>
+                            <td colspan="4" class="py-8 text-center text-gray-400">Không có sản phẩm trong đơn hàng.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -369,138 +310,136 @@
         <h2 class="font-semibold text-gray-700 mb-4">🚚 Vận chuyển GHN</h2>
 
         @if($order->shipment?->ghn_order_code)
-
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5 text-sm">
                 <div>
                     <span class="text-gray-500 block text-xs">Mã GHN</span>
                     <span class="font-mono font-semibold">{{ $order->shipment->ghn_order_code }}</span>
                 </div>
-
                 <div>
                     <span class="text-gray-500 block text-xs">Phí ship GHN</span>
                     <span>{{ number_format($order->shipment->shipping_fee) }}đ</span>
                 </div>
-
                 <div>
                     <span class="text-gray-500 block text-xs">Trạng thái</span>
-                    <span class="uppercase font-medium text-blue-600">{{ $order->shipment->status }}</span>
+                    @php
+                        $ghnColors = [
+                            'ready_to_pick' => 'yellow',
+                            'picking'       => 'blue',
+                            'delivering'    => 'indigo',
+                            'delivered'     => 'green',
+                            'cancel'        => 'red',
+                        ];
+                        $ghnColor = $ghnColors[$order->shipment->status] ?? 'blue';
+                    @endphp
+                    <span class="uppercase font-medium text-{{ $ghnColor }}-600">{{ $order->shipment->status }}</span>
                 </div>
-
                 <div>
                     <span class="text-gray-500 block text-xs">Dự kiến giao</span>
                     <span>{{ $order->shipment->expected_delivery_at?->format('d/m/Y') ?? '—' }}</span>
                 </div>
             </div>
 
-            <div class="mb-5">
-                <span class="text-gray-500 block text-xs">In vận đơn</span>
+            @if($order->shipment->status === 'cancel')
+                {{-- Vận đơn đã huỷ — cho tạo lại --}}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p class="text-red-600 text-sm font-medium">⚠️ Vận đơn GHN đã bị huỷ.</p>
+                    <p class="text-gray-500 text-xs mt-1">Bạn có thể tạo vận đơn mới cho đơn hàng này ngay bên dưới.</p>
+                </div>
 
-                <span id="print-status"
-                      class="text-xs @if($order->shipment->printed_at) text-green-600 @else text-gray-400 @endif">
-                    @if($order->shipment->printed_at)
-                        ✅ {{ $order->shipment->printed_at->format('H:i d/m/Y') }}
-                    @else
-                        Chưa in
-                    @endif
-                </span>
-            </div>
-
-            <div class="flex gap-3 flex-wrap">
-                <a href="{{ route('admin.orders.shipment.print', $order) }}"
-                   target="_blank"
-                   onclick="markPrinted()"
-                   class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-                    🖨️ In vận đơn
-                </a>
-
-                <form method="POST" action="{{ route('admin.orders.shipment.track', $order) }}">
+                <form method="POST" action="{{ route('admin.orders.shipment.create', $order) }}" class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     @csrf
-                    <button type="submit"
-                            class="border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg text-sm hover:bg-indigo-50">
-                        🔄 Tra cứu GHN
-                    </button>
+                    <div>
+                        <label class="text-xs text-gray-600 block mb-1">Khối lượng (gram)</label>
+                        <input type="number" name="weight" value="{{ $order->shipment->weight ?? 500 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600 block mb-1">Dài (cm)</label>
+                        <input type="number" name="length" value="{{ $order->shipment->length ?? 20 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600 block mb-1">Rộng (cm)</label>
+                        <input type="number" name="width" value="{{ $order->shipment->width ?? 15 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600 block mb-1">Cao (cm)</label>
+                        <input type="number" name="height" value="{{ $order->shipment->height ?? 10 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
+                    </div>
+                    <div class="col-span-2 md:col-span-4">
+                        <label class="text-xs text-gray-600 block mb-1">Ghi chú</label>
+                        <input type="text" name="note" placeholder="Gọi trước khi giao..." class="border rounded-lg px-3 py-2 text-sm w-full">
+                    </div>
+                    <div class="col-span-2 md:col-span-4">
+                        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-green-700">
+                            🚚 Tạo vận đơn mới
+                        </button>
+                    </div>
                 </form>
+            @else
+                {{-- Vận đơn bình thường -> Cho in, tra cứu, hủy --}}
+                <div class="mb-5">
+                    <span class="text-gray-500 block text-xs">In vận đơn</span>
+                    <span id="print-status" class="text-xs @if($order->shipment->printed_at) text-green-600 @else text-gray-400 @endif">
+                        @if($order->shipment->printed_at)
+                            ✅ {{ $order->shipment->printed_at->format('H:i d/m/Y') }}
+                        @else
+                            Chưa in
+                        @endif
+                    </span>
+                </div>
 
-                @if(in_array($order->shipment->status, ['pending', 'ready_to_pick']))
-                    <form method="POST"
-                          action="{{ route('admin.orders.shipment.cancel', $order) }}"
-                          onsubmit="return confirm('Huỷ vận đơn GHN này?')">
+                <div class="flex gap-3 flex-wrap">
+                    <a href="{{ route('admin.orders.shipment.print', $order) }}" target="_blank" onclick="markPrinted()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+                        🖨️ In vận đơn
+                    </a>
+
+                    <form method="POST" action="{{ route('admin.orders.shipment.track', $order) }}">
                         @csrf
-                        @method('DELETE')
-
-                        <button type="submit"
-                                class="border border-red-400 text-red-500 px-4 py-2 rounded-lg text-sm hover:bg-red-50">
-                            ❌ Huỷ vận đơn
+                        <button type="submit" class="border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg text-sm hover:bg-indigo-50">
+                            🔄 Tra cứu GHN
                         </button>
                     </form>
-                @endif
-            </div>
 
+                    @if(in_array($order->shipment->status, ['pending', 'ready_to_pick']))
+                        <form method="POST" action="{{ route('admin.orders.shipment.cancel', $order) }}" onsubmit="return confirm('Huỷ vận đơn GHN này?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="border border-red-400 text-red-500 px-4 py-2 rounded-lg text-sm hover:bg-red-50">
+                                ❌ Huỷ vận đơn
+                            </button>
+                        </form>
+                    @endif
+                </div>
+            @endif
         @else
-
             <p class="text-sm text-gray-500 mb-4">Chưa tạo vận đơn GHN cho đơn này.</p>
-
-            <form method="POST"
-                  action="{{ route('admin.orders.shipment.create', $order) }}"
-                  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <form method="POST" action="{{ route('admin.orders.shipment.create', $order) }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 @csrf
-
                 <div>
                     <label class="text-xs text-gray-600 block mb-1">Khối lượng (gram)</label>
-                    <input type="number"
-                           name="weight"
-                           value="500"
-                           min="1"
-                           required
-                           class="border rounded-lg px-3 py-2 text-sm w-full">
+                    <input type="number" name="weight" value="500" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
                 </div>
-
                 <div>
                     <label class="text-xs text-gray-600 block mb-1">Dài (cm)</label>
-                    <input type="number"
-                           name="length"
-                           value="20"
-                           min="1"
-                           required
-                           class="border rounded-lg px-3 py-2 text-sm w-full">
+                    <input type="number" name="length" value="20" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
                 </div>
-
                 <div>
                     <label class="text-xs text-gray-600 block mb-1">Rộng (cm)</label>
-                    <input type="number"
-                           name="width"
-                           value="15"
-                           min="1"
-                           required
-                           class="border rounded-lg px-3 py-2 text-sm w-full">
+                    <input type="number" name="width" value="15" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
                 </div>
-
                 <div>
                     <label class="text-xs text-gray-600 block mb-1">Cao (cm)</label>
-                    <input type="number"
-                           name="height"
-                           value="10"
-                           min="1"
-                           required
-                           class="border rounded-lg px-3 py-2 text-sm w-full">
+                    <input type="number" name="height" value="10" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
                 </div>
-
                 <div class="sm:col-span-2 md:col-span-4">
                     <label class="text-xs text-gray-600 block mb-1">Ghi chú giao hàng</label>
-                    <input type="text"
-                           name="note"
-                           placeholder="Gọi trước khi giao, hàng dễ vỡ..."
-                           class="border rounded-lg px-3 py-2 text-sm w-full">
+                    <input type="text" name="note" placeholder="Gọi trước khi giao, hàng dễ vỡ..." class="border rounded-lg px-3 py-2 text-sm w-full">
                 </div>
-
                 <div class="sm:col-span-2 md:col-span-4">
-                    <button type="submit"
-                            class="bg-green-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-green-700">
+                    <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-green-700">
                         🚚 Tạo vận đơn GHN
                     </button>
                 </div>
             </form>
-
         @endif
     </div>
 
@@ -510,17 +449,11 @@
 <script>
 function markPrinted() {
     const status = document.getElementById('print-status');
-
-    if (!status) {
-        return;
-    }
+    if (!status) return;
 
     const now = new Date();
     const pad = n => n.toString().padStart(2, '0');
-
-    const formatted =
-        `${pad(now.getHours())}:${pad(now.getMinutes())} ` +
-        `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+    const formatted = `${pad(now.getHours())}:${pad(now.getMinutes())} ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
 
     status.textContent = '✅ ' + formatted;
     status.className = 'text-xs text-green-600';
