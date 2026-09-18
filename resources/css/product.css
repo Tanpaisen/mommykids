@@ -7470,3 +7470,754 @@ body.product-detail-active::-webkit-scrollbar {
         margin-right: 0;
     }
 }
+
+/* =========================================================
+   VITAMIN & HEALTH PRODUCT DETAIL
+   Scope riêng: .product-vitamin-detail
+========================================================= */
+
+.product-vitamin-detail {
+    display: grid;
+    gap: 1rem;
+}
+
+.product-vitamin-detail .product-vitamin-overview,
+.product-vitamin-detail .product-vitamin-section-card,
+.product-vitamin-detail .product-vitamin-info-card {
+    border: 1px solid rgba(255, 111, 129, .16);
+    background: #fff;
+    box-shadow: 0 10px 28px -24px rgba(43, 37, 48, .28);
+}
+
+.product-vitamin-detail .product-vitamin-overview,
+.product-vitamin-detail .product-vitamin-section-card {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.product-vitamin-detail .product-vitamin-overview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, .96fr) minmax(0, 1.04fr);
+    align-items: stretch;
+}
+
+.product-vitamin-detail .product-vitamin-overview-spec,
+.product-vitamin-detail .product-vitamin-overview-description {
+    padding: 1.15rem 1.2rem;
+    min-width: 0;
+}
+
+.product-vitamin-detail .product-vitamin-overview-description {
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid rgba(231, 219, 222, .82);
+}
+
+.product-vitamin-detail .product-vitamin-section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    margin-bottom: .85rem;
+}
+
+.product-vitamin-detail .product-vitamin-heading-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.15rem;
+    width: 2.15rem;
+    height: 2.15rem;
+    border: 1px solid rgba(255, 111, 129, .20);
+    border-radius: .72rem;
+    background: linear-gradient(145deg, #fff, #fff0f3);
+    color: #ff4167;
+}
+
+.product-vitamin-detail .product-vitamin-heading-icon svg,
+.product-vitamin-detail .product-vitamin-benefit-icon svg,
+.product-vitamin-detail .product-vitamin-trust-icon svg,
+.product-vitamin-detail .product-vitamin-ingredient-icon svg,
+.product-vitamin-detail .product-vitamin-step-icon svg,
+.product-vitamin-detail .product-vitamin-info-icon svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-vitamin-detail .product-vitamin-section-heading > div > span,
+.product-vitamin-detail .product-vitamin-info-title > div > span {
+    display: block;
+    margin-bottom: .08rem;
+    color: #ff4167;
+    font-size: .57rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.product-vitamin-detail .product-vitamin-section-heading h2 {
+    margin: 0;
+    color: #19223d;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.product-vitamin-detail .product-vitamin-spec-table {
+    border: 0;
+    border-radius: 0;
+}
+
+.product-vitamin-detail .product-vitamin-spec-table .product-spec-row {
+    min-height: 2.35rem;
+    grid-template-columns: 8.3rem minmax(0, 1fr);
+    border-bottom-color: #f0e5e8;
+}
+
+.product-vitamin-detail .product-vitamin-spec-table .product-spec-row strong,
+.product-vitamin-detail .product-vitamin-spec-table .product-spec-row > span {
+    display: flex;
+    align-items: center;
+    padding: .55rem .4rem;
+    background: transparent;
+    font-size: .69rem;
+}
+
+.product-vitamin-detail .product-vitamin-spec-table .product-spec-row strong {
+    color: #3e3843;
+    font-weight: 700;
+}
+
+.product-vitamin-detail .product-vitamin-spec-table .product-spec-row > span {
+    color: #67606c;
+}
+
+.product-vitamin-detail .product-vitamin-description-text {
+    color: #5f5964;
+    font-size: .72rem;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+.product-vitamin-detail .product-vitamin-benefit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+    margin-top: .9rem;
+}
+
+.product-vitamin-detail .product-vitamin-benefit-item {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0;
+    min-height: 3.55rem;
+    padding: .55rem .65rem;
+    border: 1px solid rgba(255, 111, 129, .14);
+    border-radius: .78rem;
+    background: linear-gradient(145deg, #fff, #fff7f8);
+}
+
+.product-vitamin-detail .product-vitamin-benefit-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .7rem;
+    background: #fff0f3;
+    color: #ff4167;
+}
+
+.product-vitamin-detail .product-vitamin-benefit-item strong,
+.product-vitamin-detail .product-vitamin-benefit-item span {
+    display: block;
+}
+
+.product-vitamin-detail .product-vitamin-benefit-item strong {
+    color: #302b34;
+    font-size: .66rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.product-vitamin-detail .product-vitamin-benefit-item div > span {
+    margin-top: .12rem;
+    color: #8a838e;
+    font-size: .57rem;
+    line-height: 1.35;
+}
+
+.product-vitamin-detail .product-vitamin-trust-banner {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-top: auto;
+    padding: .6rem .7rem;
+    border: 1px solid #e2eddc;
+    border-radius: .78rem;
+    background: linear-gradient(90deg, #fbfff8, #fffdf9);
+}
+
+.product-vitamin-detail .product-vitamin-trust-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 1.85rem;
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: .65rem;
+    background: #f1f8ec;
+    color: #70826a;
+}
+
+.product-vitamin-detail .product-vitamin-trust-banner strong,
+.product-vitamin-detail .product-vitamin-trust-banner span {
+    display: block;
+}
+
+.product-vitamin-detail .product-vitamin-trust-banner strong {
+    color: #3b3b3b;
+    font-size: .61rem;
+    font-weight: 800;
+}
+
+.product-vitamin-detail .product-vitamin-trust-banner span {
+    margin-top: .1rem;
+    color: #8a838e;
+    font-size: .54rem;
+    line-height: 1.35;
+}
+
+/* =========================================================
+   SECTION CARD
+========================================================= */
+
+.product-vitamin-detail .product-vitamin-section-card {
+    padding: 1rem 1.15rem 1.1rem;
+}
+
+.product-vitamin-detail .product-vitamin-card-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .85rem;
+}
+
+.product-vitamin-detail .product-vitamin-card-heading .product-vitamin-section-heading {
+    margin-bottom: 0;
+}
+
+.product-vitamin-detail .product-vitamin-card-heading > p {
+    max-width: 22rem;
+    margin: .2rem 0 0;
+    color: #9a929d;
+    font-size: .57rem;
+    line-height: 1.45;
+    text-align: right;
+}
+
+/* =========================================================
+   INGREDIENTS
+========================================================= */
+
+.product-vitamin-detail .product-vitamin-ingredient-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+}
+
+.product-vitamin-detail .product-vitamin-ingredient-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-width: 0;
+    min-height: 4.25rem;
+    padding: .7rem 2.7rem .7rem .75rem;
+    border: 1px solid rgba(231, 208, 214, .9);
+    border-radius: .82rem;
+    background: #fffafa;
+}
+
+.product-vitamin-detail .product-vitamin-ingredient-number {
+    position: absolute;
+    top: .55rem;
+    right: .65rem;
+    color: rgba(255, 65, 103, .14);
+    font-size: 1.2rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.product-vitamin-detail .product-vitamin-ingredient-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .65rem;
+    background: #fff0f3;
+    color: #ff4167;
+}
+
+.product-vitamin-detail .product-vitamin-ingredient-item strong,
+.product-vitamin-detail .product-vitamin-ingredient-item span {
+    display: block;
+}
+
+.product-vitamin-detail .product-vitamin-ingredient-item strong {
+    color: #34303a;
+    font-size: .65rem;
+    font-weight: 800;
+}
+
+.product-vitamin-detail .product-vitamin-ingredient-item div > span {
+    margin-top: .14rem;
+    color: #8a838e;
+    font-size: .57rem;
+    line-height: 1.45;
+}
+
+/* =========================================================
+   USAGE TIMELINE
+========================================================= */
+
+.product-vitamin-detail .product-vitamin-steps {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    padding-top: .15rem;
+}
+
+.product-vitamin-detail .product-vitamin-steps::before {
+    content: "";
+    position: absolute;
+    top: 1.18rem;
+    left: 8%;
+    right: 8%;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 111, 129, .20),
+        rgba(255, 65, 103, .48),
+        rgba(255, 111, 129, .20)
+    );
+}
+
+.product-vitamin-detail .product-vitamin-step {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    padding: .2rem .7rem .35rem;
+    text-align: center;
+}
+
+.product-vitamin-detail .product-vitamin-step-head {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    width: 3rem;
+    margin: 0 auto .55rem;
+}
+
+.product-vitamin-detail .product-vitamin-step-number {
+    position: absolute;
+    top: -.05rem;
+    left: -.35rem;
+    z-index: 2;
+    min-width: 1.6rem;
+    height: 1.15rem;
+    padding: 0 .32rem;
+    border-radius: 999px;
+    background: #ff5f7f;
+    color: #fff;
+    font-size: .52rem;
+    font-weight: 900;
+    line-height: 1.15rem;
+}
+
+.product-vitamin-detail .product-vitamin-step-icon {
+    display: grid;
+    place-items: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 1px solid rgba(255, 111, 129, .20);
+    border-radius: 50%;
+    background: #fff7f8;
+    color: #ff4167;
+    box-shadow: 0 0 0 .28rem #fff;
+}
+
+.product-vitamin-detail .product-vitamin-step > strong {
+    display: block;
+    color: #34303a;
+    font-size: .66rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.product-vitamin-detail .product-vitamin-step > p {
+    max-width: 10.5rem;
+    margin: .22rem auto 0;
+    color: #88808b;
+    font-size: .57rem;
+    line-height: 1.48;
+}
+
+/* =========================================================
+   BOTTOM INFO
+========================================================= */
+
+.product-vitamin-detail .product-vitamin-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .65rem;
+}
+
+.product-vitamin-detail .product-vitamin-info-card {
+    min-width: 0;
+    min-height: 8.6rem;
+    padding: .85rem .9rem;
+    border-radius: .9rem;
+}
+
+.product-vitamin-detail .product-vitamin-info-card.is-warning {
+    background: linear-gradient(145deg, #fff, #fffafa);
+}
+
+.product-vitamin-detail .product-vitamin-info-card.is-audience {
+    border-color: #dfead8;
+    background: linear-gradient(145deg, #fff, #f8fff5);
+}
+
+.product-vitamin-detail .product-vitamin-info-title {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: .55rem;
+}
+
+.product-vitamin-detail .product-vitamin-info-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .65rem;
+    background: #fff0f3;
+    color: #ff4167;
+}
+
+.product-vitamin-detail .is-audience .product-vitamin-info-icon {
+    background: #eff8ea;
+    color: #74a268;
+}
+
+.product-vitamin-detail .product-vitamin-info-title h3 {
+    margin: 0;
+    color: #302b34;
+    font-size: .68rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.product-vitamin-detail .product-vitamin-info-card ul {
+    display: grid;
+    gap: .35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.product-vitamin-detail .product-vitamin-info-card li {
+    position: relative;
+    padding-left: .72rem;
+    color: #77707c;
+    font-size: .58rem;
+    line-height: 1.48;
+}
+
+.product-vitamin-detail .product-vitamin-info-card li::before {
+    content: "";
+    position: absolute;
+    top: .43rem;
+    left: 0;
+    width: .22rem;
+    height: .22rem;
+    border-radius: 50%;
+    background: #ff6684;
+}
+
+.product-vitamin-detail .product-vitamin-info-card.is-audience li::before {
+    background: #79ad6c;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 980px) {
+    .product-vitamin-detail .product-vitamin-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-vitamin-detail .product-vitamin-overview-description {
+        border-top: 1px solid rgba(231, 219, 222, .82);
+        border-left: 0;
+    }
+
+    .product-vitamin-detail .product-vitamin-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-vitamin-detail .product-vitamin-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .8rem;
+    }
+
+    .product-vitamin-detail .product-vitamin-steps::before {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .product-vitamin-detail .product-vitamin-overview-spec,
+    .product-vitamin-detail .product-vitamin-overview-description,
+    .product-vitamin-detail .product-vitamin-section-card {
+        padding: 1rem;
+    }
+
+    .product-vitamin-detail .product-vitamin-card-heading {
+        display: block;
+    }
+
+    .product-vitamin-detail .product-vitamin-card-heading > p {
+        max-width: none;
+        margin-top: .45rem;
+        text-align: left;
+    }
+
+    .product-vitamin-detail .product-vitamin-benefit-grid,
+    .product-vitamin-detail .product-vitamin-ingredient-grid,
+    .product-vitamin-detail .product-vitamin-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .product-vitamin-detail .product-vitamin-spec-table .product-spec-row {
+        grid-template-columns: 7.25rem minmax(0, 1fr);
+    }
+
+    .product-vitamin-detail .product-vitamin-step {
+        display: grid;
+        grid-template-columns: 3rem minmax(0, 1fr);
+        column-gap: .65rem;
+        text-align: left;
+    }
+
+    .product-vitamin-detail .product-vitamin-step-head {
+        grid-row: 1 / span 2;
+        align-self: start;
+        margin: 0;
+    }
+
+    .product-vitamin-detail .product-vitamin-step > p {
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+/* =========================================================
+   VITAMIN OVERVIEW - FINAL POLISH
+   Chỉ tác động khối Tổng quan bên phải.
+========================================================= */
+
+.product-vitamin-detail .product-vitamin-overview-description {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    padding: 1.28rem 1.35rem 1.22rem;
+    background:
+        radial-gradient(circle at 92% 8%, rgba(255, 111, 129, .075), transparent 8rem),
+        linear-gradient(145deg, #ffffff 0%, #fffdfd 54%, #fff9fa 100%);
+}
+
+.product-vitamin-detail .product-vitamin-overview-description::before,
+.product-vitamin-detail .product-vitamin-overview-description::after {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.product-vitamin-detail .product-vitamin-overview-description::before {
+    top: 1.1rem;
+    right: 1.25rem;
+    width: 2rem;
+    height: 2rem;
+    background: rgba(255, 111, 129, .07);
+}
+
+.product-vitamin-detail .product-vitamin-overview-description::after {
+    top: 2.15rem;
+    right: 3.15rem;
+    width: .72rem;
+    height: .72rem;
+    background: rgba(255, 65, 103, .09);
+}
+
+.product-vitamin-detail .product-vitamin-overview-description > * {
+    position: relative;
+    z-index: 1;
+}
+
+.product-vitamin-detail .product-vitamin-overview-description .product-vitamin-section-heading {
+    margin-bottom: .55rem;
+}
+
+.product-vitamin-detail .product-vitamin-overview-intro {
+    padding: .1rem 0 .15rem;
+}
+
+.product-vitamin-detail .product-vitamin-overview-kicker {
+    max-width: 90%;
+    margin: 0 0 .52rem;
+    color: #8d7f89;
+    font-size: .64rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.product-vitamin-detail .product-vitamin-description-text {
+    max-width: 96%;
+    margin: 0;
+    color: #514a55;
+    font-size: .73rem;
+    line-height: 1.72;
+}
+
+.product-vitamin-detail .product-vitamin-benefit-grid {
+    gap: .62rem;
+    margin-top: .9rem;
+}
+
+.product-vitamin-detail .product-vitamin-benefit-item {
+    position: relative;
+    min-height: 4.05rem;
+    padding: .68rem 2.4rem .68rem .72rem;
+    border: 1px solid rgba(255, 111, 129, .18);
+    border-radius: .88rem;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, .98), rgba(255, 248, 250, .96));
+    box-shadow: 0 7px 18px -16px rgba(255, 70, 105, .55);
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+.product-vitamin-detail .product-vitamin-benefit-item::after {
+    content: attr(data-index);
+    position: absolute;
+    top: .55rem;
+    right: .65rem;
+    color: rgba(255, 65, 103, .17);
+    font-size: .92rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.product-vitamin-detail .product-vitamin-benefit-item:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 88, 119, .32);
+    box-shadow: 0 10px 22px -17px rgba(255, 70, 105, .48);
+}
+
+.product-vitamin-detail .product-vitamin-benefit-icon {
+    flex: 0 0 2.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid rgba(255, 111, 129, .09);
+    border-radius: .75rem;
+    background: linear-gradient(145deg, #fff2f5, #ffe9ee);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .55);
+}
+
+.product-vitamin-detail .product-vitamin-benefit-item strong {
+    color: #2e2932;
+    font-size: .69rem;
+    line-height: 1.28;
+}
+
+.product-vitamin-detail .product-vitamin-benefit-item div > span {
+    margin-top: .14rem;
+    color: #8c838e;
+    font-size: .57rem;
+    line-height: 1.38;
+}
+
+.product-vitamin-detail .product-vitamin-trust-banner {
+    position: relative;
+    margin-top: .75rem !important;
+    padding: .7rem .78rem;
+    border: 1px solid #d7e9cf;
+    border-radius: .88rem;
+    background:
+        linear-gradient(90deg, #f7fff2 0%, #fffdf8 100%);
+    box-shadow: 0 8px 20px -19px rgba(90, 133, 78, .55);
+}
+
+.product-vitamin-detail .product-vitamin-trust-icon {
+    flex: 0 0 2.05rem;
+    width: 2.05rem;
+    height: 2.05rem;
+    background: #eef8e9;
+    color: #5f9460;
+}
+
+.product-vitamin-detail .product-vitamin-trust-copy {
+    min-width: 0;
+}
+
+.product-vitamin-detail .product-vitamin-trust-label {
+    display: block;
+    margin-bottom: .1rem;
+    color: #77a16e !important;
+    font-size: .49rem !important;
+    font-weight: 800;
+    letter-spacing: .075em;
+    line-height: 1.2 !important;
+    text-transform: uppercase;
+}
+
+.product-vitamin-detail .product-vitamin-trust-banner strong {
+    color: #2f4930;
+    font-size: .65rem;
+    line-height: 1.3;
+}
+
+.product-vitamin-detail .product-vitamin-trust-banner .product-vitamin-trust-copy > span:last-child {
+    margin-top: .12rem;
+    color: #778074;
+    font-size: .55rem;
+    line-height: 1.4;
+}
+
+@media (max-width: 700px) {
+    .product-vitamin-detail .product-vitamin-overview-kicker,
+    .product-vitamin-detail .product-vitamin-description-text {
+        max-width: 100%;
+    }
+
+    .product-vitamin-detail .product-vitamin-benefit-item {
+        padding-right: 2.35rem;
+    }
+}
+

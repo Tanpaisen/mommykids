@@ -21,6 +21,46 @@
         $minPrice = $minPrice ?? $priceFloor;
         $maxPrice = $maxPrice ?? $priceCeiling;
         $hasPriceFilter = $hasPriceFilter ?? false;
+
+        /*
+         * Sidebar riêng cho category Vitamin & sức khỏe.
+         * Vẫn dùng name="attribute[]" để giữ nguyên logic filter hiện tại.
+         */
+        $isVitaminHealthCategory =
+            $category->slug === 'vitamin-suc-khoe';
+
+        $vitaminFilterGroups = [
+            [
+                'title' => 'Độ tuổi',
+                'slugs' => [
+                    'tu-so-sinh',
+                    'tu-4-thang',
+                    'tu-2-tuoi',
+                ],
+            ],
+            [
+                'title' => 'Dạng sản phẩm',
+                'slugs' => [
+                    'dang-nho-giot',
+                    'dang-xit',
+                    'dang-siro',
+                    'vien-nhai',
+                    'vien-nang-mem',
+                ],
+            ],
+            [
+                'title' => 'Dưỡng chất / Nhóm',
+                'slugs' => [
+                    'vitamin-d3',
+                    'vitamin-k2',
+                    'vitamin-tong-hop',
+                    'dha',
+                    'men-vi-sinh',
+                    'sat',
+                    'canxi',
+                ],
+            ],
+        ];
     @endphp
 
     <aside
@@ -422,7 +462,7 @@
             {{-- =====================================================
                  GIAI ĐOẠN / ĐỘ TUỔI - PRODUCT_STAGE
             ====================================================== --}}
-            @if ($stages->isNotEmpty())
+            @if (!$isVitaminHealthCategory && $stages->isNotEmpty())
 
                 <div class="p-5 border-b border-coral-light/70">
 
@@ -483,9 +523,75 @@
 
 
             {{-- =====================================================
-                 THUỘC TÍNH - TAG TYPE ATTRIBUTE
+                 FILTER THUỘC TÍNH
+                 Vitamin & sức khỏe: chia 3 nhóm gọn hơn.
+                 Category khác: giữ nguyên danh sách thuộc tính cũ.
             ====================================================== --}}
-            @if ($attributeTags->isNotEmpty())
+            @if ($isVitaminHealthCategory)
+
+                @foreach ($vitaminFilterGroups as $filterGroup)
+
+                    @php
+                        $groupTags = collect($filterGroup['slugs'])
+                            ->map(
+                                fn ($slug) =>
+                                    $attributeTags->firstWhere('slug', $slug)
+                            )
+                            ->filter()
+                            ->values();
+                    @endphp
+
+                    @if ($groupTags->isNotEmpty())
+
+                        <div class="p-5 border-b border-coral-light/70">
+
+                            <h3 class="font-display font-bold text-sm text-ink mb-3">
+                                {{ $filterGroup['title'] }}
+                            </h3>
+
+                            <div class="space-y-2">
+
+                                @foreach ($groupTags as $tag)
+
+                                    <label
+                                        class="flex items-center gap-3
+                                               px-2 py-1.5
+                                               rounded-lg
+                                               cursor-pointer
+                                               hover:bg-cream
+                                               transition"
+                                    >
+
+                                        <input
+                                            type="checkbox"
+                                            name="attribute[]"
+                                            value="{{ $tag->slug }}"
+                                            @checked(in_array($tag->slug, $selectedAttributes, true))
+                                            class="js-auto-filter
+                                                   w-4 h-4
+                                                   rounded
+                                                   border-coral-light
+                                                   text-coral
+                                                   focus:ring-coral/30"
+                                        >
+
+                                        <span class="text-sm text-ink">
+                                            {{ $tag->name }}
+                                        </span>
+
+                                    </label>
+
+                                @endforeach
+
+                            </div>
+
+                        </div>
+
+                    @endif
+
+                @endforeach
+
+            @elseif ($attributeTags->isNotEmpty())
 
                 <div class="p-5 border-b border-coral-light/70">
 
@@ -532,6 +638,7 @@
                 </div>
 
             @endif
+
 
 
         </form>
