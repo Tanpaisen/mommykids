@@ -39,8 +39,6 @@ body.product-detail-active::-webkit-scrollbar {
 }
 
 
-
-
 .product-page .is-hidden {
     display: none !important;
 }
@@ -681,8 +679,6 @@ body.product-detail-active::-webkit-scrollbar {
 }
 
 
-
-
 /* =========================================================
    RELATED PRODUCTS
 ========================================================= */
@@ -783,7 +779,6 @@ body.product-detail-active::-webkit-scrollbar {
     border-color: #f4cbd5;
     box-shadow: 0 10px 24px -20px rgba(43, 37, 48, .38);
 }
-
 
 
 .product-related-discount {
@@ -1700,7 +1695,6 @@ body.product-detail-active::-webkit-scrollbar {
         grid-template-columns: 1fr;
     }
 }
-
 
 
 /* =========================================================
@@ -8221,3 +8215,559 @@ body.product-detail-active::-webkit-scrollbar {
     }
 }
 
+/* =========================================================
+   ĐỒ DÙNG MẸ & BÉ - PRODUCT DETAIL
+   Append cuối resources/css/product.css
+========================================================= */
+
+.product-mother-baby-detail {
+    display: grid;
+    gap: 1rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-overview,
+.product-mother-baby-detail .product-mother-baby-section-card,
+.product-mother-baby-detail .product-mother-baby-info-card {
+    border: 1px solid rgba(255, 111, 129, .16);
+    background: #fff;
+    box-shadow: 0 10px 28px -24px rgba(43, 37, 48, .28);
+}
+
+.product-mother-baby-detail .product-mother-baby-overview,
+.product-mother-baby-detail .product-mother-baby-section-card {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.product-mother-baby-detail .product-mother-baby-overview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, .98fr) minmax(0, 1.02fr);
+    align-items: stretch;
+}
+
+.product-mother-baby-detail .product-mother-baby-overview-spec,
+.product-mother-baby-detail .product-mother-baby-overview-description {
+    padding: 1.15rem 1.2rem;
+    min-width: 0;
+}
+
+.product-mother-baby-detail .product-mother-baby-overview-description {
+    border-left: 1px solid rgba(231, 219, 222, .82);
+    background: linear-gradient(145deg, #fff 0%, #fffdfd 55%, #fff8fa 100%);
+}
+
+.product-mother-baby-detail .product-mother-baby-section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    margin-bottom: .85rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-heading-icon,
+.product-mother-baby-detail .product-mother-baby-fact-icon,
+.product-mother-baby-detail .product-mother-baby-structure-icon,
+.product-mother-baby-detail .product-mother-baby-step-icon,
+.product-mother-baby-detail .product-mother-baby-info-icon,
+.product-mother-baby-detail .product-mother-baby-trust-icon {
+    display: grid;
+    place-items: center;
+    border-radius: .72rem;
+    background: linear-gradient(145deg, #fff, #fff0f3);
+    color: #ff4167;
+}
+
+.product-mother-baby-detail .product-mother-baby-heading-icon {
+    flex: 0 0 2.15rem;
+    width: 2.15rem;
+    height: 2.15rem;
+    border: 1px solid rgba(255, 111, 129, .20);
+}
+
+.product-mother-baby-detail svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-mother-baby-detail .product-mother-baby-section-heading > div > span,
+.product-mother-baby-detail .product-mother-baby-info-title > div > span {
+    display: block;
+    margin-bottom: .08rem;
+    color: #ff4167;
+    font-size: .57rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.product-mother-baby-detail .product-mother-baby-section-heading h2 {
+    margin: 0;
+    color: #19223d;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.product-mother-baby-detail .product-mother-baby-spec-table {
+    border: 0;
+    border-radius: 0;
+}
+
+.product-mother-baby-detail .product-mother-baby-spec-table .product-spec-row {
+    min-height: 2.35rem;
+    grid-template-columns: 8.3rem minmax(0, 1fr);
+    border-bottom-color: #f0e5e8;
+}
+
+.product-mother-baby-detail .product-mother-baby-spec-table .product-spec-row strong,
+.product-mother-baby-detail .product-mother-baby-spec-table .product-spec-row > span {
+    display: flex;
+    align-items: center;
+    padding: .55rem .4rem;
+    background: transparent;
+    font-size: .69rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-description-text {
+    color: #57515c;
+    font-size: .74rem;
+    line-height: 1.75;
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .65rem;
+    margin-top: 1rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    min-height: 4rem;
+    padding: .7rem 2.3rem .7rem .75rem;
+    border: 1px solid rgba(255, 111, 129, .18);
+    border-radius: .88rem;
+    background: #fff;
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-number,
+.product-mother-baby-detail .product-mother-baby-structure-number {
+    position: absolute;
+    top: .5rem;
+    right: .65rem;
+    color: rgba(255, 65, 103, .16);
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-icon,
+.product-mother-baby-detail .product-mother-baby-structure-icon {
+    flex: 0 0 2.2rem;
+    width: 2.2rem;
+    height: 2.2rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-item strong,
+.product-mother-baby-detail .product-mother-baby-fact-item span,
+.product-mother-baby-detail .product-mother-baby-structure-item strong,
+.product-mother-baby-detail .product-mother-baby-structure-item span {
+    display: block;
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-item strong,
+.product-mother-baby-detail .product-mother-baby-structure-item strong {
+    color: #302b34;
+    font-size: .66rem;
+    font-weight: 800;
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-item div > span,
+.product-mother-baby-detail .product-mother-baby-structure-item div > span {
+    margin-top: .13rem;
+    color: #8a838e;
+    font-size: .57rem;
+    line-height: 1.42;
+}
+
+.product-mother-baby-detail .product-mother-baby-trust-banner {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-top: .8rem;
+    padding: .72rem .8rem;
+    border: 1px solid #dcebd4;
+    border-radius: .85rem;
+    background: linear-gradient(90deg, #f7fff2 0%, #fffdf8 100%);
+}
+
+.product-mother-baby-detail .product-mother-baby-trust-icon {
+    flex: 0 0 2rem;
+    width: 2rem;
+    height: 2rem;
+    background: #f1f8ec;
+    color: #70826a;
+}
+
+.product-mother-baby-detail .product-mother-baby-trust-banner strong,
+.product-mother-baby-detail .product-mother-baby-trust-banner span {
+    display: block;
+}
+
+.product-mother-baby-detail .product-mother-baby-trust-banner strong {
+    color: #3b3b3b;
+    font-size: .64rem;
+    font-weight: 800;
+}
+
+.product-mother-baby-detail .product-mother-baby-trust-banner span {
+    margin-top: .1rem;
+    color: #8a838e;
+    font-size: .55rem;
+}
+
+/* CẤU TẠO */
+.product-mother-baby-detail .product-mother-baby-section-card {
+    padding: 1rem 1.15rem 1.1rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-card-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .85rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-card-heading .product-mother-baby-section-heading {
+    margin-bottom: 0;
+}
+
+.product-mother-baby-detail .product-mother-baby-card-heading > p {
+    max-width: 23rem;
+    margin: .2rem 0 0;
+    color: #9a929d;
+    font-size: .57rem;
+    line-height: 1.45;
+    text-align: right;
+}
+
+.product-mother-baby-detail .product-mother-baby-structure-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .6rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-structure-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    min-height: 4.3rem;
+    padding: .75rem 2.7rem .75rem .8rem;
+    border: 1px solid rgba(231, 208, 214, .9);
+    border-radius: .82rem;
+    background: #fffafa;
+}
+
+/* TIMELINE */
+.product-mother-baby-detail .product-mother-baby-steps {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+}
+
+.product-mother-baby-detail .product-mother-baby-steps::before {
+    content: "";
+    position: absolute;
+    top: 1.15rem;
+    left: 8%;
+    right: 8%;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 111, 129, .18),
+        rgba(255, 65, 103, .48),
+        rgba(255, 111, 129, .18)
+    );
+}
+
+.product-mother-baby-detail .product-mother-baby-step {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    padding: .2rem .7rem .35rem;
+    text-align: center;
+}
+
+.product-mother-baby-detail .product-mother-baby-step-head {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    width: 3rem;
+    margin: 0 auto .55rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-step-number {
+    position: absolute;
+    top: -.05rem;
+    left: -.35rem;
+    z-index: 2;
+    min-width: 1.6rem;
+    height: 1.15rem;
+    padding: 0 .32rem;
+    border-radius: 999px;
+    background: #ff5f7f;
+    color: #fff;
+    font-size: .52rem;
+    font-weight: 900;
+    line-height: 1.15rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-step-icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 1px solid rgba(255, 111, 129, .20);
+    border-radius: 50%;
+    box-shadow: 0 0 0 .28rem #fff;
+}
+
+.product-mother-baby-detail .product-mother-baby-step > strong {
+    display: block;
+    color: #34303a;
+    font-size: .66rem;
+    font-weight: 800;
+}
+
+.product-mother-baby-detail .product-mother-baby-step > p {
+    max-width: 10.5rem;
+    margin: .22rem auto 0;
+    color: #88808b;
+    font-size: .57rem;
+    line-height: 1.48;
+}
+
+/* BOTTOM */
+.product-mother-baby-detail .product-mother-baby-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .65rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-card {
+    min-width: 0;
+    min-height: 8.5rem;
+    padding: .85rem .9rem;
+    border-radius: .9rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-card.is-care {
+    background: linear-gradient(145deg, #fff, #fffaf6);
+}
+
+.product-mother-baby-detail .product-mother-baby-info-card.is-warning {
+    border-color: #ecdba9;
+    background: linear-gradient(145deg, #fff, #fffdf4);
+}
+
+.product-mother-baby-detail .product-mother-baby-info-title {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: .55rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-icon {
+    flex: 0 0 2rem;
+    width: 2rem;
+    height: 2rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-title h3 {
+    margin: 0;
+    color: #302b34;
+    font-size: .68rem;
+    font-weight: 800;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-card ul {
+    display: grid;
+    gap: .35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-card li {
+    position: relative;
+    padding-left: .72rem;
+    color: #77707c;
+    font-size: .58rem;
+    line-height: 1.48;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-card li::before {
+    content: "";
+    position: absolute;
+    top: .43rem;
+    left: 0;
+    width: .22rem;
+    height: .22rem;
+    border-radius: 50%;
+    background: #ff6684;
+}
+
+@media (max-width: 980px) {
+    .product-mother-baby-detail .product-mother-baby-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-overview-description {
+        border-top: 1px solid rgba(231, 219, 222, .82);
+        border-left: 0;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .8rem;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-steps::before {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .product-mother-baby-detail .product-mother-baby-overview-spec,
+    .product-mother-baby-detail .product-mother-baby-overview-description,
+    .product-mother-baby-detail .product-mother-baby-section-card {
+        padding: 1rem;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-card-heading {
+        display: block;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-card-heading > p {
+        max-width: none;
+        margin-top: .45rem;
+        text-align: left;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-fact-grid,
+    .product-mother-baby-detail .product-mother-baby-structure-grid,
+    .product-mother-baby-detail .product-mother-baby-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-spec-table .product-spec-row {
+        grid-template-columns: 7.25rem minmax(0, 1fr);
+    }
+}
+
+/* =========================================================
+   VITAMIN & HEALTH - VERBOSE CONTENT POLISH
+   Nội dung dài hơn, vẫn giữ scope riêng product-vitamin-detail
+========================================================= */
+
+.product-vitamin-detail .product-vitamin-context-copy {
+    display: grid;
+    gap: .48rem;
+    margin-top: .62rem;
+}
+
+.product-vitamin-detail .product-vitamin-context-copy p {
+    margin: 0;
+    color: #716a76;
+    font-size: .62rem;
+    line-height: 1.62;
+}
+
+.product-vitamin-detail .product-vitamin-ingredient-item {
+    align-items: flex-start;
+    min-height: 6.65rem;
+    padding-top: .85rem;
+    padding-bottom: .85rem;
+}
+
+.product-vitamin-detail .product-vitamin-ingredient-item > div {
+    min-width: 0;
+}
+
+.product-vitamin-detail .product-vitamin-ingredient-item > div > span {
+    display: block;
+    margin-top: .14rem;
+    color: #6e6773;
+    font-size: .61rem;
+    line-height: 1.45;
+}
+
+.product-vitamin-detail .product-vitamin-ingredient-note {
+    margin: .38rem 0 0;
+    color: #8a838e;
+    font-size: .56rem;
+    line-height: 1.55;
+}
+
+.product-vitamin-detail .product-vitamin-step {
+    min-height: 10.5rem;
+    padding-left: .55rem;
+    padding-right: .55rem;
+}
+
+.product-vitamin-detail .product-vitamin-step > p {
+    line-height: 1.5;
+}
+
+.product-vitamin-detail .product-vitamin-step-note {
+    max-width: 12rem;
+    margin: .34rem auto 0 !important;
+    color: #918994 !important;
+    font-size: .54rem !important;
+    line-height: 1.5 !important;
+}
+
+.product-vitamin-detail .product-vitamin-info-card {
+    min-height: 12rem;
+}
+
+.product-vitamin-detail .product-vitamin-info-card ul {
+    display: grid;
+    gap: .4rem;
+}
+
+.product-vitamin-detail .product-vitamin-info-card li {
+    line-height: 1.52;
+}
+
+
+@media (max-width: 900px) {
+    .product-vitamin-detail .product-vitamin-step {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .product-vitamin-detail .product-vitamin-ingredient-item {
+        min-height: auto;
+    }
+
+    .product-vitamin-detail .product-vitamin-info-card {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 430px) {
+}
