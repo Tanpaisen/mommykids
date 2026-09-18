@@ -30,7 +30,7 @@
 
     /*
      * Template chi tiết riêng theo từng nhóm sản phẩm.
-     * Sữa / Bỉm tã / Bình sữa / Ăn dặm / Vitamin dùng partial riêng theo category.
+     * Sữa / Bỉm tã / Bình sữa / Ăn dặm / Vitamin / Đồ dùng mẹ & bé dùng partial riêng theo category.
      */
     $isMilkProduct =
         ($product->category?->slug === 'sua-cho-be') ||
@@ -47,6 +47,10 @@
 
     $isVitaminProduct =
         $product->category?->slug === 'vitamin-suc-khoe';
+
+
+    $isMotherBabyProduct =
+        $product->category?->slug === 'do-dung-me-be';
 
     /*
      * Demo giao diện Aptamil theo đúng ảnh mẫu hiện tại.
@@ -538,7 +542,7 @@
 
     {{-- =========================================================
         LONG CONTENT
-        Sữa / Bỉm tã / Bình sữa / Ăn dặm / Vitamin dùng partial riêng.
+        Sữa / Bỉm tã / Bình sữa / Ăn dặm / Vitamin / Đồ dùng mẹ & bé dùng partial riêng.
         Các danh mục khác tạm giữ giao diện chung, sẽ tách tiếp sau.
     ========================================================== --}}
     @if ($isMilkProduct)
@@ -582,6 +586,16 @@
 
 @elseif ($isVitaminProduct)
     @include('client.product-details.vitamin', [
+        'brandTag' => $brandTag,
+        'attributeTags' => $attributeTags,
+        'usageSteps' => $usageSteps,
+        'storageItems' => $storageItems,
+        'warningItems' => $warningItems,
+        'ageText' => $ageText,
+    ])
+
+@elseif ($isMotherBabyProduct)
+    @include('client.product-details.mother-baby', [
         'brandTag' => $brandTag,
         'attributeTags' => $attributeTags,
         'usageSteps' => $usageSteps,

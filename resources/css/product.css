@@ -8771,3 +8771,1068 @@ body.product-detail-active::-webkit-scrollbar {
 
 @media (max-width: 430px) {
 }
+
+/* =========================================================
+   ĐỒ DÙNG MẸ & BÉ - FINAL PROFESSIONAL POLISH
+   Ghi đè nhẹ lên block mother-baby hiện có.
+   Scope riêng, không ảnh hưởng Milk / Diaper / Bottle /
+   Feeding / Vitamin.
+========================================================= */
+
+.product-mother-baby-detail {
+    gap: 1.15rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-overview,
+.product-mother-baby-detail .product-mother-baby-section-card,
+.product-mother-baby-detail .product-mother-baby-info-card {
+    border-color: rgba(255, 111, 129, .18);
+    box-shadow:
+        0 18px 42px -34px rgba(43, 37, 48, .34);
+}
+
+/* ===== OVERVIEW ===== */
+.product-mother-baby-detail .product-mother-baby-overview {
+    border-radius: 1.08rem;
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff 0%,
+            #fffdfd 58%,
+            #fff9fa 100%
+        );
+}
+
+.product-mother-baby-detail .product-mother-baby-overview-grid {
+    grid-template-columns:
+        minmax(0, .94fr)
+        minmax(0, 1.06fr);
+    align-items: stretch;
+}
+
+.product-mother-baby-detail .product-mother-baby-overview-spec,
+.product-mother-baby-detail .product-mother-baby-overview-description {
+    padding: 1.28rem 1.35rem 1.35rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-overview-spec {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.98),
+            rgba(255,250,251,.88)
+        );
+}
+
+.product-mother-baby-detail .product-mother-baby-overview-description {
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #f0e2e6;
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff 0%,
+            #fffdfd 48%,
+            #fff6f8 100%
+        );
+}
+
+/* ===== HEADING ===== */
+.product-mother-baby-detail .product-mother-baby-section-heading {
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-heading-icon {
+    flex-basis: 2.45rem;
+    width: 2.45rem;
+    height: 2.45rem;
+    border-radius: .8rem;
+    background:
+        linear-gradient(
+            145deg,
+            #fff5f7,
+            #ffecef
+        );
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 111, 129, .14);
+}
+
+.product-mother-baby-detail .product-mother-baby-heading-icon svg {
+    width: 1.18rem;
+    height: 1.18rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-section-heading > div > span {
+    margin-bottom: .16rem;
+    font-size: .56rem;
+    letter-spacing: .11em;
+}
+
+.product-mother-baby-detail .product-mother-baby-section-heading h2 {
+    font-size: 1.08rem;
+    letter-spacing: -.01em;
+}
+
+/* ===== SPEC TABLE ===== */
+.product-mother-baby-detail .product-mother-baby-spec-table {
+    overflow: hidden;
+    border: 1px solid #f0e3e6;
+    border-radius: .82rem;
+    background: #fff;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-spec-table
+.product-spec-row {
+    min-height: 2.55rem;
+    grid-template-columns: 8.7rem minmax(0, 1fr);
+    border-bottom: 1px solid #f1e6e9;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-spec-table
+.product-spec-row:last-child {
+    border-bottom: 0;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-spec-table
+.product-spec-row strong {
+    padding: .64rem .72rem;
+    background: #fff8f9;
+    color: #3b3540;
+    font-size: .68rem;
+    font-weight: 800;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-spec-table
+.product-spec-row > span {
+    padding: .64rem .78rem;
+    color: #69616d;
+    font-size: .68rem;
+    line-height: 1.45;
+}
+
+/* ===== DESCRIPTION ===== */
+.product-mother-baby-detail .product-mother-baby-description-text {
+    margin: 0;
+    color: #514a56;
+    font-size: .75rem;
+    font-weight: 500;
+    line-height: 1.75;
+}
+
+/* ===== QUICK FACTS ===== */
+.product-mother-baby-detail .product-mother-baby-fact-grid {
+    gap: .72rem;
+    margin-top: 1.05rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-item {
+    min-height: 4.55rem;
+    padding: .78rem 2.45rem .78rem .82rem;
+    border: 1px solid #f3dfe4;
+    border-radius: .92rem;
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #fff8fa
+        );
+    box-shadow:
+        0 8px 20px -18px rgba(255, 65, 103, .35);
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-item:hover {
+    transform: translateY(-2px);
+    border-color: #f5c8d2;
+    box-shadow:
+        0 12px 26px -20px rgba(255, 65, 103, .42);
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-icon {
+    flex-basis: 2.45rem;
+    width: 2.45rem;
+    height: 2.45rem;
+    border-radius: .8rem;
+    background:
+        linear-gradient(
+            145deg,
+            #fff1f4,
+            #ffe8ed
+        );
+}
+
+.product-mother-baby-detail
+.product-mother-baby-fact-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-fact-item strong {
+    color: #28232c;
+    font-size: .69rem;
+    line-height: 1.35;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-fact-item div > span {
+    margin-top: .18rem;
+    color: #817a86;
+    font-size: .59rem;
+    line-height: 1.42;
+}
+
+.product-mother-baby-detail .product-mother-baby-fact-number {
+    top: .58rem;
+    right: .72rem;
+    color: rgba(255, 65, 103, .17);
+    font-size: 1.02rem;
+}
+
+/* ===== TRUST BANNER ===== */
+.product-mother-baby-detail .product-mother-baby-trust-banner {
+    margin-top: .9rem;
+    padding: .78rem .88rem;
+    border: 1px solid #dcebd4;
+    border-radius: .9rem;
+    background:
+        linear-gradient(
+            90deg,
+            #f6fff2 0%,
+            #fffdf8 100%
+        );
+}
+
+.product-mother-baby-detail .product-mother-baby-trust-icon {
+    flex-basis: 2.18rem;
+    width: 2.18rem;
+    height: 2.18rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-trust-banner strong {
+    color: #323037;
+    font-size: .67rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-trust-banner span {
+    margin-top: .13rem;
+    font-size: .57rem;
+    line-height: 1.45;
+}
+
+/* ===== SECTION CARD ===== */
+.product-mother-baby-detail .product-mother-baby-section-card {
+    padding: 1.12rem 1.25rem 1.22rem;
+    border-radius: 1rem;
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fffdfd 100%
+        );
+}
+
+.product-mother-baby-detail .product-mother-baby-card-heading {
+    margin-bottom: .95rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-card-heading > p {
+    max-width: 28rem;
+    color: #8f8793;
+    font-size: .6rem;
+    line-height: 1.55;
+}
+
+/* ===== STRUCTURE / UTILITIES ===== */
+.product-mother-baby-detail .product-mother-baby-structure-grid {
+    gap: .72rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-structure-item {
+    min-height: 5rem;
+    padding: .82rem 2.8rem .82rem .85rem;
+    border: 1px solid #f0dce1;
+    border-radius: .9rem;
+    background:
+        linear-gradient(
+            145deg,
+            #fffdfd,
+            #fff7f9
+        );
+    box-shadow:
+        0 8px 20px -18px rgba(43, 37, 48, .30);
+}
+
+.product-mother-baby-detail
+.product-mother-baby-structure-item::before {
+    content: "";
+    position: absolute;
+    top: .72rem;
+    bottom: .72rem;
+    left: 0;
+    width: 3px;
+    border-radius: 999px;
+    background:
+        linear-gradient(
+            180deg,
+            #ff9bad,
+            #ff5272
+        );
+}
+
+.product-mother-baby-detail .product-mother-baby-structure-icon {
+    flex-basis: 2.45rem;
+    width: 2.45rem;
+    height: 2.45rem;
+    border-radius: .78rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-structure-item strong {
+    font-size: .7rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-structure-item div > span {
+    margin-top: .2rem;
+    font-size: .59rem;
+    line-height: 1.48;
+}
+
+/* ===== TIMELINE ===== */
+.product-mother-baby-detail .product-mother-baby-steps {
+    padding: .45rem .25rem .1rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-steps::before {
+    top: 1.55rem;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background:
+        linear-gradient(
+            90deg,
+            #f9d3dc,
+            #ff7c96,
+            #f9d3dc
+        );
+}
+
+.product-mother-baby-detail .product-mother-baby-step {
+    padding: .2rem .75rem .45rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-step-head {
+    width: 3.45rem;
+    margin-bottom: .65rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-step-icon {
+    width: 2.85rem;
+    height: 2.85rem;
+    border: 1px solid #f4cdd6;
+    background:
+        linear-gradient(
+            145deg,
+            #fff,
+            #fff0f3
+        );
+    box-shadow:
+        0 0 0 .32rem #fff,
+        0 9px 20px -16px rgba(255, 65, 103, .55);
+}
+
+.product-mother-baby-detail
+.product-mother-baby-step-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-step-number {
+    top: -.08rem;
+    left: -.48rem;
+    min-width: 1.72rem;
+    height: 1.18rem;
+    background:
+        linear-gradient(
+            90deg,
+            #ff6c88,
+            #ff4167
+        );
+    font-size: .53rem;
+    line-height: 1.18rem;
+    box-shadow:
+        0 6px 14px -10px rgba(255, 65, 103, .85);
+}
+
+.product-mother-baby-detail
+.product-mother-baby-step > strong {
+    color: #2f2a33;
+    font-size: .69rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-step > p {
+    max-width: 12rem;
+    margin-top: .28rem;
+    color: #817a86;
+    font-size: .59rem;
+    line-height: 1.52;
+}
+
+/* ===== BOTTOM INFORMATION ===== */
+.product-mother-baby-detail .product-mother-baby-info-grid {
+    gap: .72rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-card {
+    position: relative;
+    min-height: 9.5rem;
+    padding: .95rem 1rem 1rem;
+    overflow: hidden;
+    border-radius: .95rem;
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #fff8fa
+        );
+}
+
+.product-mother-baby-detail
+.product-mother-baby-info-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    border-radius: 999px;
+    background: #ffc2ce;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-info-card.is-care {
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #fff9f3
+        );
+}
+
+.product-mother-baby-detail
+.product-mother-baby-info-card.is-care::before {
+    background: #ffd1aa;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-info-card.is-warning {
+    border-color: #ead9a5;
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #fffdf3
+        );
+}
+
+.product-mother-baby-detail
+.product-mother-baby-info-card.is-warning::before {
+    background: #e5c764;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-icon {
+    flex-basis: 2.18rem;
+    width: 2.18rem;
+    height: 2.18rem;
+    border-radius: .72rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-info-title h3 {
+    font-size: .71rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-info-card ul {
+    gap: .42rem;
+}
+
+.product-mother-baby-detail
+.product-mother-baby-info-card li {
+    padding-left: .78rem;
+    color: #69616d;
+    font-size: .6rem;
+    line-height: 1.52;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 980px) {
+    .product-mother-baby-detail
+    .product-mother-baby-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-mother-baby-detail
+    .product-mother-baby-overview-description {
+        border-top: 1px solid #f0e2e6;
+        border-left: 0;
+    }
+
+    .product-mother-baby-detail
+    .product-mother-baby-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-mother-baby-detail
+    .product-mother-baby-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .product-mother-baby-detail
+    .product-mother-baby-steps::before {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .product-mother-baby-detail
+    .product-mother-baby-overview-spec,
+    .product-mother-baby-detail
+    .product-mother-baby-overview-description,
+    .product-mother-baby-detail
+    .product-mother-baby-section-card {
+        padding: 1rem;
+    }
+
+    .product-mother-baby-detail
+    .product-mother-baby-fact-grid,
+    .product-mother-baby-detail
+    .product-mother-baby-structure-grid,
+    .product-mother-baby-detail
+    .product-mother-baby-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .product-mother-baby-detail
+    .product-mother-baby-card-heading {
+        display: block;
+    }
+
+    .product-mother-baby-detail
+    .product-mother-baby-card-heading > p {
+        max-width: none;
+        margin-top: .5rem;
+        text-align: left;
+    }
+
+    .product-mother-baby-detail
+    .product-mother-baby-spec-table
+    .product-spec-row {
+        grid-template-columns: 7.5rem minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 430px) {
+    .product-mother-baby-detail
+    .product-mother-baby-spec-table
+    .product-spec-row {
+        grid-template-columns: 1fr;
+    }
+
+    .product-mother-baby-detail
+    .product-mother-baby-spec-table
+    .product-spec-row strong {
+        border-bottom: 1px solid #f1e6e9;
+    }
+}
+
+/* =========================================================
+   ĐỒ DÙNG MẸ & BÉ - EXTRA CONTENT SECTIONS
+   Benefits / Suitable use / FAQ
+========================================================= */
+
+.product-mother-baby-detail .product-mother-baby-benefit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .78rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: .78rem;
+    min-height: 6.4rem;
+    padding: .95rem 3rem .95rem .95rem;
+    overflow: hidden;
+    border: 1px solid #f0dfe4;
+    border-radius: .95rem;
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff 0%,
+            #fff9fa 100%
+        );
+    box-shadow:
+        0 10px 26px -22px rgba(43, 37, 48, .34);
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-item:hover {
+    transform: translateY(-2px);
+    border-color: #f4c8d2;
+    box-shadow:
+        0 14px 30px -23px rgba(255, 65, 103, .38);
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-item::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background:
+        linear-gradient(
+            180deg,
+            #ff9aae,
+            #ff5272
+        );
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.8rem;
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: .86rem;
+    background:
+        linear-gradient(
+            145deg,
+            #fff0f4,
+            #ffe8ed
+        );
+    color: #ff4167;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-item strong {
+    display: block;
+    color: #2b2630;
+    font-size: .72rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-item p {
+    margin: .3rem 0 0;
+    color: #77707c;
+    font-size: .61rem;
+    line-height: 1.55;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-number {
+    position: absolute;
+    top: .72rem;
+    right: .78rem;
+    color: rgba(255, 65, 103, .17);
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+/* Suitable use */
+.product-mother-baby-detail .product-mother-baby-suitable-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .78rem;
+}
+
+.product-mother-baby-detail .product-mother-baby-suitable-item {
+    position: relative;
+    min-height: 7rem;
+    padding: 1rem 1rem 1rem 3.65rem;
+    border: 1px solid #f0e1e4;
+    border-radius: .95rem;
+    background:
+        linear-gradient(
+            145deg,
+            #fff 0%,
+            #fffaf9 100%
+        );
+}
+
+.product-mother-baby-detail .product-mother-baby-suitable-index {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .7rem;
+    background:
+        linear-gradient(
+            145deg,
+            #ffedf2,
+            #ffe3e9
+        );
+    color: #ff4167;
+    font-size: .61rem;
+    font-weight: 900;
+}
+
+.product-mother-baby-detail .product-mother-baby-suitable-item strong {
+    display: block;
+    color: #2f2933;
+    font-size: .72rem;
+    font-weight: 800;
+    line-height: 1.38;
+}
+
+.product-mother-baby-detail .product-mother-baby-suitable-item p {
+    margin: .34rem 0 0;
+    color: #77707c;
+    font-size: .61rem;
+    line-height: 1.55;
+}
+
+/* =========================================================
+   MOTHER & BABY - FINAL FULL FIX
+   Fix mạnh cho toàn bộ phần chi tiết Đồ dùng mẹ & bé.
+   Đặt CUỐI product.css.
+========================================================= */
+
+/* Tổng thể */
+.product-long-content.product-mother-baby-detail {
+    display: grid !important;
+    gap: 1rem !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-section-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 1rem 1.15rem 1.1rem !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255, 111, 129, .18) !important;
+    border-radius: 1rem !important;
+    background: #fff !important;
+    box-shadow: 0 12px 30px -26px rgba(43, 37, 48, .32) !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-card-heading {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 1rem !important;
+    margin-bottom: .9rem !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-card-heading > p {
+    max-width: 27rem !important;
+    margin: .15rem 0 0 !important;
+    color: #8b8490 !important;
+    font-size: .58rem !important;
+    line-height: 1.55 !important;
+    text-align: right !important;
+}
+
+/* =========================================================
+   CẤU TẠO & TIỆN ÍCH
+========================================================= */
+.product-mother-baby-detail .product-mother-baby-structure-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .72rem !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-structure-item {
+    position: relative !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: .72rem !important;
+    min-height: 5.8rem !important;
+    padding: .88rem 2.8rem .88rem .88rem !important;
+    border: 1px solid #efdce1 !important;
+    border-radius: .9rem !important;
+    background: linear-gradient(145deg, #fff 0%, #fff8fa 100%) !important;
+    box-shadow: 0 8px 20px -19px rgba(43, 37, 48, .32) !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-structure-item::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: .65rem auto .65rem 0 !important;
+    width: 3px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(180deg, #ff9caf, #ff5272) !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-structure-item strong {
+    display: block !important;
+    color: #302a34 !important;
+    font-size: .69rem !important;
+    font-weight: 800 !important;
+    line-height: 1.38 !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-structure-item div > span {
+    display: block !important;
+    margin-top: .24rem !important;
+    color: #7c7480 !important;
+    font-size: .59rem !important;
+    line-height: 1.55 !important;
+}
+
+/* =========================================================
+   ĐIỂM NỔI BẬT & LỢI ÍCH
+   Đây là block bị mất style trong ảnh.
+========================================================= */
+.product-mother-baby-detail .product-mother-baby-benefit-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .72rem !important;
+    width: 100% !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-item {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 2.75rem minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: .78rem !important;
+    min-height: 6.4rem !important;
+    padding: .9rem 2.65rem .9rem .9rem !important;
+    overflow: hidden !important;
+    border: 1px solid #efdce1 !important;
+    border-radius: .9rem !important;
+    background: linear-gradient(145deg, #fff 0%, #fff8fa 100%) !important;
+    box-shadow: 0 9px 22px -20px rgba(43, 37, 48, .32) !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-item::before {
+    content: "" !important;
+    position: absolute !important;
+    top: .7rem !important;
+    bottom: .7rem !important;
+    left: 0 !important;
+    width: 3px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(180deg, #ff9caf, #ff5272) !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-icon {
+    display: grid !important;
+    place-items: center !important;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    border-radius: .82rem !important;
+    background: linear-gradient(145deg, #fff1f4, #ffe8ed) !important;
+    color: #ff4167 !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-icon svg {
+    width: 1.2rem !important;
+    height: 1.2rem !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-number {
+    position: absolute !important;
+    top: .62rem !important;
+    right: .72rem !important;
+    color: rgba(255, 65, 103, .18) !important;
+    font-size: 1rem !important;
+    font-weight: 900 !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-item strong {
+    display: block !important;
+    color: #2f2933 !important;
+    font-size: .71rem !important;
+    font-weight: 800 !important;
+    line-height: 1.4 !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-benefit-item p {
+    display: block !important;
+    margin: .28rem 0 0 !important;
+    color: #77707c !important;
+    font-size: .6rem !important;
+    line-height: 1.58 !important;
+}
+
+/* =========================================================
+   PHÙ HỢP SỬ DỤNG CHO
+========================================================= */
+.product-mother-baby-detail .product-mother-baby-suitable-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: .72rem !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-suitable-item {
+    position: relative !important;
+    min-width: 0 !important;
+    min-height: 7.4rem !important;
+    padding: 1rem .9rem 1rem 3.65rem !important;
+    border: 1px solid #efe1e4 !important;
+    border-radius: .9rem !important;
+    background: linear-gradient(145deg, #fff 0%, #fffaf9 100%) !important;
+    box-shadow: 0 8px 20px -20px rgba(43, 37, 48, .28) !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-suitable-index {
+    position: absolute !important;
+    top: 1rem !important;
+    left: .9rem !important;
+    display: grid !important;
+    place-items: center !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    border-radius: .68rem !important;
+    background: linear-gradient(145deg, #ffedf2, #ffe4e9) !important;
+    color: #ff4167 !important;
+    font-size: .59rem !important;
+    font-weight: 900 !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-suitable-item strong {
+    display: block !important;
+    color: #302a34 !important;
+    font-size: .7rem !important;
+    font-weight: 800 !important;
+    line-height: 1.4 !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-suitable-item p {
+    display: block !important;
+    margin: .32rem 0 0 !important;
+    color: #77707c !important;
+    font-size: .6rem !important;
+    line-height: 1.58 !important;
+}
+
+/* =========================================================
+   HƯỚNG DẪN SỬ DỤNG
+========================================================= */
+.product-mother-baby-detail .product-mother-baby-steps {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    padding: .35rem .25rem .15rem !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-step {
+    position: relative !important;
+    z-index: 1 !important;
+    min-width: 0 !important;
+    padding: .2rem .65rem .4rem !important;
+    text-align: center !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-step > strong {
+    display: block !important;
+    color: #322c36 !important;
+    font-size: .68rem !important;
+    font-weight: 800 !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-step > p {
+    max-width: 12rem !important;
+    margin: .28rem auto 0 !important;
+    color: #817985 !important;
+    font-size: .57rem !important;
+    line-height: 1.55 !important;
+}
+
+
+/* =========================================================
+   BẢO QUẢN / VỆ SINH / LƯU Ý
+========================================================= */
+.product-mother-baby-detail .product-mother-baby-info-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: .72rem !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-card {
+    min-height: 10rem !important;
+    padding: .9rem .95rem 1rem !important;
+}
+
+.product-mother-baby-detail .product-mother-baby-info-card li {
+    font-size: .59rem !important;
+    line-height: 1.55 !important;
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+    .product-mother-baby-detail .product-mother-baby-benefit-grid,
+    .product-mother-baby-detail .product-mother-baby-structure-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-suitable-grid,
+    .product-mother-baby-detail .product-mother-baby-info-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: .85rem !important;
+    }
+}
+
+@media (max-width: 700px) {
+    .product-mother-baby-detail .product-mother-baby-card-heading {
+        display: block !important;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-card-heading > p {
+        max-width: none !important;
+        margin-top: .45rem !important;
+        text-align: left !important;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-benefit-grid,
+    .product-mother-baby-detail .product-mother-baby-structure-grid,
+    .product-mother-baby-detail .product-mother-baby-steps {
+        grid-template-columns: 1fr !important;
+    }
+
+    .product-mother-baby-detail .product-mother-baby-suitable-item {
+        min-height: auto !important;
+    }
+}
+
+@media (max-width: 430px) {
+}

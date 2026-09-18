@@ -61,6 +61,52 @@
                 ],
             ],
         ];
+
+
+        /*
+         * Sidebar riêng cho category Đồ dùng mẹ & bé.
+         * Vẫn dùng attribute[] nên giữ nguyên controller/filter hiện tại.
+         */
+        $isMotherBabyCategory =
+            $category->slug === 'do-dung-me-be';
+
+        $motherBabyFilterGroups = [
+            [
+                'title' => 'Loại sản phẩm',
+                'slugs' => [
+                    'diu-em-be',
+                    'tui-dung-do-me-be',
+                    'ghe-an-dam',
+                    'may-xay-thuc-an',
+                    'khay-tru-thuc-an',
+                    'hop-chia-sua',
+                    'yem-an-dam',
+                    'dai-xe-may',
+                ],
+            ],
+            [
+                'title' => 'Nhu cầu sử dụng',
+                'slugs' => [
+                    'do-dung-an-dam',
+                    'di-chuyen-cung-be',
+                ],
+            ],
+            [
+                'title' => 'Đặc điểm',
+                'slugs' => [
+                    '6in1',
+                    '4-tu-the',
+                    'nhieu-ngan',
+                    'quai-deo-cheo',
+                    '3-ngan',
+                    'nhua-pp',
+                    'silicone',
+                    'de-ve-sinh',
+                    'co-do-co',
+                    'dung-tich-0-3l',
+                ],
+            ],
+        ];
     @endphp
 
     <aside
@@ -462,7 +508,7 @@
             {{-- =====================================================
                  GIAI ĐOẠN / ĐỘ TUỔI - PRODUCT_STAGE
             ====================================================== --}}
-            @if (!$isVitaminHealthCategory && $stages->isNotEmpty())
+            @if (!$isVitaminHealthCategory && !$isMotherBabyCategory && $stages->isNotEmpty())
 
                 <div class="p-5 border-b border-coral-light/70">
 
@@ -524,12 +570,77 @@
 
             {{-- =====================================================
                  FILTER THUỘC TÍNH
-                 Vitamin & sức khỏe: chia 3 nhóm gọn hơn.
+                 Vitamin & sức khỏe: chia 3 nhóm riêng.
+                 Đồ dùng mẹ & bé: chia Loại sản phẩm / Nhu cầu sử dụng / Đặc điểm.
                  Category khác: giữ nguyên danh sách thuộc tính cũ.
             ====================================================== --}}
             @if ($isVitaminHealthCategory)
 
                 @foreach ($vitaminFilterGroups as $filterGroup)
+
+                    @php
+                        $groupTags = collect($filterGroup['slugs'])
+                            ->map(
+                                fn ($slug) =>
+                                    $attributeTags->firstWhere('slug', $slug)
+                            )
+                            ->filter()
+                            ->values();
+                    @endphp
+
+                    @if ($groupTags->isNotEmpty())
+
+                        <div class="p-5 border-b border-coral-light/70">
+
+                            <h3 class="font-display font-bold text-sm text-ink mb-3">
+                                {{ $filterGroup['title'] }}
+                            </h3>
+
+                            <div class="space-y-2">
+
+                                @foreach ($groupTags as $tag)
+
+                                    <label
+                                        class="flex items-center gap-3
+                                               px-2 py-1.5
+                                               rounded-lg
+                                               cursor-pointer
+                                               hover:bg-cream
+                                               transition"
+                                    >
+
+                                        <input
+                                            type="checkbox"
+                                            name="attribute[]"
+                                            value="{{ $tag->slug }}"
+                                            @checked(in_array($tag->slug, $selectedAttributes, true))
+                                            class="js-auto-filter
+                                                   w-4 h-4
+                                                   rounded
+                                                   border-coral-light
+                                                   text-coral
+                                                   focus:ring-coral/30"
+                                        >
+
+                                        <span class="text-sm text-ink">
+                                            {{ $tag->name }}
+                                        </span>
+
+                                    </label>
+
+                                @endforeach
+
+                            </div>
+
+                        </div>
+
+                    @endif
+
+                @endforeach
+
+            @elseif ($isMotherBabyCategory)
+
+                @foreach ($motherBabyFilterGroups as $filterGroup)
 
                     @php
                         $groupTags = collect($filterGroup['slugs'])
