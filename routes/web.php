@@ -14,7 +14,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\CheckoutController;
 
-// --- CONTROLLERS CẨM NANG ---
+// --- CONTROLLERS ADMIN ---
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\HandbookCategoryController;
 use App\Http\Controllers\Client\HandbookController;
 
@@ -69,7 +70,6 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 | Checkout Routes
 |--------------------------------------------------------------------------
-| Tạm thời không yêu cầu đăng nhập để test thanh toán.
 */
 
 Route::get('/thanh-toan', [CheckoutController::class, 'index'])
@@ -111,7 +111,6 @@ Route::post(
     [CheckoutController::class, 'calculateShippingFee']
 )->name('checkout.shipping-fee');
 
-
 /*
 |--------------------------------------------------------------------------
 | Cart & OTP API Routes
@@ -133,6 +132,18 @@ Route::prefix('api')->group(function () {
 
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])
         ->name('api.verify-otp');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Admin Customer Management Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/khach-hang', [CustomerController::class, 'index'])->name('customers.index');
+    Route::get('/khach-hang/{id}', [CustomerController::class, 'show'])->name('customers.show');
+    Route::post('/khach-hang/{id}/toggle-status', [CustomerController::class, 'toggleStatus'])->name('customers.toggleStatus');
 });
 
 /*

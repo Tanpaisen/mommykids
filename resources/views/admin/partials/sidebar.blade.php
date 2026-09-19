@@ -1,6 +1,4 @@
 @php
-    // Each nav item's `can` maps to a Spatie permission (see database/seeders/PermissionSeeder.php).
-    // Items whose permission the logged-in admin doesn't have are simply not rendered.
     $menu = [
         [
             'label' => 'Dashboard & Thống kê',
@@ -34,8 +32,8 @@
             'icon' => '🚚',
             'can' => 'orders.view',
             'items' => [
-                ['label' => 'Đơn hàng',           'route' => 'admin.orders.index', 'url' => '/admin/orders'],
-                ['label' => 'Vận chuyển (GHN)',     'route' => 'admin.shipments.index', 'url' => '/admin/shipments'],
+                ['label' => 'Đơn hàng', 'route' => 'admin.orders.index', 'url' => '/admin/orders'],
+                ['label' => 'Vận chuyển (GHN)', 'route' => 'admin.shipments.index', 'url' => '/admin/shipments'],
                 ['label' => 'Đổi trả & Hoàn tiền', 'route' => 'admin.refunds.index', 'url' => '/admin/refunds'],
             ],
         ],
@@ -44,9 +42,9 @@
             'icon' => '👥',
             'can' => 'crm.view',
             'items' => [
-                ['label' => 'Khách hàng', 'route' => 'admin.clients.index', 'url' => '/admin/clients'],
-                ['label' => 'Voucher',    'route' => 'admin.vouchers.index', 'url' => '/admin/vouchers'],
-                ['label' => 'Banner',     'route' => 'admin.banners.index', 'url' => '/admin/banners'],
+                ['label' => 'Khách hàng', 'route' => 'admin.customers.index', 'url' => '/admin/khach-hang'],
+                ['label' => 'Voucher', 'route' => 'admin.vouchers.index', 'url' => '/admin/vouchers'],
+                ['label' => 'Banner', 'route' => 'admin.banners.index', 'url' => '/admin/banners'],
             ],
         ],
         [
@@ -55,17 +53,14 @@
             'can' => 'roles.manage',
             'items' => [
                 ['label' => 'Tài khoản quản trị', 'route' => 'admin.admins.index', 'url' => '/admin/admins'],
-                ['label' => 'Nhóm quyền',         'route' => 'admin.roles.index', 'url' => '/admin/roles'],
-                ['label' => 'Phân quyền',         'route' => 'admin.permissions.index', 'url' => '/admin/permissions'],
+                ['label' => 'Nhóm quyền', 'route' => 'admin.roles.index', 'url' => '/admin/roles'],
+                ['label' => 'Phân quyền', 'route' => 'admin.permissions.index', 'url' => '/admin/permissions'],
             ],
         ],
     ];
 @endphp
 
-<aside id="admin-sidebar"
-       class="fixed inset-y-0 left-0 z-50 w-64 bg-admin-sidebar text-white
-              -translate-x-full lg:translate-x-0 transition-transform duration-300 overflow-y-auto">
-
+<aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-admin-sidebar text-white -translate-x-full lg:translate-x-0 transition-transform duration-300 overflow-y-auto">
     <div class="flex items-center justify-between px-5 h-16 border-b border-white/10">
         <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : url('/admin') }}" class="flex items-center gap-2">
             <span class="w-8 h-8 rounded-blob bg-coral flex items-center justify-center font-display font-bold">M</span>
@@ -84,12 +79,16 @@
                     @foreach ($group['items'] as $item)
                         @php
                             $itemUrl = Route::has($item['route']) ? route($item['route']) : url($item['url'] ?? '#');
-                            $isActive = request()->routeIs($item['route'].'*') || request()->is(ltrim($item['url'] ?? '', '/').'*');
+
+                            if ($item['url'] === '/admin' || $item['route'] === 'admin.dashboard') {
+                                $isActive = request()->routeIs('admin.dashboard') || request()->path() === 'admin';
+                            } else {
+                                $cleanUrl = ltrim($item['url'] ?? '', '/');
+                                $isActive = (Route::has($item['route']) && request()->routeIs($item['route'] . '*')) || ($cleanUrl && request()->is($cleanUrl . '*'));
+                            }
                         @endphp
                         <li>
-                            <a href="{{ $itemUrl }}"
-                               class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
-                                      {{ $isActive ? 'bg-coral text-white font-semibold' : 'text-white/75 hover:bg-admin-sidebar-hover hover:text-white' }}">
+                            <a href="{{ $itemUrl }}" class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm {{ $isActive ? 'bg-coral text-white font-semibold' : 'text-white/75 hover:bg-admin-sidebar-hover hover:text-white' }}">
                                 <span class="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
                                 {{ $item['label'] }}
                             </a>
