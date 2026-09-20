@@ -1374,4 +1374,25 @@ class ProductController extends Controller
             )
         );
     }
+
+    /**
+     * Tìm kiếm sản phẩm theo tên hoặc SKU
+     */
+    public function search(Request $request)
+    {
+        $q = trim($request->input('q', ''));
+
+        $products = Product::query()
+            ->select('id', 'name')
+            ->where('is_active', 1)
+            ->where(function ($query) use ($q) {
+                $query->where('name', 'like', "%{$q}%")
+                    ->orWhere('slug', 'like', "%{$q}%");
+            })
+            ->orderBy('name')
+            ->limit(10)
+            ->get();
+
+        return response()->json($products);
+    }
 }

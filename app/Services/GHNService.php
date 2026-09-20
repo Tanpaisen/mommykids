@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class GHNService
@@ -24,23 +25,29 @@ class GHNService
     /** Lấy danh sách tỉnh/thành */
     public function getProvinces(): array
     {
-        return $this->get('/shiip/public-api/master-data/province');
+        return Cache::remember('ghn_provinces', 86400, fn () =>
+            $this->get('/shiip/public-api/master-data/province')
+        );
     }
 
     /** Lấy danh sách quận/huyện theo tỉnh */
     public function getDistricts(int $provinceId): array
     {
-        return $this->post('/shiip/public-api/master-data/district', [
-            'province_id' => $provinceId,
-        ]);
+        return Cache::remember("ghn_districts_{$provinceId}", 86400, fn () =>
+            $this->post('/shiip/public-api/master-data/district', [
+                'province_id' => $provinceId,
+            ])
+        );
     }
 
     /** Lấy danh sách phường/xã theo quận */
     public function getWards(int $districtId): array
     {
-        return $this->post('/shiip/public-api/master-data/ward', [
-            'district_id' => $districtId,
-        ]);
+        return Cache::remember("ghn_wards_{$districtId}", 86400, fn () =>
+            $this->post('/shiip/public-api/master-data/ward', [
+                'district_id' => $districtId,
+            ])
+        );
     }
 
     // ─── Phí vận chuyển ──────────────────────────────────────────────────────

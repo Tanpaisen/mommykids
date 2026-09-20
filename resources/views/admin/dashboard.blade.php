@@ -26,7 +26,9 @@
         <div class="card p-5">
             <p class="text-xs text-ink-soft uppercase tracking-wide">Bình luận chưa trả lời</p>
             <p class="font-display font-bold text-2xl text-coral mt-1">{{ $pendingComments->count() }}</p>
-            <a href="{{ route('admin.comments.index') }}" class="text-xs text-coral font-semibold hover:underline">Xử lý ngay →</a>
+            @can('handbook.view')
+                <a href="{{ route('admin.comments.index') }}" class="text-xs text-coral font-semibold hover:underline">Xử lý ngay →</a>
+            @endcan
         </div>
     </div>
 

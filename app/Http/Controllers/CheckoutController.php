@@ -232,107 +232,110 @@ return response()->json([
 
         $data = $request->validate([
             'voucher_id' => ['required', 'string'],
-            'type' => ['required', 'in:order,shipping'],
-        ], [
-            'voucher_id.required' => 'Vui lòng chọn mã ưu đãi.',
-            'type.in' => 'Loại mã ưu đãi không hợp lệ.',
+            'type'       => ['required', 'in:order,shipping'],
         ]);
 
         $type = $data['type'];
         $user = Auth::user();
-
-        // Checkout chỉ cho dùng voucher đã được người dùng lưu vào ví.
-        // Không tin voucher_id từ frontend: luôn truy vấn lại qua savedVouchers().
-        $voucher = $user->savedVouchers()
-            ->where('vouchers.id', $data['voucher_id'])
-            ->where('vouchers.type', $type)
-            ->first();
-
-        if (!$voucher) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Mã ưu đãi này không có trong ví của bạn hoặc không còn khả dụng.',
-            ], 404);
-        }
-
         $items = $this->cart->items();
         $subtotal = (int) $this->cart->total();
         $shippingFee = (int) session('checkout_shipping_fee', 0);
 
         try {
-            $validation = $this->voucherValidation->validate(
-                $voucher,
-                $user,
-                $items
+            // 🔒 Toàn bộ trong transaction + lock row voucher
+            $validationResult = DB::transaction(function () use (
+                $data, $type, $user, $items, $subtotal, $shippingFee
+            ) {
+                $voucher = Voucher::where('id', $data['voucher_id'])
+                    ->where('type', $type)
+                    ->active()
+                    ->lockForUpdate() // 🔒 Khóa row chống 2 request cùng lúc
+                    ->first();
+
+                if (!$voucher) {
+                    throw new \RuntimeException('Mã ưu đãi không tồn tại hoặc đã hết hạn.');
+                }
+
+                $isSaved = $user->savedVouchers()->where('vouchers.id', $voucher->id)->exists();
+                $isAutoApply = !$voucher->require_save_to_user && $voucher->is_public;
+                if (!$isSaved && !$isAutoApply) {
+                    throw new \RuntimeException('Mã ưu đãi này không có trong ví của bạn.');
+                }
+
+                $validation = $this->voucherValidation->validate($voucher, $user, $items);
+
+                // ✅ SỬA: tách đúng amount / shipping_discount
+                $discount = $this->discountCalculator->calculate(
+                    $voucher,
+                    (float) $validation['eligible_subtotal'],
+                    (float) $shippingFee
+                );
+
+                $totalDiscount = (int) $discount['amount'] + (int) $discount['shipping_discount'];
+                if ($totalDiscount <= 0 && $type !== 'shipping') {
+                    throw new \RuntimeException('Mã này không tạo được mức giảm.');
+                }
+
+                // Lưu vào session (1 slot = 1 mã, ghi đè mã cũ cùng loại)
+                $slots = session('checkout_vouchers', []);
+                $slots[$type] = [
+                    'id'   => (string) $voucher->id,
+                    'code' => $voucher->code,
+                    'type' => $voucher->type,
+                    'name' => $voucher->name,
+                ];
+                session(['checkout_vouchers' => $slots]);
+
+                return compact('voucher', 'discount', 'totalDiscount');
+            });
+
+            $voucher = $validationResult['voucher'];
+            $discount = $validationResult['discount'];
+
+            // Tính lại tổng tiền (không cần lock nữa)
+            $breakdown = $this->calculateVoucherBreakdown($items, $subtotal, $shippingFee, $user, false, false);
+            $pointsDiscount = min(
+                (int) session('point_discount', 0),
+                max(0, $subtotal - $breakdown['order_discount'])
+            );
+            $total = max(
+                0,
+                $subtotal
+                - $breakdown['order_discount']
+                + $shippingFee
+                - $breakdown['shipping_discount']
+                - $pointsDiscount
             );
 
-            $discount = $this->discountCalculator->calculate(
-                $voucher,
-                (float) $validation['eligible_subtotal'],
-                (float) $shippingFee
-            );
+            $message = $type === 'shipping' && $shippingFee <= 0
+                ? 'Đã lưu mã vận chuyển. Mức giảm sẽ tính sau khi có phí ship.'
+                : 'Áp dụng mã ưu đãi thành công.';
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'voucher' => [
+                    'id'   => (string) $voucher->id,
+                    'code' => $voucher->code,
+                    'name' => $voucher->name,
+                    'type' => $voucher->type,
+                    'discount' => $discount,
+                ],
+                'pricing' => [
+                    'subtotal'                 => $subtotal,
+                    'shipping_fee'             => $shippingFee,
+                    'order_voucher_discount'   => $breakdown['order_discount'],
+                    'shipping_voucher_discount'=> $breakdown['shipping_discount'],
+                    'points_discount'          => $pointsDiscount,
+                    'total'                    => $total,
+                ],
+            ]);
         } catch (Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 422);
         }
-
-        $slots = session('checkout_vouchers', []);
-        $slots[$type] = [
-            'id' => (string) $voucher->id,
-            'code' => $voucher->code,
-            'type' => $voucher->type,
-            'name' => $voucher->name,
-        ];
-        session(['checkout_vouchers' => $slots]);
-
-        $breakdown = $this->calculateVoucherBreakdown(
-            $items,
-            $subtotal,
-            $shippingFee,
-            $user,
-            false,
-            false
-        );
-
-        $pointsDiscount = min(
-            (int) session('point_discount', 0),
-            max(0, $subtotal - $breakdown['order_discount'])
-        );
-
-        $total = max(
-            0,
-            $subtotal
-            - $breakdown['order_discount']
-            + $shippingFee
-            - $breakdown['shipping_discount']
-            - $pointsDiscount
-        );
-
-        $message = $type === 'shipping' && $shippingFee <= 0
-            ? 'Đã lưu mã vận chuyển. Mức giảm sẽ được tính sau khi có phí ship.'
-            : 'Áp dụng mã ưu đãi thành công.';
-
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'voucher' => [
-                'id' => (string) $voucher->id,
-                'code' => $voucher->code,
-                'name' => $voucher->name,
-                'type' => $voucher->type,
-                'discount' => $discount,
-            ],
-            'pricing' => [
-                'subtotal' => $subtotal,
-                'shipping_fee' => $shippingFee,
-                'order_voucher_discount' => $breakdown['order_discount'],
-                'shipping_voucher_discount' => $breakdown['shipping_discount'],
-                'points_discount' => $pointsDiscount,
-                'total' => $total,
-            ],
-        ]);
     }
 
     public function removeVoucher(Request $request)
@@ -1017,12 +1020,38 @@ return response()->json([
             return collect();
         }
 
-        $vouchers = $user->savedVouchers()
+        $now = now();
+        $savedIds = $user->savedVouchers()
             ->where('vouchers.type', $type)
-            ->orderByDesc('vouchers.priority')
-            ->orderBy('vouchers.expires_at')
+            ->pluck('vouchers.id');
+
+        $vouchers = Voucher::where('type', $type)
+            ->where(function ($q) use ($savedIds, $now) {
+                // Loại 1: Đã lưu vào tài khoản
+                $q->whereIn('id', $savedIds)
+                // Loại 2: Không cần lưu + công khai + đủ thời gian
+                ->orWhere(function ($q2) use ($now) {
+                    $q2->where('require_save_to_user', false)
+                        ->where('is_public', true)
+                        ->where('status', 'active')
+                        ->where(function ($qTime) use ($now) {
+                            $qTime->whereNull('starts_at')
+                                ->orWhere('starts_at', '<=', $now);
+                        })
+                        ->where(function ($qTime) use ($now) {
+                            $qTime->whereNull('expires_at')
+                                ->orWhere('expires_at', '>=', $now);
+                        })
+                        ->where(fn ($q) => $q
+                            ->whereNull('total_quantity')
+                            ->orWhereColumn('total_quantity', '>', 'used_count')
+                        );
+                });
+            })
+            ->orderBy('expires_at')
             ->get();
 
+        // Lọc tiếp theo điều kiện áp dụng thực tế
         return $vouchers
             ->filter(function (Voucher $voucher) use ($user, $items) {
                 try {
@@ -1031,7 +1060,6 @@ return response()->json([
                         $user,
                         $items
                     );
-
                     return true;
                 } catch (Throwable $e) {
                     return false;
@@ -1045,23 +1073,17 @@ return response()->json([
                             : ''),
                     'fixed' => 'Giảm ' . number_format((int) $voucher->discount_value, 0, ',', '.') . 'đ',
                     'free_shipping' => (int) $voucher->max_discount_amount > 0
-    ? 'Giảm phí ship tối đa '
-        . number_format(
-            (int) $voucher->max_discount_amount,
-            0,
-            ',',
-            '.'
-        ) . 'đ'
-    : 'Miễn phí vận chuyển',
+                        ? 'Giảm phí ship tối đa ' . number_format((int) $voucher->max_discount_amount, 0, ',', '.') . 'đ'
+                        : 'Miễn phí vận chuyển',
                     default => 'Ưu đãi',
                 };
-
                 return [
                     'id' => (string) $voucher->id,
                     'code' => $voucher->code,
                     'name' => $voucher->name,
                     'benefit' => $benefit,
                     'expires_at' => $voucher->expires_at?->format('d/m/Y'),
+                    'is_auto' => !$voucher->require_save_to_user, // Đánh dấu loại tự động
                 ];
             })
             ->values();
@@ -1113,12 +1135,10 @@ return response()->json([
                     throw new \RuntimeException('Mã ưu đãi đã thay đổi hoặc không còn tồn tại.');
                 }
 
-                if (
-                    !$user ||
-                    !$user->savedVouchers()
-                        ->where('vouchers.id', $voucher->id)
-                        ->exists()
-                ) {
+                $isSaved = $user && $user->savedVouchers()->where('vouchers.id', $voucher->id)->exists();
+                $isAutoApply = $voucher && !$voucher->require_save_to_user && $voucher->is_public;
+
+                if (!$isSaved && !$isAutoApply) {
                     throw new \RuntimeException('Mã ưu đãi này không còn trong ví của bạn.');
                 }
 
@@ -1134,26 +1154,38 @@ return response()->json([
                     (float) $shippingFee
                 );
 
-                if (
-                    $voucher->total_budget !== null &&
-                    ((int) $validation['total_discounted'] + (int) $discount) > (int) $voucher->total_budget
-                ) {
-                    throw new \RuntimeException('Ngân sách còn lại của mã ưu đãi không đủ cho đơn hàng này.');
+                $orderDiscount = (int) $discount['amount'];
+                $shipDiscount  = (int) $discount['shipping_discount'];
+                $totalDiscount = $orderDiscount + $shipDiscount;
+
+                if ($totalDiscount <= 0 && $voucher->type !== 'shipping') {
+                    throw new \RuntimeException('Mã này không tạo được mức giảm cho đơn hàng.');
                 }
 
-                $key = $type === 'order'
-                    ? 'order_discount'
-                    : 'shipping_discount';
+                if (
+                    $voucher->total_budget !== null &&
+                    ((int) $validation['total_discounted'] + $totalDiscount) > (int) $voucher->total_budget
+                ) {
+                    throw new \RuntimeException('Ngân sách còn lại của mã ưu đãi không đủ.');
+                }
 
-                $result[$key] = (int) $discount;
+                if ($type === 'order') {
+                    $result['order_discount'] = $orderDiscount;
+                } else {
+                    $result['shipping_discount'] = $shipDiscount;
+                }
+
                 $result[$type] = [
-                    'id' => (string) $voucher->id,
+                    'id'   => (string) $voucher->id,
                     'code' => $voucher->code,
                     'name' => $voucher->name,
                 ];
+
                 $result['details'][$type] = [
-                    'voucher' => $voucher,
-                    'discount' => (int) $discount,
+                    'voucher'           => $voucher,
+                    'discount'          => $totalDiscount, 
+                    'order_discount'    => $orderDiscount,
+                    'shipping_discount' => $shipDiscount,
                     'eligible_subtotal' => (int) $validation['eligible_subtotal'],
                 ];
             } catch (Throwable $e) {

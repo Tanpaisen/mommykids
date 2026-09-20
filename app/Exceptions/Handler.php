@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use Spatie\Permission\Exceptions\UnauthorizedException;
 
 class Handler extends ExceptionHandler
 {
@@ -41,8 +42,11 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        $this->renderable(function (UnauthorizedException $e, $request) {
+            if ($request->is('admin/*')) {
+                return redirect()->route('admin.dashboard')
+                    ->with('error', 'Bạn không có quyền truy cập trang này.');
+            }
         });
     }
 }

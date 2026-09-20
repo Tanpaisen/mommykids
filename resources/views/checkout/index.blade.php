@@ -271,24 +271,24 @@
                         @endif
 
                         @if(config('services.paypal.enabled'))
-    <label class="mk-payment-option">
-        <input
-            type="radio"
-            name="payment_method"
-            value="paypal"
-            {{ old('payment_method') === 'paypal' ? 'checked' : '' }}
-        >
+                            <label class="mk-payment-option">
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="paypal"
+                                    {{ old('payment_method') === 'paypal' ? 'checked' : '' }}
+                                >
 
-        <span class="mk-payment-icon">🅿️</span>
+                                <span class="mk-payment-icon">🅿️</span>
 
-        <span>
-            <strong>PayPal</strong>
-            <small>
-                Thanh toán qua PayPal Sandbox
-            </small>
-        </span>
-    </label>
-@endif
+                                <span>
+                                    <strong>PayPal</strong>
+                                    <small>
+                                        Thanh toán qua PayPal Sandbox
+                                    </small>
+                                </span>
+                            </label>
+                        @endif
                     </section>
                 </div>
 
