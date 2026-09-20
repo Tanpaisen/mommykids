@@ -285,7 +285,7 @@ class OrderController extends Controller
 
         try {
             // Lấy URL in từ GHN Service
-            $url = $this->ghn->getPrintToken($order->shipment->ghn_order_code);
+            $url = $this->ghn->getPrintUrl($order->shipment->ghn_order_code);
             
             // Cập nhật thời gian in
             $order->shipment->update(['printed_at' => now()]);

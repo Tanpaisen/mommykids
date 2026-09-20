@@ -75,6 +75,8 @@
 
 @push('scripts')
 <script>
+const CAN_MANAGE_ORDERS = @json(auth('admin')->user()->can('orders.manage'));
+
 let debounceTimer = null;
 
 function debounceSearch() {
@@ -141,7 +143,10 @@ async function fetchShipments(page = 1) {
             <td class="px-5 py-3.5 text-gray-500">${s.expected_delivery_at ?? '—'}</td>
             <td class="px-5 py-3.5 text-right whitespace-nowrap">
                 <a href="/admin/don-hang/${s.order_code}" class="text-indigo-600 hover:underline text-xs mr-3">Chi tiết</a>
-                <a href="/admin/don-hang/${s.order_code}/in-van-don" target="_blank" class="text-blue-600 hover:underline text-xs">In vận đơn</a>
+                ${CAN_MANAGE_ORDERS ? 
+                    `<a href="/admin/don-hang/${s.order_code}/in-van-don" target="_blank" class="text-blue-600 hover:underline text-xs">In vận đơn</a>` 
+                    : ''
+                }
             </td>
         </tr>
     `).join('');

@@ -25,98 +25,118 @@ class VoucherController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Khai báo rules đầy đủ (Bổ sung type và scope)
         $rules = [
-            'type'                 => 'required|in:order,shipping',
-            'code'                 => 'required|string|max:50|unique:vouchers,code',
-            'name'                 => 'required|string|max:255',
-            'description'          => 'nullable|string',
-
+            'type'                => 'required|in:order,shipping',
+            'code'                => 'required|string|max:50|unique:vouchers,code',
+            'name'                => 'required|string|max:255',
+            'description'         => 'nullable|string',
             'is_public'           => 'nullable|boolean',
             'auto_apply'          => 'nullable|boolean',
-            // 'is_stackable'        => 'nullable|boolean',
-            // 'priority'            => 'nullable|integer|min:0',
-            // 'channel'             => 'nullable|in:all,web,app',
-
-            'discount_type'        => 'required|in:percent,fixed,free_shipping',
-            'discount_value'       => 'required|numeric|min:0',
-            'max_discount_amount'  => 'nullable|numeric|min:0',
-            'min_order_amount'     => 'nullable|numeric|min:0',
-            'total_quantity'       => 'nullable|integer|min:1',
-            'usage_limit_per_user' => 'required|integer|min:1',
+            'is_stackable'        => 'nullable|boolean',
+            'priority'            => 'nullable|integer|min:0',
+            'channel'             => 'nullable|in:all,web,app',
+            'discount_type'       => 'required|in:percent,fixed,free_shipping',
+            'discount_value'      => 'required|numeric|min:0',
+            'max_discount_amount' => 'nullable|numeric|min:0',
+            'min_order_amount'    => 'nullable|numeric|min:0',
+            'total_quantity'      => 'nullable|integer|min:1',
+            'usage_limit_per_user'=> 'required|integer|min:1',
             'total_budget'        => 'nullable|numeric|min:0',
-            'starts_at'            => 'nullable|date',
-            'expires_at'           => 'nullable|date|after_or_equal:starts_at',
-            'require_save_to_user' => 'nullable|boolean',
-            
-            // Các trường Đối tượng & Phạm vi
-            'apply_to'             => 'required|in:all,new_user,specific_tiers,specific_users',
-            'status'               => 'required|in:draft,scheduled,active,paused,expired',
-            'scope'                => 'required|in:all,specific_categories',
-            'tiers'                => 'nullable|array',
-            'tiers.*'              => 'in:member,silver,gold,diamond',
-            'category_ids'         => 'nullable|array',
-            'user_emails'          => 'nullable|string',
+            'starts_at'           => 'nullable|date',
+            'expires_at'          => 'nullable|date|after_or_equal:starts_at',
+            'require_save_to_user'=> 'nullable|boolean',
+            'apply_to'            => 'required|in:all,new_user,specific_tiers,specific_users',
+            'status'              => 'required|in:draft,scheduled,active,paused,expired',
+            // ✅ ĐÃ BỔ SUNG specific_products
+            'scope'               => 'required|in:all,specific_categories,specific_products',
+            'tiers'               => 'nullable|array',
+            'tiers.*'             => 'in:member,silver,gold,diamond',
+            'category_ids'        => 'nullable|array',
+            'product_ids'         => 'nullable|string', // Lưu dạng JSON
+            'user_emails'         => 'nullable|string',
         ];
 
-        // 2. Tùy chỉnh thông báo lỗi
         $messages = [
-            'code.unique'               => 'Mã Voucher này đã tồn tại trên hệ thống.',
-            'code.required'             => 'Vui lòng nhập mã Voucher.',
+            'code.unique' => 'Mã Voucher này đã tồn tại trên hệ thống.',
+            'code.required' => 'Vui lòng nhập mã Voucher.',
             'expires_at.after_or_equal' => 'Thời gian kết thúc phải diễn ra sau thời gian bắt đầu.',
         ];
 
         $validated = $request->validate($rules, $messages);
 
-        // 3. Logic chặn lỗi nhập liệu chuyên sâu
         if ($validated['discount_type'] === 'percent' && $validated['discount_value'] > 100) {
             return back()->withErrors(['discount_value' => 'Mức giảm phần trăm không được vượt quá 100%'])->withInput();
         }
 
-        // Tự động IN HOA mã code
         $validated['code'] = Str::upper($validated['code']);
-        
-        // Xử lý các Checkbox
         $validated['is_public'] = $request->boolean('is_public', true);
         $validated['auto_apply'] = $request->boolean('auto_apply', false);
         $validated['require_save_to_user'] = $request->boolean('require_save_to_user', false);
-        // $validated['is_stackable'] = $request->boolean('is_stackable', false);
-        // $validated['priority'] = $request->input('priority', 0);
-        // $validated['channel'] = $request->input('channel', 'all');
+        $validated['is_stackable'] = $request->boolean('is_stackable', false);
+        $validated['priority'] = $request->input('priority', 0);
+        $validated['channel'] = $request->input('channel', 'all');
         $validated['owner_type'] = $request->input('owner_type', 'platform');
 
-        // BẮT BUỘC: Xóa các trường ảo trước khi lưu vào bảng chính
-        unset($validated['tiers'], $validated['category_ids'], $validated['user_emails'], $validated['scope']);
+        $applyTo = $validated['apply_to'];
+        $scope = $validated['scope'];
+        $type = $validated['type'];
+        $tiers = $validated['tiers'] ?? [];
+        $categoryIds = $validated['category_ids'] ?? [];
+        $rawProductIds = trim($validated['product_ids'] ?? '');
+        $productIds = [];
 
-        // 4. Lưu bảng chính Voucher
+        if (!empty($rawProductIds)) {
+            $decoded = json_decode($rawProductIds, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $productIds = array_filter($decoded);
+            } else {
+                $productIds = array_filter(array_map('trim', explode(',', $rawProductIds)));
+            }
+        }
+        unset($validated['tiers'], $validated['category_ids'], $validated['product_ids'], $validated['user_emails'], $validated['scope']);
+
         $voucher = Voucher::create($validated);
 
-        // 5. Lưu bảng phụ: Xử lý dữ liệu Hạng thẻ
-        if ($request->apply_to === 'specific_tiers' && $request->has('tiers')) {
+        // Lưu điều kiện hạng thành viên
+        if ($applyTo === 'specific_tiers' && !empty($tiers)) {
             $conditions = [];
-            foreach ($request->tiers as $tier) {
-                $conditions[] = ['type' => 'tier', 'operator' => 'eq', 'value' => $tier, 'is_include' => true];
+            foreach ($tiers as $tier) {
+                $conditions[] = [
+                    'type' => 'tier', 'operator' => 'eq', 'value' => $tier, 'is_include' => true,
+                ];
             }
             $voucher->conditions()->createMany($conditions);
         }
 
-        // 6. Lưu bảng phụ: Xử lý dữ liệu Tặng khách hàng cụ thể
-        if ($request->apply_to === 'specific_users' && $request->filled('user_emails')) {
-            $emails = array_map('trim', explode(',', $request->user_emails));
+        // Lưu điều kiện danh mục
+        if ($type === 'order' && $scope === 'specific_categories' && !empty($categoryIds)) {
+            $categoryConditions = [];
+            foreach ($categoryIds as $catId) {
+                $categoryConditions[] = [
+                    'type' => 'category', 'operator' => 'in', 'value' => $catId, 'is_include' => true,
+                ];
+            }
+            $voucher->conditions()->createMany($categoryConditions);
+        }
+
+        // ✅ Lưu điều kiện sản phẩm
+        if ($type === 'order' && $scope === 'specific_products' && !empty($productIds)) {
+            $productConditions = [];
+            foreach ($productIds as $prodId) {
+                $productConditions[] = [
+                    'type' => 'product', 'operator' => 'in', 'value' => $prodId, 'is_include' => true,
+                ];
+            }
+            $voucher->conditions()->createMany($productConditions);
+        }
+
+        // Lưu người dùng cụ thể
+        if ($applyTo === 'specific_users' && !empty($validated['user_emails'])) {
+            $emails = array_map('trim', explode(',', $validated['user_emails']));
             $userIds = User::whereIn('email', $emails)->pluck('id')->toArray();
-            
             if (!empty($userIds)) {
                 $voucher->savedUsers()->syncWithoutDetaching($userIds);
             }
-        }
-
-        // 7. Xử lý dữ liệu Danh mục sản phẩm (Chỉ áp dụng nếu là mã Đơn hàng)
-        if ($request->type === 'order' && $request->scope === 'specific_categories' && $request->has('category_ids')) {
-            $categoryConditions = [];
-            foreach ($request->category_ids as $catId) {
-                $categoryConditions[] = ['type' => 'category', 'operator' => 'in', 'value' => $catId, 'is_include' => true];
-            }
-            $voucher->conditions()->createMany($categoryConditions);
         }
 
         return redirect()->route('admin.vouchers.index')->with('success', 'Đã tạo thành công Voucher: ' . $validated['code']);
@@ -129,12 +149,22 @@ class VoucherController extends Controller
 
         $selectedTiers = $voucher->conditions->where('type', 'tier')->pluck('value')->toArray();
         $selectedCategories = $voucher->conditions->where('type', 'category')->pluck('value')->toArray();
+        $selectedProducts = $voucher->conditions->where('type', 'product')->pluck('value')->toArray();
         $selectedEmails = $voucher->savedUsers->pluck('email')->implode(', ');
 
-        $currentScope = count($selectedCategories) > 0 ? 'specific_categories' : 'all';
+        // Xác định phạm vi hiện tại
+        if (count($selectedProducts) > 0) {
+            $currentScope = 'specific_products';
+        } elseif (count($selectedCategories) > 0) {
+            $currentScope = 'specific_categories';
+        } else {
+            $currentScope = 'all';
+        }
 
         return view('admin.vouchers.edit', compact(
-            'voucher', 'categories', 'selectedTiers', 'selectedCategories', 'selectedEmails', 'currentScope'
+            'voucher', 'categories', 'selectedTiers',
+            'selectedCategories', 'selectedProducts',
+            'selectedEmails', 'currentScope'
         ));
     }
 
@@ -148,11 +178,10 @@ class VoucherController extends Controller
             'name'                 => 'required|string|max:255',
             'is_public'            => 'nullable|boolean',
             'auto_apply'           => 'nullable|boolean',
-            // 'is_stackable'         => 'nullable|boolean',
-            // 'priority'            => 'nullable|integer|min:0',
-            // 'channel'             => 'nullable|in:all,web,app',
+            'is_stackable'         => 'nullable|boolean',
+            'priority'             => 'nullable|integer|min:0',
+            'channel'              => 'nullable|in:all,web,app',
             'description'          => 'nullable|string',
-
             'discount_type'        => 'required|in:percent,fixed,free_shipping',
             'discount_value'       => 'required|numeric|min:0',
             'max_discount_amount'  => 'nullable|numeric|min:0',
@@ -164,10 +193,11 @@ class VoucherController extends Controller
             'expires_at'           => 'nullable|date|after_or_equal:starts_at',
             'apply_to'             => 'required|in:all,new_user,specific_tiers,specific_users',
             'status'               => 'required|in:draft,scheduled,active,paused,expired',
-            'scope'                => 'required|in:all,specific_categories',
+            'scope'                => 'required|in:all,specific_categories,specific_products',
             'tiers'                => 'nullable|array',
             'tiers.*'              => 'in:member,silver,gold,diamond',
             'category_ids'         => 'nullable|array',
+            'product_ids'          => 'nullable|string',
             'user_emails'          => 'nullable|string',
         ];
 
@@ -184,34 +214,63 @@ class VoucherController extends Controller
         $validated['is_public'] = $request->has('is_public');
         $validated['auto_apply'] = $request->has('auto_apply');
         $validated['require_save_to_user'] = $request->boolean('require_save_to_user', false);
-        // BẮT BUỘC: Xóa các trường ảo trước khi update
-        unset($validated['tiers'], $validated['category_ids'], $validated['user_emails'], $validated['scope']);
 
-        // 1. Cập nhật bảng chính
+        $type = $validated['type'];
+        $scope = $validated['scope'];
+        $applyTo = $validated['apply_to'];
+        $tiers = $validated['tiers'] ?? [];
+        $categoryIds = $validated['category_ids'] ?? [];
+        $rawProductIds = trim($validated['product_ids'] ?? '');
+        $productIds = [];
+
+        if (!empty($rawProductIds)) {
+            $decoded = json_decode($rawProductIds, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                // Định dạng JSON hợp lệ
+                $productIds = array_filter($decoded);
+            } else {
+                // Định dạng chuỗi phân tách dấu phẩy
+                $productIds = array_filter(array_map('trim', explode(',', $rawProductIds)));
+            }
+        }
+
+        unset($validated['tiers'], $validated['category_ids'], $validated['product_ids'], $validated['user_emails'], $validated['scope']);
+
+        // Cập nhật thông tin chính
         $voucher->update($validated);
 
-        // 2. Cập nhật bảng Điều kiện (Xóa cũ, chèn mới)
+        // Xóa toàn bộ điều kiện cũ → ghi mới
         $voucher->conditions()->delete();
-        $conditionsToInsert = [];
 
-        if ($request->apply_to === 'specific_tiers' && $request->has('tiers')) {
-            foreach ($request->tiers as $tier) {
-                $conditionsToInsert[] = ['type' => 'tier', 'operator' => 'eq', 'value' => $tier, 'is_include' => true];
+        // Hạng thành viên
+        if ($applyTo === 'specific_tiers' && !empty($tiers)) {
+            foreach ($tiers as $tier) {
+                $voucher->conditions()->create([
+                    'type' => 'tier', 'operator' => 'eq', 'value' => $tier, 'is_include' => true,
+                ]);
             }
         }
 
-        if ($request->type === 'order' && $request->scope === 'specific_categories' && $request->has('category_ids')) {
-            foreach ($request->category_ids as $catId) {
-                $conditionsToInsert[] = ['type' => 'category', 'operator' => 'in', 'value' => $catId, 'is_include' => true];
+        // Danh mục
+        if ($type === 'order' && $scope === 'specific_categories' && !empty($categoryIds)) {
+            foreach ($categoryIds as $catId) {
+                $voucher->conditions()->create([
+                    'type' => 'category', 'operator' => 'in', 'value' => $catId, 'is_include' => true,
+                ]);
             }
         }
 
-        if (!empty($conditionsToInsert)) {
-            $voucher->conditions()->createMany($conditionsToInsert);
+        // Sản phẩm cụ thể
+        if ($type === 'order' && $scope === 'specific_products' && !empty($productIds) && is_iterable($productIds)) {
+            foreach ($productIds as $prodId) {
+                $voucher->conditions()->create([
+                    'type' => 'product', 'operator' => 'in', 'value' => $prodId, 'is_include' => true,
+                ]);
+            }
         }
 
-        // 3. Cập nhật User cho phép
-        if ($request->apply_to === 'specific_users' && $request->filled('user_emails')) {
+        // Người dùng cụ thể
+        if ($applyTo === 'specific_users' && $request->filled('user_emails')) {
             $emails = array_map('trim', explode(',', $request->user_emails));
             $userIds = User::whereIn('email', $emails)->pluck('id')->toArray();
             $voucher->savedUsers()->sync($userIds);

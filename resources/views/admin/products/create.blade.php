@@ -511,12 +511,11 @@
 
                     <div class="flex flex-col gap-3">
 
-                        <button
-                            type="submit"
-                            class="btn-primary w-full"
-                        >
-                            Lưu sản phẩm
-                        </button>
+                        @can('products.manage')
+                            <button type="submit" class="btn-primary w-full">
+                                Lưu sản phẩm
+                            </button>
+                        @endcan
 
                         <a
                             href="{{ route('admin.products.index') }}"

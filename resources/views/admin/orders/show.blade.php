@@ -174,20 +174,26 @@
             </div>
 
             @if(count($nextStatuses))
-                <form method="POST" action="{{ route('admin.orders.status', $order) }}">
-                    @csrf
-                    @method('PATCH')
-                    <label class="text-xs text-gray-500 block mb-2">Chuyển trạng thái</label>
-                    <select name="status" required class="border rounded-lg px-3 py-2 text-sm w-full mb-3">
-                        <option value="">-- Chọn trạng thái --</option>
-                        @foreach($nextStatuses as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
-                    <button type="submit" class="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm hover:bg-indigo-700">
-                        Cập nhật trạng thái
-                    </button>
-                </form>
+                @can('orders.manage')
+                    <form method="POST" action="{{ route('admin.orders.status', $order) }}">
+                        @csrf
+                        @method('PATCH')
+                        <label class="text-xs text-gray-500 block mb-2">Chuyển trạng thái</label>
+                        <select name="status" required class="border rounded-lg px-3 py-2 text-sm w-full mb-3">
+                            <option value="">-- Chọn trạng thái --</option>
+                            @foreach($nextStatuses as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm hover:bg-indigo-700">
+                            Cập nhật trạng thái
+                        </button>
+                    </form>
+                @else
+                    <div class="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-500">
+                        🔒 Bạn không có quyền thay đổi trạng thái đơn hàng này.
+                    </div>
+                @endcan
             @else
                 @if($order->status === 'delivered')
                     <div class="bg-green-50 text-green-700 rounded-lg px-3 py-2 text-sm">✅ Đơn hàng đã hoàn tất.</div>
@@ -341,39 +347,43 @@
 
             @if($order->shipment->status === 'cancel')
                 {{-- Vận đơn đã huỷ — cho tạo lại --}}
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <p class="text-red-600 text-sm font-medium">⚠️ Vận đơn GHN đã bị huỷ.</p>
-                    <p class="text-gray-500 text-xs mt-1">Bạn có thể tạo vận đơn mới cho đơn hàng này ngay bên dưới.</p>
-                </div>
+                @can('orders.manage')
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                        <p class="text-red-600 text-sm font-medium">⚠️ Vận đơn GHN đã bị huỷ.</p>
+                        <p class="text-gray-500 text-xs mt-1">Bạn có thể tạo vận đơn mới cho đơn hàng này ngay bên dưới.</p>
+                    </div>
 
-                <form method="POST" action="{{ route('admin.orders.shipment.create', $order) }}" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    @csrf
-                    <div>
-                        <label class="text-xs text-gray-600 block mb-1">Khối lượng (gram)</label>
-                        <input type="number" name="weight" value="{{ $order->shipment->weight ?? 500 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-600 block mb-1">Dài (cm)</label>
-                        <input type="number" name="length" value="{{ $order->shipment->length ?? 20 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-600 block mb-1">Rộng (cm)</label>
-                        <input type="number" name="width" value="{{ $order->shipment->width ?? 15 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-600 block mb-1">Cao (cm)</label>
-                        <input type="number" name="height" value="{{ $order->shipment->height ?? 10 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
-                    </div>
-                    <div class="col-span-2 md:col-span-4">
-                        <label class="text-xs text-gray-600 block mb-1">Ghi chú</label>
-                        <input type="text" name="note" placeholder="Gọi trước khi giao..." class="border rounded-lg px-3 py-2 text-sm w-full">
-                    </div>
-                    <div class="col-span-2 md:col-span-4">
-                        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-green-700">
-                            🚚 Tạo vận đơn mới
-                        </button>
-                    </div>
-                </form>
+                    <form method="POST" action="{{ route('admin.orders.shipment.create', $order) }}" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        @csrf
+                        <div>
+                            <label class="text-xs text-gray-600 block mb-1">Khối lượng (gram)</label>
+                            <input type="number" name="weight" value="{{ $order->shipment->weight ?? 500 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600 block mb-1">Dài (cm)</label>
+                            <input type="number" name="length" value="{{ $order->shipment->length ?? 20 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600 block mb-1">Rộng (cm)</label>
+                            <input type="number" name="width" value="{{ $order->shipment->width ?? 15 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-600 block mb-1">Cao (cm)</label>
+                            <input type="number" name="height" value="{{ $order->shipment->height ?? 10 }}" min="1" class="border rounded-lg px-3 py-2 text-sm w-full">
+                        </div>
+                        <div class="col-span-2 md:col-span-4">
+                            <label class="text-xs text-gray-600 block mb-1">Ghi chú</label>
+                            <input type="text" name="note" placeholder="Gọi trước khi giao..." class="border rounded-lg px-3 py-2 text-sm w-full">
+                        </div>
+                        <div class="col-span-2 md:col-span-4">
+                            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-green-700">
+                                🚚 Tạo vận đơn mới
+                            </button>
+                        </div>
+                    </form>
+                @else
+                    <div class="text-sm text-red-500">⚠️ Vận đơn GHN đã bị huỷ. Bạn cần liên hệ Quản lý để tạo vận đơn mới.</div>
+                @endcan
             @else
                 {{-- Vận đơn bình thường -> Cho in, tra cứu, hủy --}}
                 <div class="mb-5">
@@ -388,58 +398,64 @@
                 </div>
 
                 <div class="flex gap-3 flex-wrap">
-                    <a href="{{ route('admin.orders.shipment.print', $order) }}" target="_blank" onclick="markPrinted()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-                        🖨️ In vận đơn
-                    </a>
+                    @can('orders.manage')
+                        <a href="{{ route('admin.orders.shipment.print', $order) }}" target="_blank" onclick="markPrinted()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+                            🖨️ In vận đơn
+                        </a>
 
-                    <form method="POST" action="{{ route('admin.orders.shipment.track', $order) }}">
-                        @csrf
-                        <button type="submit" class="border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg text-sm hover:bg-indigo-50">
-                            🔄 Tra cứu GHN
-                        </button>
-                    </form>
-
-                    @if(in_array($order->shipment->status, ['pending', 'ready_to_pick']))
-                        <form method="POST" action="{{ route('admin.orders.shipment.cancel', $order) }}" onsubmit="return confirm('Huỷ vận đơn GHN này?')">
+                        <form method="POST" action="{{ route('admin.orders.shipment.track', $order) }}">
                             @csrf
-                            @method('DELETE')
-                            <button type="submit" class="border border-red-400 text-red-500 px-4 py-2 rounded-lg text-sm hover:bg-red-50">
-                                ❌ Huỷ vận đơn
+                            <button type="submit" class="border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg text-sm hover:bg-indigo-50">
+                                🔄 Tra cứu GHN
                             </button>
                         </form>
-                    @endif
+
+                        @if(in_array($order->shipment->status, ['pending', 'ready_to_pick']))
+                            <form method="POST" action="{{ route('admin.orders.shipment.cancel', $order) }}" onsubmit="return confirm('Huỷ vận đơn GHN này?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="border border-red-400 text-red-500 px-4 py-2 rounded-lg text-sm hover:bg-red-50">
+                                    ❌ Huỷ vận đơn
+                                </button>
+                            </form>
+                        @endif
+                    @endcan
                 </div>
             @endif
         @else
             <p class="text-sm text-gray-500 mb-4">Chưa tạo vận đơn GHN cho đơn này.</p>
-            <form method="POST" action="{{ route('admin.orders.shipment.create', $order) }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                @csrf
-                <div>
-                    <label class="text-xs text-gray-600 block mb-1">Khối lượng (gram)</label>
-                    <input type="number" name="weight" value="500" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
-                </div>
-                <div>
-                    <label class="text-xs text-gray-600 block mb-1">Dài (cm)</label>
-                    <input type="number" name="length" value="20" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
-                </div>
-                <div>
-                    <label class="text-xs text-gray-600 block mb-1">Rộng (cm)</label>
-                    <input type="number" name="width" value="15" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
-                </div>
-                <div>
-                    <label class="text-xs text-gray-600 block mb-1">Cao (cm)</label>
-                    <input type="number" name="height" value="10" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
-                </div>
-                <div class="sm:col-span-2 md:col-span-4">
-                    <label class="text-xs text-gray-600 block mb-1">Ghi chú giao hàng</label>
-                    <input type="text" name="note" placeholder="Gọi trước khi giao, hàng dễ vỡ..." class="border rounded-lg px-3 py-2 text-sm w-full">
-                </div>
-                <div class="sm:col-span-2 md:col-span-4">
-                    <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-green-700">
-                        🚚 Tạo vận đơn GHN
-                    </button>
-                </div>
-            </form>
+            @can('orders.manage')
+                <form method="POST" action="{{ route('admin.orders.shipment.create', $order) }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    @csrf
+                    <div>
+                        <label class="text-xs text-gray-600 block mb-1">Khối lượng (gram)</label>
+                        <input type="number" name="weight" value="500" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600 block mb-1">Dài (cm)</label>
+                        <input type="number" name="length" value="20" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600 block mb-1">Rộng (cm)</label>
+                        <input type="number" name="width" value="15" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-600 block mb-1">Cao (cm)</label>
+                        <input type="number" name="height" value="10" min="1" required class="border rounded-lg px-3 py-2 text-sm w-full">
+                    </div>
+                    <div class="sm:col-span-2 md:col-span-4">
+                        <label class="text-xs text-gray-600 block mb-1">Ghi chú giao hàng</label>
+                        <input type="text" name="note" placeholder="Gọi trước khi giao, hàng dễ vỡ..." class="border rounded-lg px-3 py-2 text-sm w-full">
+                    </div>
+                    <div class="sm:col-span-2 md:col-span-4">
+                        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-green-700">
+                            🚚 Tạo vận đơn GHN
+                        </button>
+                    </div>
+                </form>
+            @else
+                <div class="p-3 bg-gray-50 text-sm text-gray-500 rounded-lg">🔒 Tính năng tạo vận đơn chỉ dành cho cấp Quản lý.</div>
+            @endcan
         @endif
     </div>
 

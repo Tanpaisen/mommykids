@@ -5,10 +5,12 @@
 @section('page_subtitle', 'Quản lý vai trò quản trị viên và giới hạn quyền truy cập theo từng module')
 
 @section('page_actions')
-    <a href="{{ route('admin.roles.create') }}" class="btn-primary">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-        Thêm nhóm quyền
-    </a>
+    @can('roles.manage')
+        <a href="{{ route('admin.roles.create') }}" class="btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Thêm nhóm quyền
+        </a>
+    @endcan
 @endsection
 
 @section('content')
@@ -37,14 +39,18 @@
                         <td class="px-5 py-3.5 text-ink-soft">{{ $role->users_count }} người</td>
                         <td class="px-5 py-3.5 text-ink-soft">{{ $role->updated_at?->format('d/m/Y') }}</td>
                         <td class="px-5 py-3.5 text-right whitespace-nowrap">
-                            <a href="{{ route('admin.roles.edit', $role) }}" class="text-coral font-semibold hover:underline">Sửa quyền</a>
-                            @if ($role->name !== 'Super Admin')
-                                <form action="{{ route('admin.roles.destroy', $role) }}" method="POST" class="inline"
-                                      onsubmit="return confirm('Xóa nhóm quyền {{ $role->name }}? Các tài khoản đang gán nhóm này sẽ mất toàn bộ quyền tương ứng.')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="ml-3 text-ink-soft hover:text-coral">Xóa</button>
-                                </form>
-                            @endif
+                            @can('roles.manage')
+                                <a href="{{ route('admin.roles.edit', $role) }}" class="text-coral font-semibold hover:underline">Sửa quyền</a>
+                                @if ($role->name !== 'Super Admin')
+                                    <form action="{{ route('admin.roles.destroy', $role) }}" method="POST" class="inline"
+                                          onsubmit="return confirm('Xóa nhóm quyền {{ $role->name }}? Các tài khoản đang gán nhóm này sẽ mất toàn bộ quyền tương ứng.')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="ml-3 text-ink-soft hover:text-coral">Xóa</button>
+                                    </form>
+                                @endif
+                            @else
+                                <a href="{{ route('admin.roles.edit', $role) }}" class="text-ink-soft hover:underline">Xem chi tiết</a>
+                            @endcan
                         </td>
                     </tr>
                 @empty

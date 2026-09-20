@@ -20,37 +20,39 @@
 
         <div class="flex flex-wrap items-center gap-3">
 
-            <a
-                href="{{ route('admin.stages.trash') }}"
-                class="inline-flex items-center gap-2 h-11 px-4 rounded-xl
-                       border border-admin-border bg-white
-                       text-sm font-semibold text-ink
-                       hover:border-red-300 hover:text-red-500 transition"
-            >
-                <span>🗑️</span>
+            @can('catalog.manage')
 
-                <span>
-                    Thùng rác
-                </span>
+                <a
+                    href="{{ route('admin.stages.trash') }}"
+                    class="inline-flex items-center gap-2 h-11 px-4 rounded-xl
+                        border border-admin-border bg-white
+                        text-sm font-semibold text-ink
+                        hover:border-red-300 hover:text-red-500 transition"
+                >
+                    <span>🗑️</span>
 
-                @if (($trashCount ?? 0) > 0)
-                    <span
-                        class="inline-flex min-w-5 h-5 items-center justify-center
-                               rounded-full bg-red-500 px-1.5
-                               text-[11px] font-semibold text-white"
-                    >
-                        {{ $trashCount }}
+                    <span>
+                        Thùng rác
                     </span>
-                @endif
-            </a>
 
-            <a
-                href="{{ route('admin.stages.create') }}"
-                class="btn-primary whitespace-nowrap"
-            >
-                + Thêm giai đoạn
-            </a>
+                    @if (($trashCount ?? 0) > 0)
+                        <span
+                            class="inline-flex min-w-5 h-5 items-center justify-center
+                                rounded-full bg-red-500 px-1.5
+                                text-[11px] font-semibold text-white"
+                        >
+                            {{ $trashCount }}
+                        </span>
+                    @endif
+                </a>
 
+                <a
+                    href="{{ route('admin.stages.create') }}"
+                    class="btn-primary whitespace-nowrap"
+                >
+                    + Thêm giai đoạn
+                </a>
+            @endcan
         </div>
 
     </div>
@@ -328,32 +330,37 @@
                             <td class="px-5 py-4">
 
                                 <div class="flex items-center justify-end gap-2">
+                                    @can('catalog.manage')
+                                        <a
+                                            href="{{ route('admin.stages.edit', $stage) }}"
+                                            class="inline-flex items-center justify-center
+                                                px-3 py-1.5 rounded-lg
+                                                border border-admin-border
+                                                text-sm text-ink
+                                                hover:border-coral
+                                                hover:text-coral transition"
+                                        >
+                                            Sửa
+                                        </a>
 
-                                    <a
-                                        href="{{ route('admin.stages.edit', $stage) }}"
-                                        class="inline-flex items-center justify-center
-                                               px-3 py-1.5 rounded-lg
-                                               border border-admin-border
-                                               text-sm text-ink
-                                               hover:border-coral
-                                               hover:text-coral transition"
-                                    >
-                                        Sửa
-                                    </a>
-
-                                    <button
-                                        type="button"
-                                        data-action="{{ route('admin.stages.destroy', $stage) }}"
-                                        data-name="{{ $stage->name }}"
-                                        onclick="openDeleteStageModal(this)"
-                                        class="inline-flex items-center justify-center
-                                               px-3 py-1.5 rounded-lg
-                                               bg-red-50 text-red-500
-                                               hover:bg-red-100 transition"
-                                    >
-                                        Xóa
-                                    </button>
-
+                                        <button
+                                            type="button"
+                                            data-action="{{ route('admin.stages.destroy', $stage) }}"
+                                            data-name="{{ $stage->name }}"
+                                            onclick="openDeleteStageModal(this)"
+                                            class="inline-flex items-center justify-center
+                                                px-3 py-1.5 rounded-lg
+                                                bg-red-50 text-red-500
+                                                hover:bg-red-100 transition"
+                                        >
+                                            Xóa
+                                        </button>
+                                    @else
+                                        {{-- CHỈ XEM --}}
+                                        <a href="{{ route('admin.stages.edit', $stage) }}" class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 transition text-xs font-semibold">
+                                            Xem chi tiết
+                                        </a>
+                                    @endcan
                                 </div>
 
                             </td>
