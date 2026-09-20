@@ -1,6 +1,4 @@
 @php
-    // Each nav item's `can` maps to a Spatie permission (see database/seeders/PermissionSeeder.php).
-    // Items whose permission the logged-in admin doesn't have are simply not rendered.
     $menu = [
         [
             'label' => 'Dashboard & Thống kê',
@@ -13,41 +11,42 @@
         [
             'label' => 'Kiến thức & Sản phẩm',
             'icon' => '📦',
-            'can' => 'catalog.view',
+            // Chỉ cần có 1 trong 2 quyền này thì sẽ thấy header menu
+            'can' => ['catalog.manage', 'products.manage'],
             'items' => [
-             ['label' => 'Giai đoạn của bé', 'route' => 'admin.stages.index'],
-             ['label' => 'Danh mục & Thuộc tính', 'route' => 'admin.categories.index'],
-              ['label' => 'Sản phẩm', 'route' => 'admin.products.index'],
-            ['label' => 'Đánh giá sản phẩm', 'route' => 'admin.reviews.index'],
-    ],
-],
+                ['label' => 'Giai đoạn của bé', 'route' => 'admin.stages.index', 'can' => 'catalog.manage'],
+                ['label' => 'Danh mục & Thuộc tính', 'route' => 'admin.categories.index', 'can' => 'catalog.manage'],
+                ['label' => 'Sản phẩm', 'route' => 'admin.products.index', 'can' => 'products.manage'],
+                ['label' => 'Đánh giá sản phẩm', 'route' => 'admin.reviews.index', 'can' => 'products.manage'],
+            ],
+        ],
         [
             'label' => 'Cẩm nang & Tương tác',
             'icon' => '📚',
-            'can' => 'handbook.view',
+            'can' => 'handbook.view', // Bạn nhớ bổ sung quyền này vào Seeder
             'items' => [
                 ['label' => 'Bài viết Cẩm nang', 'route' => 'admin.articles.index'],
                 ['label' => 'Trung tâm Hỏi đáp', 'route' => 'admin.comments.index'],
             ],
         ],
-                [
+        [
             'label' => 'Đơn hàng & Dòng tiền',
             'icon' => '🚚',
-            'can' => 'orders.view',
+            'can' => ['orders.view', 'refunds.manage'],
             'items' => [
-                ['label' => 'Đơn hàng',            'route' => 'admin.orders.index'],
-                ['label' => 'Vận chuyển (GHN)',     'route' => 'admin.shipments.index'],
-                ['label' => 'Đổi trả & Hoàn tiền', 'route' => 'admin.refunds.index'],
+                ['label' => 'Đơn hàng', 'route' => 'admin.orders.index', 'can' => 'orders.view'],
+                ['label' => 'Vận chuyển (GHN)', 'route' => 'admin.shipments.index', 'can' => 'orders.view'],
+                ['label' => 'Đổi trả & Hoàn tiền', 'route' => 'admin.refunds.index', 'can' => 'refunds.manage'],
             ],
         ],
         [
             'label' => 'CRM & Marketing',
             'icon' => '👥',
-            'can' => 'crm.view',
+            'can' => ['crm.view', 'vouchers.manage', 'marketing.manage'],
             'items' => [
-                ['label' => 'Khách hàng', 'route' => 'admin.clients.index'],
-                ['label' => 'Voucher',    'route' => 'admin.vouchers.index'],
-                ['label' => 'Banner',     'route' => 'admin.banners.index'],
+                ['label' => 'Khách hàng', 'route' => 'admin.clients.index', 'can' => 'crm.view'], // Bạn nhớ bổ sung quyền này vào Seeder
+                ['label' => 'Voucher', 'route' => 'admin.vouchers.index', 'can' => 'vouchers.manage'],
+                ['label' => 'Banner', 'route' => 'admin.banners.index', 'can' => 'marketing.manage'],
             ],
         ],
         [
@@ -56,12 +55,11 @@
             'can' => 'roles.manage',
             'items' => [
                 ['label' => 'Tài khoản quản trị', 'route' => 'admin.admins.index'],
-                ['label' => 'Nhóm quyền',         'route' => 'admin.roles.index'],
-                ['label' => 'Phân quyền',         'route' => 'admin.permissions.index'],
+                ['label' => 'Nhóm quyền', 'route' => 'admin.roles.index'],
+                ['label' => 'Phân quyền', 'route' => 'admin.permissions.index'],
             ],
         ],
     ];
-
 @endphp
 
 <aside id="admin-sidebar"
@@ -77,47 +75,58 @@
     </div>
 
     <nav class="py-3">
-        {{-- @foreach ($menu as $group)
-            @can($group['can'])
-                <div class="px-3 py-2">
-                    <p class="px-2 text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-1">
-                        {{ $group['icon'] }} {{ $group['label'] }}
-                    </p>
-                    <ul>
-                        @foreach ($group['items'] as $item)
-                            @can($item['can'] ?? $group['can'])
-                                <li>
-                                    <a href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}"
-                                       class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
-                                              {{ request()->routeIs($item['route'].'*') ? 'bg-coral text-white font-semibold' : 'text-white/75 hover:bg-admin-sidebar-hover hover:text-white' }}">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
-                                        {{ $item['label'] }}
-                                    </a>
-                                </li>
-                            @endcan
-                        @endforeach
-                    </ul>
-                </div>
-            @endcan
-        @endforeach --}}
         @foreach ($menu as $group)
-    <div class="px-3 py-2">
-        <p class="px-2 text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-1">
-            {{ $group['icon'] }} {{ $group['label'] }}
-        </p>
-        <ul>
-            @foreach ($group['items'] as $item)
-                <li>
-                    <a href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}"
-                       class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm
-                              {{ request()->routeIs($item['route'].'*') ? 'bg-coral text-white font-semibold' : 'text-white/75 hover:bg-admin-sidebar-hover hover:text-white' }}">
-                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
-                        {{ $item['label'] }}
-                    </a>
-                </li>
-            @endforeach
-        </ul>
-    </div>
-@endforeach
+            {{-- Đã thay @can thành @canany và ép kiểu (array) để hỗ trợ mảng quyền --}}
+            @canany((array) $group['can'])
+            @php
+                $isGroupActive = collect($group['items'])->contains(
+                    fn($item) => request()->routeIs($item['route'] . '*')
+                );
+            @endphp
+
+            <div class="px-3 py-1" x-data="{ open: {{ $isGroupActive ? 'true' : 'false' }} }">
+
+                <button type="button"
+                        @click="open = !open"
+                        class="w-full flex items-center justify-between px-2 py-2 rounded-xl
+                               text-[11px] uppercase tracking-wider font-semibold
+                               {{ $isGroupActive ? 'text-white/80' : 'text-white/40' }}
+                               hover:text-white/70 transition-colors">
+                    <span>{{ $group['icon'] }} {{ $group['label'] }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="w-3.5 h-3.5 transition-transform duration-200"
+                         :class="open ? 'rotate-180' : ''"
+                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+
+                <ul x-show="open"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="mt-1 space-y-0.5">
+                    @foreach ($group['items'] as $item)
+                        {{-- Áp dụng tương tự cho các item con --}}
+                        @canany((array) ($item['can'] ?? $group['can']))
+                            <li>
+                                <a href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}"
+                                   class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors
+                                          {{ request()->routeIs($item['route'].'*')
+                                             ? 'bg-coral text-white font-semibold'
+                                             : 'text-white/70 hover:bg-admin-sidebar-hover hover:text-white' }}">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-60 shrink-0"></span>
+                                    {{ $item['label'] }}
+                                </a>
+                            </li>
+                        @endcanany
+                    @endforeach
+                </ul>
+            </div>
+            @endcanany
+        @endforeach
     </nav>
 </aside>

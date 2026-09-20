@@ -42,7 +42,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('checkout.store') }}">
+       <form method="POST" action="{{ route('checkout.store', [], false) }}">
             @csrf
 
             <div class="mk-checkout-grid">
@@ -106,6 +106,124 @@
                     </section>
 
                     <section class="mk-card">
+                        <div class="mk-voucher-heading">
+                            <div>
+                                <h2>Mã ưu đãi</h2>
+                                <p class="mk-voucher-note">Chọn trực tiếp mã đã có trong ví. Mỗi đơn hàng dùng tối đa 1 mã đơn hàng và 1 mã vận chuyển.</p>
+                            </div>
+                            <a href="{{ route('vouchers.index') }}" class="mk-voucher-wallet-link">Xem & lưu thêm mã</a>
+                        </div>
+
+                        @guest
+                            <div class="mk-voucher-login-note">
+                                Đăng nhập để xem và chọn các voucher đã lưu trong ví của bạn.
+                            </div>
+                        @endguest
+
+                        <div class="mk-voucher-grid">
+                            <div class="mk-voucher-slot" data-voucher-slot="order">
+                                <div class="mk-voucher-title">
+                                    <span>🎟️</span>
+                                    <div>
+                                        <strong>Mã giảm giá đơn hàng</strong>
+                                        <small>Chỉ hiện các mã trong ví đang phù hợp với giỏ hàng hiện tại</small>
+                                    </div>
+                                </div>
+                                <div class="mk-voucher-controls">
+                                    <select
+                                        id="voucher-order-id"
+                                        {{ auth()->guest() || $availableOrderVouchers->isEmpty() ? 'disabled' : '' }}
+                                    >
+                                        <option value="">
+                                            @guest
+                                                -- Đăng nhập để chọn mã --
+                                            @else
+                                                {{ $availableOrderVouchers->isEmpty() ? '-- Chưa có mã đơn hàng phù hợp --' : '-- Chọn mã đơn hàng --' }}
+                                            @endguest
+                                        </option>
+                                        @foreach($availableOrderVouchers as $voucher)
+                                            <option
+                                                value="{{ $voucher['id'] }}"
+                                                {{ ($checkoutVouchers['order']['id'] ?? null) === $voucher['id'] ? 'selected' : '' }}
+                                            >
+                                                {{ $voucher['code'] }} — {{ $voucher['benefit'] }} — {{ $voucher['name'] }}{{ $voucher['expires_at'] ? ' · HSD ' . $voucher['expires_at'] : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button
+                                        type="button"
+                                        data-voucher-apply="order"
+                                        {{ auth()->guest() || $availableOrderVouchers->isEmpty() ? 'disabled' : '' }}
+                                    >Áp dụng</button>
+                                    <button
+                                        type="button"
+                                        class="mk-voucher-remove"
+                                        data-voucher-remove="order"
+                                        {{ empty($checkoutVouchers['order']) ? 'hidden' : '' }}
+                                    >Gỡ</button>
+                                </div>
+                                <p class="mk-voucher-status" id="voucher-order-status">
+                                    @if(!empty($checkoutVouchers['order']))
+                                        Đang áp dụng: {{ $checkoutVouchers['order']['code'] }}
+                                    @elseif(auth()->check() && $availableOrderVouchers->isEmpty())
+                                        Bạn chưa có mã đơn hàng nào phù hợp với giỏ hàng này.
+                                    @endif
+                                </p>
+                            </div>
+
+                            <div class="mk-voucher-slot" data-voucher-slot="shipping">
+                                <div class="mk-voucher-title">
+                                    <span>🚚</span>
+                                    <div>
+                                        <strong>Mã vận chuyển</strong>
+                                        <small>Chọn mã trong ví; mức giảm thực tế được tính theo phí GHN</small>
+                                    </div>
+                                </div>
+                                <div class="mk-voucher-controls">
+                                    <select
+                                        id="voucher-shipping-id"
+                                        {{ auth()->guest() || $availableShippingVouchers->isEmpty() ? 'disabled' : '' }}
+                                    >
+                                        <option value="">
+                                            @guest
+                                                -- Đăng nhập để chọn mã --
+                                            @else
+                                                {{ $availableShippingVouchers->isEmpty() ? '-- Chưa có mã vận chuyển phù hợp --' : '-- Chọn mã vận chuyển --' }}
+                                            @endguest
+                                        </option>
+                                        @foreach($availableShippingVouchers as $voucher)
+                                            <option
+                                                value="{{ $voucher['id'] }}"
+                                                {{ ($checkoutVouchers['shipping']['id'] ?? null) === $voucher['id'] ? 'selected' : '' }}
+                                            >
+                                                {{ $voucher['code'] }} — {{ $voucher['benefit'] }} — {{ $voucher['name'] }}{{ $voucher['expires_at'] ? ' · HSD ' . $voucher['expires_at'] : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button
+                                        type="button"
+                                        data-voucher-apply="shipping"
+                                        {{ auth()->guest() || $availableShippingVouchers->isEmpty() ? 'disabled' : '' }}
+                                    >Áp dụng</button>
+                                    <button
+                                        type="button"
+                                        class="mk-voucher-remove"
+                                        data-voucher-remove="shipping"
+                                        {{ empty($checkoutVouchers['shipping']) ? 'hidden' : '' }}
+                                    >Gỡ</button>
+                                </div>
+                                <p class="mk-voucher-status" id="voucher-shipping-status">
+                                    @if(!empty($checkoutVouchers['shipping']))
+                                        Đang áp dụng: {{ $checkoutVouchers['shipping']['code'] }}
+                                    @elseif(auth()->check() && $availableShippingVouchers->isEmpty())
+                                        Bạn chưa có mã vận chuyển nào phù hợp với giỏ hàng này.
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="mk-card">
                         <h2>Phương thức thanh toán</h2>
 
                         <label class="mk-payment-option">
@@ -127,6 +245,50 @@
                                 <small>Thanh toán qua tài khoản ngân hàng</small>
                             </span>
                         </label>
+
+                        @if(config('services.zalopay.enabled'))
+                            <label class="mk-payment-option">
+                                <input type="radio" name="payment_method" value="zalopay"
+                                    {{ old('payment_method') === 'zalopay' ? 'checked' : '' }}>
+                                <span class="mk-payment-icon">💙</span>
+                                <span>
+                                    <strong>ZaloPay</strong>
+                                    <small>Thanh toán an toàn qua ZaloPay Sandbox</small>
+                                </span>
+                            </label>
+                        @endif
+
+                        @if(config('services.stripe.enabled'))
+                            <label class="mk-payment-option">
+                                <input type="radio" name="payment_method" value="stripe"
+                                    {{ old('payment_method') === 'stripe' ? 'checked' : '' }}>
+                                <span class="mk-payment-icon">💳</span>
+                                <span>
+                                    <strong>Stripe - Visa / Mastercard</strong>
+                                    <small>Thanh toán bằng thẻ quốc tế qua Stripe Sandbox</small>
+                                </span>
+                            </label>
+                        @endif
+
+                        @if(config('services.paypal.enabled'))
+                            <label class="mk-payment-option">
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="paypal"
+                                    {{ old('payment_method') === 'paypal' ? 'checked' : '' }}
+                                >
+
+                                <span class="mk-payment-icon">🅿️</span>
+
+                                <span>
+                                    <strong>PayPal</strong>
+                                    <small>
+                                        Thanh toán qua PayPal Sandbox
+                                    </small>
+                                </span>
+                            </label>
+                        @endif
                     </section>
                 </div>
 
@@ -195,33 +357,42 @@
                         <strong id="checkout-subtotal">{{ number_format($subtotal) }}đ</strong>
                     </div>
 
+                    <div
+                        class="mk-row mk-discount-row"
+                        id="checkout-order-voucher-row"
+                        {{ ($voucherBreakdown['order_discount'] ?? 0) <= 0 ? 'hidden' : '' }}
+                    >
+                        <span>Voucher đơn hàng</span>
+                        <strong id="checkout-order-voucher">-{{ number_format($voucherBreakdown['order_discount'] ?? 0) }}đ</strong>
+                    </div>
+
                     <div class="mk-row">
                         <span>Phí vận chuyển</span>
                         <strong id="checkout-shipping">Chưa tính</strong>
                     </div>
 
+                    <div
+                        class="mk-row mk-discount-row"
+                        id="checkout-shipping-voucher-row"
+                        {{ ($voucherBreakdown['shipping_discount'] ?? 0) <= 0 ? 'hidden' : '' }}
+                    >
+                        <span>Voucher vận chuyển</span>
+                        <strong id="checkout-shipping-voucher">-{{ number_format($voucherBreakdown['shipping_discount'] ?? 0) }}đ</strong>
+                    </div>
+
+                    <div
+                        class="mk-row mk-discount-row"
+                        id="checkout-points-row"
+                        {{ $pointsDiscount <= 0 ? 'hidden' : '' }}
+                    >
+                        <span>Điểm tích lũy</span>
+                        <strong id="checkout-points-discount">-{{ number_format($pointsDiscount) }}đ</strong>
+                    </div>
+
                     <hr>
-            @if(config('services.momo.enabled'))
-    <label class="mk-payment-option">
-        <input
-            type="radio"
-            name="payment_method"
-            value="momo"
-            {{ old('payment_method') === 'momo' ? 'checked' : '' }}
-        >
-
-        <span class="mk-payment-icon">💗</span>
-
-        <span>
-            <strong>Ví MoMo</strong>
-            <small>Thanh toán bằng MoMo Test</small>
-        </span>
-    </label>
-@endif
-
                     <div class="mk-row mk-total">
                         <span>Tổng thanh toán</span>
-                        <strong id="checkout-total">{{ number_format($subtotal) }}đ</strong>
+                        <strong id="checkout-total">{{ number_format($total) }}đ</strong>
                     </div>
 
                     <button class="mk-primary" type="submit">Đặt hàng</button>
@@ -253,21 +424,30 @@
 .mk-card hr{border:0;border-top:1px solid #f0e4e6;margin:18px 0}.mk-row{display:flex;justify-content:space-between;margin:12px 0}.mk-total{font-size:18px}.mk-total strong{color:#ff5f76;font-size:24px}
 .mk-primary{width:100%;border:0;border-radius:28px;background:#ff536e;color:#fff;font-weight:700;padding:15px;margin-top:18px;cursor:pointer}
 .mk-alert{padding:14px 16px;border-radius:12px;margin:0 0 18px}.mk-alert-error{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}.mk-alert ul{margin:8px 0 0 18px}
+.mk-voucher-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.mk-voucher-heading h2{margin-bottom:8px}.mk-voucher-note{margin:0 0 16px;color:#81777d;font-size:14px}.mk-voucher-wallet-link{flex:0 0 auto;color:#ff536e;font-weight:700;font-size:13px;text-decoration:none;background:#fff3f5;border:1px solid #ffd6dd;border-radius:999px;padding:8px 12px}.mk-voucher-wallet-link:hover{text-decoration:underline}.mk-voucher-login-note{padding:11px 13px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;margin-bottom:14px}
+.mk-voucher-grid{display:grid;gap:14px}.mk-voucher-slot{border:1px solid #eadfe2;border-radius:14px;padding:15px;background:#fff}.mk-voucher-title{display:flex;gap:10px;align-items:flex-start}.mk-voucher-title>span{font-size:22px}.mk-voucher-title strong{display:block}.mk-voucher-title small{display:block;color:#81777d;margin-top:3px}
+.mk-voucher-controls{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;margin-top:12px}.mk-voucher-controls select{min-width:0;width:100%;border:1px solid #eadfe2;border-radius:10px;padding:11px 38px 11px 12px;font:inherit;background:#fff;outline:0;color:#2f2930}.mk-voucher-controls select:focus{border-color:#ff6b80;box-shadow:0 0 0 3px rgba(255,107,128,.1)}.mk-voucher-controls select:disabled{background:#f7f3f4;color:#9b9397;cursor:not-allowed}.mk-voucher-controls button{border:0;border-radius:10px;padding:0 14px;font-weight:700;cursor:pointer;background:#ff5f76;color:#fff}.mk-voucher-controls .mk-voucher-remove{background:#f3f4f6;color:#4b5563}.mk-voucher-controls button:disabled{opacity:.6;cursor:not-allowed}
+.mk-voucher-status{min-height:18px;margin:8px 0 0;font-size:13px;color:#15803d}.mk-voucher-status.is-error{color:#be123c}.mk-discount-row strong{color:#15803d}
 .mk-left{min-width:0;}.mk-summary{min-width:0;}
 @media(max-width:900px){.mk-checkout-grid{grid-template-columns:1fr}.mk-summary{position:static}}
-@media(max-width:600px){.mk-form-grid{grid-template-columns:1fr}.mk-full{grid-column:auto}.mk-product{grid-template-columns:54px 1fr}.mk-product>b{grid-column:2}.mk-checkout-page{padding:20px 10px 40px}}
+@media(max-width:600px){.mk-form-grid{grid-template-columns:1fr}.mk-full{grid-column:auto}.mk-product{grid-template-columns:54px 1fr}.mk-product>b{grid-column:2}.mk-checkout-page{padding:20px 10px 40px}.mk-voucher-heading{display:block}.mk-voucher-wallet-link{display:inline-block;margin:-4px 0 14px}.mk-voucher-controls{grid-template-columns:1fr 1fr}.mk-voucher-controls select{grid-column:1/-1}}
 </style>
 
 <script type="application/json" id="checkout-config">
 {
     "subtotal": {{ (int) $subtotal }},
+    "orderVoucherDiscount": {{ (int) ($voucherBreakdown['order_discount'] ?? 0) }},
+    "shippingVoucherDiscount": {{ (int) ($voucherBreakdown['shipping_discount'] ?? 0) }},
+    "pointsDiscount": {{ (int) $pointsDiscount }},
     "oldProvinceId": @json(old('province_id')),
     "oldDistrictId": @json(old('to_district_id')),
     "oldWardCode": @json(old('to_ward_code')),
     "routes": {
-        "districts": @json(route('checkout.districts')),
-        "wards": @json(route('checkout.wards')),
-        "shippingFee": @json(route('checkout.shipping-fee'))
+        "districts": @json(route('checkout.districts', [], false)),
+        "wards": @json(route('checkout.wards', [], false)),
+        "shippingFee": @json(route('checkout.shipping-fee', [], false)),
+        "voucherApply": @json(route('checkout.vouchers.apply', [], false)),
+        "voucherRemove": @json(route('checkout.vouchers.remove', [], false))
     }
 }
 </script>
@@ -280,18 +460,75 @@ document.addEventListener('DOMContentLoaded', () => {
     const ward = document.getElementById('ward');
     const shippingText = document.getElementById('checkout-shipping');
     const totalText = document.getElementById('checkout-total');
+    const orderVoucherRow = document.getElementById('checkout-order-voucher-row');
+    const orderVoucherText = document.getElementById('checkout-order-voucher');
+    const shippingVoucherRow = document.getElementById('checkout-shipping-voucher-row');
+    const shippingVoucherText = document.getElementById('checkout-shipping-voucher');
+    const pointsRow = document.getElementById('checkout-points-row');
+    const pointsText = document.getElementById('checkout-points-discount');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
-    const formatMoney = (amount) => Number(amount).toLocaleString('vi-VN') + 'đ';
+    const pricing = {
+        subtotal: Number(config.subtotal) || 0,
+        shippingFee: 0,
+        orderVoucherDiscount: Number(config.orderVoucherDiscount) || 0,
+        shippingVoucherDiscount: Number(config.shippingVoucherDiscount) || 0,
+        pointsDiscount: Number(config.pointsDiscount) || 0,
+    };
 
-    // Hàm tải danh sách Quận/Huyện
+    const formatMoney = (amount) => Number(amount || 0).toLocaleString('vi-VN') + 'đ';
+
+    function renderPricing(serverTotal = null) {
+        shippingText.textContent = pricing.shippingFee > 0
+            ? formatMoney(pricing.shippingFee)
+            : 'Chưa tính';
+
+        orderVoucherRow.hidden = pricing.orderVoucherDiscount <= 0;
+        orderVoucherText.textContent = '-' + formatMoney(pricing.orderVoucherDiscount);
+
+        shippingVoucherRow.hidden = pricing.shippingVoucherDiscount <= 0;
+        shippingVoucherText.textContent = '-' + formatMoney(pricing.shippingVoucherDiscount);
+
+        pointsRow.hidden = pricing.pointsDiscount <= 0;
+        pointsText.textContent = '-' + formatMoney(pricing.pointsDiscount);
+
+        const total = serverTotal !== null
+            ? Number(serverTotal)
+            : Math.max(
+                0,
+                pricing.subtotal
+                - pricing.orderVoucherDiscount
+                + pricing.shippingFee
+                - pricing.shippingVoucherDiscount
+                - pricing.pointsDiscount
+            );
+
+        totalText.textContent = formatMoney(total);
+    }
+
+    function applyPricingPayload(data) {
+        if (!data) return;
+
+        pricing.shippingFee = Number(data.shipping_fee ?? pricing.shippingFee) || 0;
+        pricing.orderVoucherDiscount = Number(data.order_voucher_discount ?? pricing.orderVoucherDiscount) || 0;
+        pricing.shippingVoucherDiscount = Number(data.shipping_voucher_discount ?? pricing.shippingVoucherDiscount) || 0;
+        pricing.pointsDiscount = Number(data.points_discount ?? pricing.pointsDiscount) || 0;
+
+        renderPricing(data.total ?? null);
+    }
+
+    function resetShippingPricing() {
+        pricing.shippingFee = 0;
+        pricing.shippingVoucherDiscount = 0;
+        renderPricing();
+    }
+
     async function loadDistricts(provinceId, selectedDistrictId = null) {
         district.disabled = true;
         ward.disabled = true;
         district.innerHTML = '<option value="">Đang tải...</option>';
         ward.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
-        shippingText.textContent = 'Chưa tính';
-        totalText.textContent = formatMoney(config.subtotal);
+        resetShippingPricing();
 
         if (!provinceId) {
             district.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
@@ -320,12 +557,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Hàm tải danh sách Phường/Xã
     async function loadWards(districtId, selectedWardCode = null) {
         ward.disabled = true;
         ward.innerHTML = '<option value="">Đang tải...</option>';
-        shippingText.textContent = 'Chưa tính';
-        totalText.textContent = formatMoney(config.subtotal);
+        resetShippingPricing();
 
         if (!districtId) {
             ward.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
@@ -354,7 +589,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Hàm tính phí vận chuyển
     async function calculateShippingFee() {
         if (!district.value || !ward.value) return;
 
@@ -382,20 +616,109 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            shippingText.textContent = formatMoney(data.shipping_fee);
-            totalText.textContent = formatMoney(data.total);
+            applyPricingPayload(data);
         } catch (error) {
             shippingText.textContent = 'Không tính được phí';
             console.error(error);
         }
     }
 
-    // Sự kiện khi người dùng tự chọn lại dropdowns
+    async function applyVoucher(type) {
+        const select = document.getElementById(`voucher-${type}-id`);
+        const status = document.getElementById(`voucher-${type}-status`);
+        const button = document.querySelector(`[data-voucher-apply="${type}"]`);
+        const removeButton = document.querySelector(`[data-voucher-remove="${type}"]`);
+        const voucherId = select?.value ?? '';
+
+        status.classList.remove('is-error');
+
+        if (!voucherId) {
+            status.textContent = 'Vui lòng chọn một mã ưu đãi trong ví.';
+            status.classList.add('is-error');
+            return;
+        }
+
+        button.disabled = true;
+        status.textContent = 'Đang kiểm tra mã...';
+
+        try {
+            const response = await fetch(config.routes.voucherApply, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken ?? ''
+                },
+                body: JSON.stringify({ type, voucher_id: voucherId })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message ?? 'Không thể áp dụng mã ưu đãi.');
+            }
+
+            select.value = data.voucher.id;
+            status.textContent = data.message;
+            removeButton.hidden = false;
+            applyPricingPayload(data.pricing);
+        } catch (error) {
+            status.textContent = error.message;
+            status.classList.add('is-error');
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function removeVoucher(type) {
+        const select = document.getElementById(`voucher-${type}-id`);
+        const status = document.getElementById(`voucher-${type}-status`);
+        const removeButton = document.querySelector(`[data-voucher-remove="${type}"]`);
+
+        removeButton.disabled = true;
+        status.classList.remove('is-error');
+
+        try {
+            const response = await fetch(config.routes.voucherRemove, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken ?? ''
+                },
+                body: JSON.stringify({ type })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message ?? 'Không thể gỡ mã ưu đãi.');
+            }
+
+            select.value = '';
+            status.textContent = data.message;
+            removeButton.hidden = true;
+            applyPricingPayload(data.pricing);
+        } catch (error) {
+            status.textContent = error.message;
+            status.classList.add('is-error');
+        } finally {
+            removeButton.disabled = false;
+        }
+    }
+
+    document.querySelectorAll('[data-voucher-apply]').forEach(button => {
+        button.addEventListener('click', () => applyVoucher(button.dataset.voucherApply));
+    });
+
+    document.querySelectorAll('[data-voucher-remove]').forEach(button => {
+        button.addEventListener('click', () => removeVoucher(button.dataset.voucherRemove));
+    });
+
     province.addEventListener('change', () => loadDistricts(province.value));
     district.addEventListener('change', () => loadWards(district.value));
     ward.addEventListener('change', calculateShippingFee);
 
-    // BƯỚC 3.4 & 3.5: Khôi phục lựa chọn cũ (old) & tự động tính phí vận chuyển khi reload
     async function restoreOldState() {
         if (config.oldProvinceId) {
             await loadDistricts(config.oldProvinceId, config.oldDistrictId);
@@ -408,6 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    renderPricing();
     restoreOldState();
 });
 </script>

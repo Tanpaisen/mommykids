@@ -55,7 +55,6 @@
     {{-- Modal Đăng nhập OTP Popup --}}
     @include('components.auth-modal')
 
-
     @stack('scripts')
 </body>
 </html>

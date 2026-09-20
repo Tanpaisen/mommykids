@@ -329,6 +329,15 @@ class CartService
             )
             ->delete();
     }
+/**
+ * Xóa toàn bộ sản phẩm trong giỏ hàng hiện tại.
+ */
+public function clear(): void
+{
+    $this->getCart()
+        ->items()
+        ->delete();
+}
 
     /**
      * ============================================================

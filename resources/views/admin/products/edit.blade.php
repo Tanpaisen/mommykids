@@ -31,11 +31,17 @@
     ];
 @endphp
 
+@cannot('products.manage')
+    <div class="card p-4 mb-6 bg-gray-100 text-gray-600 text-sm">
+        🔒 Chế độ chỉ xem: Bạn không có quyền <strong>products.manage</strong> nên không thể chỉnh sửa sản phẩm này.
+    </div>
+@endcannot
+
 <form action="{{ route('admin.products.update', $product) }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')
 
-    <div class="space-y-6">
+    <fieldset class="space-y-6" @cannot('products.manage') disabled @endcannot>
 
         {{-- =========================================================
             THÔNG TIN CƠ BẢN - FULL WIDTH
@@ -112,129 +118,128 @@
         ========================================================== --}}
         <div class="grid grid-cols-1 xl:grid-cols-[1.55fr_0.85fr] gap-6 items-start">
             <div class="space-y-6">
-            <section class="card">
-                <div class="border-b border-admin-border pb-4 mb-5">
-                    <h2 class="text-base font-semibold text-ink">Nội dung chi tiết sản phẩm</h2>
-                    <p class="text-sm text-ink-soft mt-1">Nội dung hiển thị tại trang chi tiết sản phẩm.</p>
-                </div>
+                <section class="card">
+                    <div class="border-b border-admin-border pb-4 mb-5">
+                        <h2 class="text-base font-semibold text-ink">Nội dung chi tiết sản phẩm</h2>
+                        <p class="text-sm text-ink-soft mt-1">Nội dung hiển thị tại trang chi tiết sản phẩm.</p>
+                    </div>
 
-                <div class="space-y-5">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-ink">Xuất xứ</label>
+                                <input type="text" name="origin" value="{{ old('origin', $product->origin) }}" placeholder="Ví dụ: Nhật Bản"
+                                       class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none focus:border-coral">
+                                @error('origin')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-ink">Nhà sản xuất</label>
+                                <input type="text" name="manufacturer" value="{{ old('manufacturer', $product->manufacturer) }}" placeholder="Ví dụ: Morinaga Milk Industry"
+                                       class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none focus:border-coral">
+                                @error('manufacturer')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+
                         <div>
-                            <label class="block mb-2 text-sm font-semibold text-ink">Xuất xứ</label>
-                            <input type="text" name="origin" value="{{ old('origin', $product->origin) }}" placeholder="Ví dụ: Nhật Bản"
+                            <label class="block mb-2 text-sm font-semibold text-ink">Thành phần</label>
+                            <textarea name="ingredients" rows="5" placeholder="Nhập thành phần của sản phẩm..."
+                                      class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none resize-y focus:border-coral">{{ old('ingredients', $product->ingredients) }}</textarea>
+                            @error('ingredients')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label class="block mb-2 text-sm font-semibold text-ink">Hướng dẫn sử dụng</label>
+                            <textarea name="usage_instructions" rows="5" placeholder="Nhập cách sử dụng, cách pha, liều lượng..."
+                                      class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none resize-y focus:border-coral">{{ old('usage_instructions', $product->usage_instructions) }}</textarea>
+                            @error('usage_instructions')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-ink">Hướng dẫn bảo quản</label>
+                                <textarea name="storage_instructions" rows="4" placeholder="Nhập cách bảo quản..."
+                                          class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none resize-y focus:border-coral">{{ old('storage_instructions', $product->storage_instructions) }}</textarea>
+                                @error('storage_instructions')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-semibold text-ink">Cảnh báo / Lưu ý</label>
+                                <textarea name="warning" rows="4" placeholder="Nhập cảnh báo hoặc lưu ý..."
+                                          class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none resize-y focus:border-coral">{{ old('warning', $product->warning) }}</textarea>
+                                @error('warning')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {{-- =========================================================
+                    ĐIỂM NỔI BẬT - COMPACT TRONG CỘT NỘI DUNG
+                ========================================================== --}}
+                <section class="card">
+                    <div class="border-b border-admin-border pb-4 mb-5">
+                        <h2 class="text-base font-semibold text-ink">Điểm nổi bật sản phẩm</h2>
+                        <p class="text-sm text-ink-soft mt-1">Thiết lập nội dung nổi bật hiển thị tại phần mô tả sản phẩm.</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        @for ($i = 0; $i < 4; $i++)
+                            @php
+                                $highlightTitle = old('highlights.items.' . $i . '.title', data_get($product->highlights, 'items.' . $i . '.title'));
+                                $highlightSubtitle = old('highlights.items.' . $i . '.subtitle', data_get($product->highlights, 'items.' . $i . '.subtitle'));
+                                $highlightIcon = old('highlights.items.' . $i . '.icon', data_get($product->highlights, 'items.' . $i . '.icon'));
+                            @endphp
+
+                            <div class="grid grid-cols-1 lg:grid-cols-[48px_1fr_1fr_220px] gap-3 items-end rounded-xl border border-admin-border bg-admin-bg/25 p-3.5">
+                                <div class="hidden lg:flex w-10 h-10 rounded-xl bg-coral-light text-coral font-bold items-center justify-center self-center">
+                                    {{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}
+                                </div>
+                                <div>
+                                    <label class="block mb-1.5 text-xs font-semibold text-ink-soft">Tiêu đề</label>
+                                    <input type="text" name="highlights[items][{{ $i }}][title]" value="{{ $highlightTitle }}" maxlength="100"
+                                           placeholder="Ví dụ: Hỗ trợ miễn dịch"
+                                           class="w-full border border-admin-border rounded-xl px-3.5 py-2.5 bg-white text-ink outline-none focus:border-coral">
+                                    @error("highlights.items.$i.title")<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                                </div>
+                                <div>
+                                    <label class="block mb-1.5 text-xs font-semibold text-ink-soft">Nội dung ngắn</label>
+                                    <input type="text" name="highlights[items][{{ $i }}][subtitle]" value="{{ $highlightSubtitle }}" maxlength="150"
+                                           placeholder="Ví dụ: Với Synbiotic+"
+                                           class="w-full border border-admin-border rounded-xl px-3.5 py-2.5 bg-white text-ink outline-none focus:border-coral">
+                                    @error("highlights.items.$i.subtitle")<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                                </div>
+                                <div>
+                                    <label class="block mb-1.5 text-xs font-semibold text-ink-soft">Icon</label>
+                                    <select name="highlights[items][{{ $i }}][icon]"
+                                            class="w-full border border-admin-border rounded-xl px-3.5 py-2.5 bg-white text-ink outline-none focus:border-coral">
+                                        <option value="">— Chọn icon —</option>
+                                        @foreach ($highlightIconOptions as $value => $label)
+                                            <option value="{{ $value }}" @selected($highlightIcon === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error("highlights.items.$i.icon")<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                                </div>
+                            </div>
+                        @endfor
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 pt-5 border-t border-admin-border">
+                        <div>
+                            <label class="block mb-2 text-sm font-semibold text-ink">Thông điệp nổi bật</label>
+                            <input type="text" name="highlights[message]"
+                                   value="{{ old('highlights.message', data_get($product->highlights, 'message')) }}" maxlength="255"
+                                   placeholder="Ví dụ: Lựa chọn tin cậy của hàng triệu ba mẹ..."
                                    class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none focus:border-coral">
-                            @error('origin')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                            @error('highlights.message')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                         </div>
                         <div>
-                            <label class="block mb-2 text-sm font-semibold text-ink">Nhà sản xuất</label>
-                            <input type="text" name="manufacturer" value="{{ old('manufacturer', $product->manufacturer) }}" placeholder="Ví dụ: Morinaga Milk Industry"
+                            <label class="block mb-2 text-sm font-semibold text-ink">Nội dung phụ</label>
+                            <input type="text" name="highlights[submessage]"
+                                   value="{{ old('highlights.submessage', data_get($product->highlights, 'submessage')) }}" maxlength="255"
+                                   placeholder="Ví dụ: Aptamil – Đồng hành cùng sự phát triển của bé yêu."
                                    class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none focus:border-coral">
-                            @error('manufacturer')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                            @error('highlights.submessage')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                         </div>
                     </div>
-
-                    <div>
-                        <label class="block mb-2 text-sm font-semibold text-ink">Thành phần</label>
-                        <textarea name="ingredients" rows="5" placeholder="Nhập thành phần của sản phẩm..."
-                                  class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none resize-y focus:border-coral">{{ old('ingredients', $product->ingredients) }}</textarea>
-                        @error('ingredients')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
-                    </div>
-
-                    <div>
-                        <label class="block mb-2 text-sm font-semibold text-ink">Hướng dẫn sử dụng</label>
-                        <textarea name="usage_instructions" rows="5" placeholder="Nhập cách sử dụng, cách pha, liều lượng..."
-                                  class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none resize-y focus:border-coral">{{ old('usage_instructions', $product->usage_instructions) }}</textarea>
-                        @error('usage_instructions')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block mb-2 text-sm font-semibold text-ink">Hướng dẫn bảo quản</label>
-                            <textarea name="storage_instructions" rows="4" placeholder="Nhập cách bảo quản..."
-                                      class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none resize-y focus:border-coral">{{ old('storage_instructions', $product->storage_instructions) }}</textarea>
-                            @error('storage_instructions')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
-                        </div>
-                        <div>
-                            <label class="block mb-2 text-sm font-semibold text-ink">Cảnh báo / Lưu ý</label>
-                            <textarea name="warning" rows="4" placeholder="Nhập cảnh báo hoặc lưu ý..."
-                                      class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none resize-y focus:border-coral">{{ old('warning', $product->warning) }}</textarea>
-                            @error('warning')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {{-- =========================================================
-                ĐIỂM NỔI BẬT - COMPACT TRONG CỘT NỘI DUNG
-            ========================================================== --}}
-            <section class="card">
-                <div class="border-b border-admin-border pb-4 mb-5">
-                    <h2 class="text-base font-semibold text-ink">Điểm nổi bật sản phẩm</h2>
-                    <p class="text-sm text-ink-soft mt-1">Thiết lập nội dung nổi bật hiển thị tại phần mô tả sản phẩm.</p>
-                </div>
-
-                <div class="space-y-3">
-                    @for ($i = 0; $i < 4; $i++)
-                        @php
-                            $highlightTitle = old('highlights.items.' . $i . '.title', data_get($product->highlights, 'items.' . $i . '.title'));
-                            $highlightSubtitle = old('highlights.items.' . $i . '.subtitle', data_get($product->highlights, 'items.' . $i . '.subtitle'));
-                            $highlightIcon = old('highlights.items.' . $i . '.icon', data_get($product->highlights, 'items.' . $i . '.icon'));
-                        @endphp
-
-                        <div class="grid grid-cols-1 lg:grid-cols-[48px_1fr_1fr_220px] gap-3 items-end rounded-xl border border-admin-border bg-admin-bg/25 p-3.5">
-                            <div class="hidden lg:flex w-10 h-10 rounded-xl bg-coral-light text-coral font-bold items-center justify-center self-center">
-                                {{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}
-                            </div>
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold text-ink-soft">Tiêu đề</label>
-                                <input type="text" name="highlights[items][{{ $i }}][title]" value="{{ $highlightTitle }}" maxlength="100"
-                                       placeholder="Ví dụ: Hỗ trợ miễn dịch"
-                                       class="w-full border border-admin-border rounded-xl px-3.5 py-2.5 bg-white text-ink outline-none focus:border-coral">
-                                @error("highlights.items.$i.title")<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-                            </div>
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold text-ink-soft">Nội dung ngắn</label>
-                                <input type="text" name="highlights[items][{{ $i }}][subtitle]" value="{{ $highlightSubtitle }}" maxlength="150"
-                                       placeholder="Ví dụ: Với Synbiotic+"
-                                       class="w-full border border-admin-border rounded-xl px-3.5 py-2.5 bg-white text-ink outline-none focus:border-coral">
-                                @error("highlights.items.$i.subtitle")<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-                            </div>
-                            <div>
-                                <label class="block mb-1.5 text-xs font-semibold text-ink-soft">Icon</label>
-                                <select name="highlights[items][{{ $i }}][icon]"
-                                        class="w-full border border-admin-border rounded-xl px-3.5 py-2.5 bg-white text-ink outline-none focus:border-coral">
-                                    <option value="">— Chọn icon —</option>
-                                    @foreach ($highlightIconOptions as $value => $label)
-                                        <option value="{{ $value }}" @selected($highlightIcon === $value)>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                                @error("highlights.items.$i.icon")<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-                            </div>
-                        </div>
-                    @endfor
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 pt-5 border-t border-admin-border">
-                    <div>
-                        <label class="block mb-2 text-sm font-semibold text-ink">Thông điệp nổi bật</label>
-                        <input type="text" name="highlights[message]"
-                               value="{{ old('highlights.message', data_get($product->highlights, 'message')) }}" maxlength="255"
-                               placeholder="Ví dụ: Lựa chọn tin cậy của hàng triệu ba mẹ..."
-                               class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none focus:border-coral">
-                        @error('highlights.message')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label class="block mb-2 text-sm font-semibold text-ink">Nội dung phụ</label>
-                        <input type="text" name="highlights[submessage]"
-                               value="{{ old('highlights.submessage', data_get($product->highlights, 'submessage')) }}" maxlength="255"
-                               placeholder="Ví dụ: Aptamil – Đồng hành cùng sự phát triển của bé yêu."
-                               class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none focus:border-coral">
-                        @error('highlights.submessage')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
-                    </div>
-                </div>
-            </section>
-
+                </section>
             </div>
 
             <aside class="space-y-6 xl:sticky xl:top-24">
@@ -380,8 +385,9 @@
                                 </div>
                                 <p class="text-xs text-ink-soft mt-2 text-center">Ảnh hiện tại</p>
                             @else
-                                <div class="w-40 h-40 rounded-2xl border-2 border-dashed border-admin-border bg-admin-bg flex items-center justify-center text-sm text-ink-soft">
-                                    Chưa có ảnh
+                                <div class="w-40 h-40 rounded-2xl border-2 border-dashed border-admin-border bg-admin-bg flex flex-col items-center justify-center text-ink-soft">
+                                    <span class="text-4xl">🖼️</span>
+                                    <span class="text-xs mt-2">Chưa có ảnh</span>
                                 </div>
                             @endif
                         </div>
@@ -405,10 +411,10 @@
                 <div class="mt-7 pt-6 border-t border-admin-border">
                     <label class="block mb-3 text-sm font-semibold text-ink">Ảnh chi tiết</label>
                     @if (!empty($product->images))
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-5">
                             @foreach ($product->images as $image)
                                 <div class="rounded-xl border border-admin-border bg-white p-2">
-                                    <div class="w-full h-24 rounded-lg overflow-hidden bg-admin-bg">
+                                    <div class="w-full h-28 rounded-lg overflow-hidden bg-admin-bg">
                                         <img src="{{ str_starts_with($image, 'http') ? $image : asset('storage/' . $image) }}"
                                              alt="" class="w-full h-full object-cover">
                                     </div>
@@ -420,8 +426,9 @@
                             @endforeach
                         </div>
                     @else
-                        <div class="rounded-xl border border-dashed border-admin-border bg-admin-bg/40 px-4 py-5 text-center mb-4 text-sm text-ink-soft">
-                            Chưa có ảnh chi tiết.
+                        <div class="rounded-xl border border-dashed border-admin-border bg-admin-bg/40 px-4 py-6 text-center mb-4 text-ink-soft">
+                            <span class="text-2xl">🖼️</span>
+                            <p class="text-sm mt-2">Chưa có ảnh chi tiết.</p>
                         </div>
                     @endif
 
@@ -449,9 +456,10 @@
                            text-sm font-medium text-ink
                            hover:bg-admin-bg transition"
                 >
-                    Hủy
+                    @can('products.manage') Hủy @else Quay lại @endcan
                 </a>
 
+                @can('products.manage')
                 <button
                     type="submit"
                     class="w-full sm:w-48
@@ -462,8 +470,10 @@
                 >
                     ✓ Lưu thay đổi
                 </button>
+                @endcan
             </div>
         </section>
-    </div>
+
+    </fieldset>
 </form>
 @endsection

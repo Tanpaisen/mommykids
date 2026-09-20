@@ -15,6 +15,12 @@
 
 @section('content')
 
+    @cannot('catalog.manage')
+        <div class="card p-4 mb-5 bg-gray-100 text-gray-600 text-sm">
+            🔒 Chế độ chỉ xem: Bạn không có quyền <strong>catalog.manage</strong> nên không thể chỉnh sửa giai đoạn này.
+        </div>
+    @endcannot
+
     <form
         action="{{ route('admin.stages.update', $stage) }}"
         method="POST"
@@ -36,7 +42,9 @@
 
             </div>
 
-            @include('admin.stages._form', ['stage' => $stage])
+            <fieldset @cannot('catalog.manage') disabled @endcannot>
+                @include('admin.stages._form', ['stage' => $stage])
+            </fieldset>
 
             <div class="flex justify-end gap-3 border-t border-admin-border mt-6 pt-5">
 
@@ -45,15 +53,17 @@
                     class="px-5 py-2.5 rounded-xl border border-admin-border
                            text-sm text-ink hover:bg-admin-bg transition"
                 >
-                    Hủy
+                    @can('catalog.manage') Hủy @else Quay lại @endcan
                 </a>
 
-                <button
-                    type="submit"
-                    class="btn-primary"
-                >
-                    Lưu thay đổi
-                </button>
+                @can('catalog.manage')
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                    >
+                        Lưu thay đổi
+                    </button>
+                @endcan    
 
             </div>
 

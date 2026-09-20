@@ -396,6 +396,7 @@
                     Hủy
                 </a>
 
+                @can('products.manage')
                 <button
                     type="submit"
                     class="w-full sm:w-48
@@ -406,6 +407,7 @@
                 >
                     ✓ Lưu sản phẩm
                 </button>
+                @endcan
             </div>
         </section>
     </div>

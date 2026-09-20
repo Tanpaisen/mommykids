@@ -1,147 +1,180 @@
 <?php
-
 namespace App\Services;
 
-use App\Models\Voucher;
 use App\Models\User;
+use App\Models\Voucher;
 use Exception;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 class VoucherValidationService
 {
     /**
-     * Hàm main xử lý toàn bộ logic kiểm duyệt
+     * Kiểm tra toàn bộ điều kiện sử dụng voucher.
+     *
+     * @return array{is_valid: bool, eligible_items: Collection, eligible_subtotal: int, total_discounted: int}
      */
-    public function validate(Voucher $voucher, User $user, Collection $cartItems)
+    public function validate(Voucher $voucher, ?User $user, Collection $cartItems): array
     {
-        // 1. KIỂM TRA THỜI GIAN & TRẠNG THÁI
+        // === BẮT BUỘC ĐĂNG NHẬP — TẤT CẢ MÃ ƯU ĐÃI ===
+        if (!$user) {
+            throw new Exception('Vui lòng đăng nhập để sử dụng mã ưu đãi.');
+        }
+
         if ($voucher->status !== 'active') {
             throw new Exception('Mã ưu đãi không tồn tại hoặc chưa được kích hoạt.');
         }
-        if (now()->lessThan($voucher->starts_at) || now()->greaterThan($voucher->expires_at)) {
-            throw new Exception('Mã ưu đãi chưa diễn ra hoặc đã hết hạn.');
+        if ($voucher->starts_at && now()->lt($voucher->starts_at)) {
+            throw new Exception('Mã ưu đãi chưa đến thời gian sử dụng.');
         }
-
-        // 2. KIỂM TRA ĐỐI TƯỢNG (TIER & USER)
+        if ($voucher->expires_at && now()->gt($voucher->expires_at)) {
+            throw new Exception('Mã ưu đãi đã hết hạn.');
+        }
+        // V2: type quyết định slot. Mã shipping chỉ dùng free_shipping,
+        // mã order không được dùng discount_type free_shipping.
+        if ($voucher->type === 'shipping' && $voucher->discount_type !== 'free_shipping') {
+            throw new Exception('Mã vận chuyển đang có cấu hình giảm giá không hợp lệ.');
+        }
+        if ($voucher->type === 'order' && $voucher->discount_type === 'free_shipping') {
+            throw new Exception('Mã đơn hàng đang có cấu hình giảm giá không hợp lệ.');
+        }
         $this->validateTargetAudience($voucher, $user);
-
-        // 3. LỌC SẢN PHẨM HỢP LỆ & TÍNH TỔNG TIỀN ĐỦ ĐIỀU KIỆN
         $eligibleItems = $this->getEligibleCartItems($voucher, $cartItems);
-        
         if ($eligibleItems->isEmpty()) {
-            throw new Exception('Giỏ hàng của bạn không có sản phẩm nào nằm trong danh mục áp dụng mã ưu đãi này.');
+            throw new Exception('Giỏ hàng không có sản phẩm thuộc phạm vi áp dụng của mã này.');
         }
-
-        // Giả sử $item->total_price là (giá * số lượng) của từng món
-        $eligibleSubtotal = $eligibleItems->sum('total_price');
-
-        // 4. KIỂM TRA MIN ORDER DỰA TRÊN SẢN PHẨM HỢP LỆ
-        if ($eligibleSubtotal < $voucher->min_order_amount) {
-            $missing = $voucher->min_order_amount - $eligibleSubtotal;
-            throw new Exception("Bạn cần mua thêm " . number_format($missing) . "đ các sản phẩm hợp lệ để dùng mã này.");
+        $eligibleSubtotal = (int) $eligibleItems->sum(function ($item) {
+            $price = (int) ($item->product?->price ?? $item->price ?? 0);
+            $quantity = max(0, (int) ($item->quantity ?? 0));
+            return $price * $quantity;
+        });
+        if ($eligibleSubtotal < (int) $voucher->min_order_amount) {
+            $missing = (int) $voucher->min_order_amount - $eligibleSubtotal;
+            throw new Exception(
+                'Bạn cần mua thêm ' . number_format($missing, 0, ',', '.') .
+                'đ sản phẩm hợp lệ để dùng mã này.'
+            );
         }
-
-        // 5. KIỂM TRA LƯỢT DÙNG TỔNG & NGÂN SÁCH (Chống Race Condition)
-        $usageStats = $voucher->usages()
-            ->whereIn('status', ['reserved', 'applied', 'completed'])
-            ->selectRaw('COUNT(*) as total_used, SUM(discount_amount) as total_discounted')
+        // Chỉ tính reservation còn hiệu lực; applied/completed luôn được tính.
+        $activeUsageQuery = $voucher->usages()
+            ->where(function ($query) {
+                $query->whereIn('status', ['applied', 'completed'])
+                    ->orWhere(function ($reserved) {
+                        $reserved->where('status', 'reserved')
+                            ->where(function ($time) {
+                                $time->whereNull('reserved_until')
+                                    ->orWhere('reserved_until', '>', now());
+                            });
+                    });
+            });
+        $usageStats = (clone $activeUsageQuery)
+            ->selectRaw('COUNT(*) as total_used, COALESCE(SUM(discount_amount), 0) as total_discounted')
             ->first();
-
-        if ($voucher->total_quantity && $usageStats->total_used >= $voucher->total_quantity) {
+        $totalUsed = (int) ($usageStats->total_used ?? 0);
+        $totalDiscounted = (int) ($usageStats->total_discounted ?? 0);
+        if ($voucher->total_quantity !== null && $totalUsed >= (int) $voucher->total_quantity) {
             throw new Exception('Rất tiếc, số lượng mã ưu đãi đã được sử dụng hết.');
         }
-        if ($voucher->total_budget && $usageStats->total_discounted >= $voucher->total_budget) {
+        if ($voucher->total_budget !== null && $totalDiscounted >= (int) $voucher->total_budget) {
             throw new Exception('Ngân sách của chương trình khuyến mãi đã đạt giới hạn.');
         }
-
-        // 6. KIỂM TRA LƯỢT CÁ NHÂN
-        $userUsageCount = $voucher->usages()
+        // Vì đã kiểm tra $user ở đầu nên không cần kiểm tra lại ở đây
+        $userUsageCount = (clone $activeUsageQuery)
             ->where('user_id', $user->id)
-            ->whereIn('status', ['reserved', 'applied', 'completed'])
             ->count();
-
-        if ($userUsageCount >= $voucher->usage_limit_per_user) {
+        if ($userUsageCount >= (int) $voucher->usage_limit_per_user) {
             throw new Exception('Bạn đã hết lượt sử dụng mã ưu đãi này.');
         }
-
-        // Trả về danh sách sản phẩm hợp lệ và tổng tiền hợp lệ để bước sau (CalculateDiscount) tính toán
         return [
             'is_valid' => true,
             'eligible_items' => $eligibleItems,
-            'eligible_subtotal' => $eligibleSubtotal
+            'eligible_subtotal' => $eligibleSubtotal,
+            'total_discounted' => $totalDiscounted,
         ];
     }
 
-    /**
-     * BỘ LỌC ĐA MƯU: Bóc tách chính xác sản phẩm nào được phép giảm giá
-     */
-    private function getEligibleCartItems(Voucher $voucher, Collection $cartItems)
+    private function getEligibleCartItems(Voucher $voucher, Collection $cartItems): Collection
     {
-        $conditions = $voucher->conditions()->whereIn('type', ['product', 'category'])->get();
-
-        // Nếu không có điều kiện ràng buộc nào -> Toàn bộ giỏ hàng đều hợp lệ
+        $conditions = $voucher->conditions()
+            ->whereIn('type', ['product', 'category'])
+            ->get();
         if ($conditions->isEmpty()) {
             return $cartItems;
         }
-
-        // Phân loại các nhóm điều kiện để xử lý logic AND/OR
-        $excludedCategories = $conditions->where('type', 'category')->where('is_include', false)->pluck('value')->toArray();
-        $excludedProducts   = $conditions->where('type', 'product')->where('is_include', false)->pluck('value')->toArray();
-        
-        $includedCategories = $conditions->where('type', 'category')->where('is_include', true)->pluck('value')->toArray();
-        $includedProducts   = $conditions->where('type', 'product')->where('is_include', true)->pluck('value')->toArray();
-
-        // Dùng Collection Filter để duyệt qua từng món trong giỏ
-        return $cartItems->filter(function ($item) use ($excludedCategories, $excludedProducts, $includedCategories, $includedProducts) {
-            // Lưu ý: Đảm bảo relation 'product' đã được load cùng cartItem
-            $productId = (string) $item->product_id;
-            $categoryId = (string) $item->product->category_id; 
-
-            // 1. RULE TỐI THƯỢNG: Danh sách bị cấm (Blacklist) luôn ghi đè tất cả
-            if (in_array($categoryId, $excludedCategories) || in_array($productId, $excludedProducts)) {
+        $excludedCategories = $conditions->where('type', 'category')
+            ->where('is_include', false)
+            ->pluck('value')
+            ->map(fn ($value) => (string) $value)
+            ->all();
+        $excludedProducts = $conditions->where('type', 'product')
+            ->where('is_include', false)
+            ->pluck('value')
+            ->map(fn ($value) => (string) $value)
+            ->all();
+        $includedCategories = $conditions->where('type', 'category')
+            ->where('is_include', true)
+            ->pluck('value')
+            ->map(fn ($value) => (string) $value)
+            ->all();
+        $includedProducts = $conditions->where('type', 'product')
+            ->where('is_include', true)
+            ->pluck('value')
+            ->map(fn ($value) => (string) $value)
+            ->all();
+        return $cartItems->filter(function ($item) use (
+            $excludedCategories,
+            $excludedProducts,
+            $includedCategories,
+            $includedProducts
+        ) {
+            if (!$item->product) {
                 return false;
             }
-
-            // 2. Kiểm tra danh sách được phép (Whitelist)
-            // Nếu mảng include trống nghĩa là không giới hạn type đó (Mặc định Pass)
-            $categoryPass = empty($includedCategories) || in_array($categoryId, $includedCategories);
-            $productPass  = empty($includedProducts) || in_array($productId, $includedProducts);
-
-            // Vì khác type nên dùng logic AND (Phải khớp cả rule Category VÀ rule Product nếu có)
+            $productId = (string) $item->product_id;
+            $categoryId = (string) $item->product->category_id;
+            if (
+                in_array($categoryId, $excludedCategories, true) ||
+                in_array($productId, $excludedProducts, true)
+            ) {
+                return false;
+            }
+            $categoryPass = empty($includedCategories) ||
+                in_array($categoryId, $includedCategories, true);
+            $productPass = empty($includedProducts) ||
+                in_array($productId, $includedProducts, true);
             return $categoryPass && $productPass;
-        });
+        })->values();
     }
 
-    /**
-     * Xử lý riêng logic về phân hạng và quyền người dùng
-     */
-    private function validateTargetAudience(Voucher $voucher, User $user)
+    private function validateTargetAudience(Voucher $voucher, ?User $user): void
     {
-        // Khách hàng cụ thể
+        // Module usage hiện bắt buộc user_id, đồng thời tier/specific user
+        // cũng cần tài khoản để kiểm tra chính xác.
+        if (!$user) {
+            throw new Exception('Vui lòng đăng nhập để sử dụng mã ưu đãi.');
+        }
         if ($voucher->apply_to === 'specific_users') {
-            if (!$voucher->allowedUsers()->where('users.id', $user->id)->exists()) {
+            if (!$voucher->savedUsers()->where('users.id', $user->id)->exists()) {
                 throw new Exception('Mã ưu đãi này không dành cho tài khoản của bạn.');
             }
         }
-
-        // Khách hàng mới
         if ($voucher->apply_to === 'new_user') {
-            $hasCompletedOrders = $user->orders()->where('status', 'completed')->exists();
+            $hasCompletedOrders = $user->orders()
+                ->where('status', 'completed')
+                ->exists();
             if ($hasCompletedOrders) {
                 throw new Exception('Mã ưu đãi này chỉ dành cho khách hàng mới.');
             }
         }
-
-        // Hạng thành viên (Tiers) thông qua voucher_conditions
-        $tierConditions = $voucher->conditions()->where('type', 'tier')->get();
-        
+        $tierConditions = $voucher->conditions()
+            ->where('type', 'tier')
+            ->get();
         if ($tierConditions->isNotEmpty()) {
-            $userTier = $user->tier ?? 'member';
-            
-            // Lấy danh sách các hạng được phép áp dụng (is_include = true)
-            $validTiers = $tierConditions->where('is_include', true)->pluck('value')->toArray();
-            
-            if (!empty($validTiers) && !in_array($userTier, $validTiers)) {
+            $userTier = (string) ($user->tier ?? 'member');
+            $validTiers = $tierConditions->where('is_include', true)
+                ->pluck('value')
+                ->map(fn ($value) => (string) $value)
+                ->all();
+            if (!empty($validTiers) && !in_array($userTier, $validTiers, true)) {
                 throw new Exception('Hạng thành viên của bạn chưa đủ điều kiện để áp dụng mã này.');
             }
         }

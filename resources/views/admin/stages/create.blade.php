@@ -33,7 +33,9 @@
                 </p>
             </div>
 
-            @include('admin.stages._form')
+            <fieldset @cannot('catalog.manage') disabled @endcannot>
+                @include('admin.stages._form')
+            </fieldset>
 
             <div class="flex justify-end gap-3 border-t border-admin-border mt-6 pt-5">
 
@@ -42,16 +44,17 @@
                     class="px-5 py-2.5 rounded-xl border border-admin-border
                            text-sm text-ink hover:bg-admin-bg transition"
                 >
-                    Hủy
+                    @can('catalog.manage') Hủy @else Quay lại @endcan
                 </a>
 
-                <button
-                    type="submit"
-                    class="btn-primary"
-                >
-                    Lưu giai đoạn
-                </button>
-
+                @can('catalog.manage')
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                    >
+                        Lưu giai đoạn
+                    </button>
+                @endcan
             </div>
 
         </div>
