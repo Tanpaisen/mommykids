@@ -32,12 +32,16 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Chia sẻ dữ liệu Cài đặt chung ($globalSetting) toàn cục ra TẤT CẢ các file Blade view (Bọc Cache để tối ưu tốc độ)
-        if (Schema::hasTable('settings')) {
-            $globalSetting = Cache::rememberForever('global_settings', function () {
-                return Setting::first() ?? new Setting();
-            });
+        try {
+            if (!app()->runningInConsole() || Schema::hasTable('settings')) {
+                $globalSetting = Cache::rememberForever('global_settings', function () {
+                    return Setting::first() ?? new Setting();
+                });
 
-            View::share('globalSetting', $globalSetting);
+                View::share('globalSetting', $globalSetting);
+            }
+        } catch (\Exception $e) {
+            // Bỏ qua lỗi kết nối database trong quá trình build Docker / chạy lệnh artisan chưa config DB
         }
 
         // Cache categories 1 tiếng — chỉ query 1 lần/giờ thay vì mỗi request
