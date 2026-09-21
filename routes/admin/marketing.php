@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\PlaceholderController;
+use App\Http\Controllers\Admin\SettingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,4 +19,7 @@ Route::patch('/khach-hang/{id}/toggle-status', [CustomerController::class, 'togg
 
 // Các module khác
 Route::get('/voucher', fn () => (new PlaceholderController)->index('Voucher'))->name('vouchers.index');
-Route::get('/banner', fn () => (new PlaceholderController)->index('Banner'))->name('banners.index');
+
+// Cài đặt chung (thay thế cho Banner)
+Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');

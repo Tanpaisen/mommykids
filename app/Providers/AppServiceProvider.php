@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Category;
+use App\Models\Setting;
 use App\Services\CartService;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +25,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Chia sẻ dữ liệu Cài đặt chung ($globalSetting) toàn cục ra TẤT CẢ các file Blade view (Bọc Cache để tối ưu tốc độ)
+        if (Schema::hasTable('settings')) {
+            $globalSetting = Cache::rememberForever('global_settings', function () {
+                return Setting::first() ?? new Setting();
+            });
+
+            View::share('globalSetting', $globalSetting);
+        }
+
         // Cache categories 1 tiếng — chỉ query 1 lần/giờ thay vì mỗi request
         View::composer(['client.partials.sidebar', 'client.layouts.app'], function ($view) {
             $view->with('categories', Cache::remember('categories_sidebar', 3600, 

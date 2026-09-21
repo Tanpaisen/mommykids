@@ -17,6 +17,7 @@ use App\Http\Controllers\CheckoutController;
 // --- CONTROLLERS ADMIN ---
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\HandbookCategoryController;
+use App\Http\Controllers\Admin\SettingController; // <- Đã cập nhật SettingController
 use App\Http\Controllers\Client\HandbookController;
 
 /*
@@ -136,14 +137,18 @@ Route::prefix('api')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Admin Customer Management Routes
+| Admin Customer Management & Menu Routes
 |--------------------------------------------------------------------------
 */
 
 Route::prefix('admin')->name('admin.')->group(function () {
+    // Quản lý khách hàng
     Route::get('/khach-hang', [CustomerController::class, 'index'])->name('customers.index');
     Route::get('/khach-hang/{id}', [CustomerController::class, 'show'])->name('customers.show');
     Route::post('/khach-hang/{id}/toggle-status', [CustomerController::class, 'toggleStatus'])->name('customers.toggleStatus');
+
+    // Quản lý Menu Admin (Gộp chung xử lý về SettingController)
+    Route::post('/menus/update-all', [SettingController::class, 'updateMenus'])->name('menus.updateAll');
 });
 
 /*

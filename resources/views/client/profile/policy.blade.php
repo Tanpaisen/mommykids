@@ -356,7 +356,7 @@
                     <div>
                         <h6 class="fw-bold text-dark mb-1" style="font-size: 14px;">6. Giải quyết khiếu nại và tranh chấp</h6>
                         <p class="mb-0">
-                            Phòng Chăm sóc Khách hàng qua Hotline <strong style="color: #FF2A54;">1800 6886</strong> là đầu mối tiếp nhận phản hồi, khiếu nại. MommyKids cam kết xử lý trong vòng 24h làm việc.
+                            Phòng Chăm sóc Khách hàng qua Hotline <strong style="color: #FF2A54;">{{ $globalSetting->hotline ?? '1800 6886' }}</strong> là đầu mối tiếp nhận phản hồi, khiếu nại. MommyKids cam kết xử lý trong vòng 24h làm việc.
                         </p>
                     </div>
                 </div>
