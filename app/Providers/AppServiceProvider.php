@@ -24,6 +24,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (str_contains(request()->getHost(), 'onrender.com')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         // Ép buộc toàn bộ hệ thống tự động dùng HTTPS khi lên môi trường production (Render)
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
