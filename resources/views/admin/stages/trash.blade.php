@@ -283,44 +283,50 @@
 
                             <div class="flex justify-end gap-2">
 
-                                <button
-                                    type="button"
-                                    data-action="{{ route(
-                                        'admin.stages.restore',
-                                        $stage->id
-                                    ) }}"
-                                    data-name="{{ $stage->name }}"
-                                    onclick="openRestoreStageModal(this)"
-                                    class="inline-flex items-center gap-2
-                                           rounded-xl bg-green-50
-                                           px-4 py-2.5
-                                           text-sm font-medium
-                                           text-green-600
-                                           hover:bg-green-100
-                                           transition"
-                                >
-                                    ↶ Khôi phục
-                                </button>
+                                @can('catalog.manage')
+
+                                    <button
+                                        type="button"
+                                        data-action="{{ route(
+                                            'admin.stages.restore',
+                                            $stage->id
+                                        ) }}"
+                                        data-name="{{ $stage->name }}"
+                                        onclick="openRestoreStageModal(this)"
+                                        class="inline-flex items-center gap-2
+                                            rounded-xl bg-green-50
+                                            px-4 py-2.5
+                                            text-sm font-medium
+                                            text-green-600
+                                            hover:bg-green-100
+                                            transition"
+                                    >
+                                        ↶ Khôi phục
+                                    </button>
 
 
-                                <button
-                                    type="button"
-                                    data-action="{{ route(
-                                        'admin.stages.forceDelete',
-                                        $stage->id
-                                    ) }}"
-                                    data-name="{{ $stage->name }}"
-                                    onclick="openForceDeleteStageModal(this)"
-                                    class="inline-flex items-center gap-2
-                                           rounded-xl bg-red-50
-                                           px-4 py-2.5
-                                           text-sm font-medium
-                                           text-red-500
-                                           hover:bg-red-100
-                                           transition"
-                                >
-                                    🗑 Xóa vĩnh viễn
-                                </button>
+                                    <button
+                                        type="button"
+                                        data-action="{{ route(
+                                            'admin.stages.forceDelete',
+                                            $stage->id
+                                        ) }}"
+                                        data-name="{{ $stage->name }}"
+                                        onclick="openForceDeleteStageModal(this)"
+                                        class="inline-flex items-center gap-2
+                                            rounded-xl bg-red-50
+                                            px-4 py-2.5
+                                            text-sm font-medium
+                                            text-red-500
+                                            hover:bg-red-100
+                                            transition"
+                                    >
+                                        🗑 Xóa vĩnh viễn
+                                    </button>
+
+                                @else
+                                    <span class="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-lg">Không có quyền thao tác</span>
+                                @endcan
 
                             </div>
 

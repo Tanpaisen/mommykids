@@ -7,11 +7,17 @@
 @section('content')
     <form action="{{ route('admin.roles.store') }}" method="POST" class="space-y-6">
         @csrf
-        @include('admin.roles.form', ['role' => null, 'permissionGroups' => $permissionGroups, 'rolePermissions' => []])
-
+        <fieldset @cannot('roles.manage') disabled @endcannot>
+            @include('admin.roles.form', ['role' => null, 'permissionGroups' => $permissionGroups, 'rolePermissions' => []])
+        </fieldset>
+        
         <div class="flex gap-3">
-            <button type="submit" class="btn-primary">Lưu nhóm quyền</button>
-            <a href="{{ route('admin.roles.index') }}" class="btn-outline">Hủy</a>
+            @can('roles.manage')
+                <button type="submit" class="btn-primary">Lưu nhóm quyền</button>
+            @endcan
+            <a href="{{ route('admin.roles.index') }}" class="btn-outline">
+                @can('roles.manage') Hủy @else Quay lại @endcan
+            </a>
         </div>
     </form>
 @endsection

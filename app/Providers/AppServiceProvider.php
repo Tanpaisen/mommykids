@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Services\CartService;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +24,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (str_contains(request()->getHost(), 'onrender.com')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
+        // Ép buộc toàn bộ hệ thống tự động dùng HTTPS khi lên môi trường production (Render)
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         // Cache categories 1 tiếng — chỉ query 1 lần/giờ thay vì mỗi request
         View::composer(['client.partials.sidebar', 'client.layouts.app'], function ($view) {
             $view->with('categories', Cache::remember('categories_sidebar', 3600, 

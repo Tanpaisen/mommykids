@@ -8,58 +8,95 @@ use Exception;
 class CalculateDiscountService
 {
     /**
-     * Tính toán số tiền được giảm thực tế
+     * Tính giảm cho 1 voucher — giữ nguyên logic gốc của bạn
      * 
-     * @param Voucher $voucher
-     * @param float $eligibleSubtotal Tổng tiền hàng của các món hợp lệ (từ Validation trả về)
-     * @param float $shippingFee Phí ship của Giao Hàng Nhanh (nếu có)
-     * @return int Số tiền được giảm
+     * @return array{amount: int, shipping_discount: int}
      */
-    public function calculate(Voucher $voucher, float $eligibleSubtotal, float $shippingFee = 0): int
+    public function calculate(Voucher $voucher, float $eligibleSubtotal, float $shippingFee = 0): array
     {
         $discountAmount = 0;
+        $shippingDiscount = 0;
 
         switch ($voucher->discount_type) {
             case 'fixed':
-                // LUẬT 1: Giảm số tiền cố định. Không bao giờ được phép giảm lố qua số tiền hàng.
-                // VD: Giỏ hàng hợp lệ 40K, mã giảm 50K -> Chỉ được giảm tối đa 40K.
-                $discountAmount = min($voucher->discount_value, $eligibleSubtotal);
+                // Giảm cố định — không vượt quá tổng tiền hàng hợp lệ
+                $discountAmount = min((int)$voucher->discount_value, (int)$eligibleSubtotal);
                 break;
 
             case 'percent':
-                // LUẬT 2: Giảm phần trăm.
-                $calculatedDiscount = $eligibleSubtotal * ($voucher->discount_value / 100);
+                // Giảm theo %
+                $calculated = $eligibleSubtotal * ((int)$voucher->discount_value / 100);
                 
-                // Nếu mã có cấu hình mức giảm tối đa (max_discount_amount), ta áp dụng "chốt chặn"
                 if ($voucher->max_discount_amount) {
-                    $discountAmount = min($calculatedDiscount, $voucher->max_discount_amount);
+                    $discountAmount = min($calculated, (int)$voucher->max_discount_amount);
                 } else {
-                    $discountAmount = $calculatedDiscount;
+                    $discountAmount = $calculated;
                 }
-                
-                // Vẫn phải đảm bảo quy tắc không giảm lố tiền hàng
-                $discountAmount = min($discountAmount, $eligibleSubtotal);
+                // Không giảm lố
+                $discountAmount = min($discountAmount, (int)$eligibleSubtotal);
                 break;
 
             case 'free_shipping':
-    $maxShippingDiscount = (int) $voucher->max_discount_amount;
+                $maxShipping = (int)$voucher->max_discount_amount;
+                $shippingDiscount = $maxShipping > 0
+                    ? min((int)$shippingFee, $maxShipping)
+                    : (int)$shippingFee;
+                break;
 
-    if ($maxShippingDiscount > 0) {
-        $discountAmount = min(
-            $shippingFee,
-            $maxShippingDiscount
-        );
-    } else {
-        // 0 = miễn toàn bộ phí vận chuyển thực tế
-        $discountAmount = $shippingFee;
-    }
-
-    break;
             default:
                 throw new Exception('Loại mã giảm giá không được hệ thống hỗ trợ.');
         }
 
-        // VNĐ không có số thập phân lẻ, ép về int để lưu DB cho chuẩn
-        return (int) round($discountAmount);
+        // Chuẩn hóa VNĐ
+        return [
+            'amount'            => (int)round($discountAmount),
+            'shipping_discount' => (int)round($shippingDiscount),
+        ];
+    }
+
+    /**
+     * Tính tổng giảm cho NHIỀU voucher — hỗ trợ is_stackable
+     * 
+     * @param Voucher[] $vouchers
+     * @return array{total_discount: int, shipping_discount: int, applied: array}
+     */
+    public function calculateMany(array $vouchers, float $eligibleSubtotal, float $shippingFee = 0): array
+    {
+        $stackableTotal = 0;
+        $soloBest = ['amount' => 0, 'shipping_discount' => 0];
+        $applied = [];
+
+        foreach ($vouchers as $voucher) {
+            ['amount' => $amt, 'shipping_discount' => $ship] = $this->calculate(
+                $voucher,
+                $eligibleSubtotal,
+                $shippingFee
+            );
+
+            if ($voucher->is_stackable) {
+                // Cộng dồn các mã cho phép chồng
+                $stackableTotal += $amt;
+                $applied[] = ['voucher' => $voucher, 'discount' => $amt, 'shipping_discount' => $ship, 'mode' => 'stacked'];
+            } else {
+                // Chọn mã đơn lẻ tốt nhất
+                $totalCurrent = $amt + $ship;
+                $totalBest = $soloBest['amount'] + $soloBest['shipping_discount'];
+                if ($totalCurrent > $totalBest) {
+                    $soloBest = ['amount' => $amt, 'shipping_discount' => $ship];
+                    $applied = array_filter($applied, fn($a) => $a['mode'] !== 'solo');
+                    $applied[] = ['voucher' => $voucher, 'discount' => $amt, 'shipping_discount' => $ship, 'mode' => 'solo'];
+                }
+            }
+        }
+
+        // Giới hạn tổng không vượt quá tiền hàng
+        $totalDiscount = min($stackableTotal + $soloBest['amount'], (int)$eligibleSubtotal);
+        $shippingDiscount = max($stackableTotal > 0 ? 0 : $soloBest['shipping_discount'], 0);
+
+        return [
+            'total_discount'    => $totalDiscount,
+            'shipping_discount' => $shippingDiscount,
+            'applied'           => $applied,
+        ];
     }
 }
