@@ -1,0 +1,100 @@
+/* =========================================================
+   CATEGORY PAGE
+   Price range slider
+========================================================= */
+
+.mk-price-range {
+    -webkit-appearance: none;
+    appearance: none;
+
+    height: 2rem;
+    margin: 0;
+
+    background: transparent;
+
+    pointer-events: none;
+
+    outline: none;
+}
+
+
+/* Chrome / Edge / Safari */
+
+.mk-price-range::-webkit-slider-runnable-track {
+    height: 0;
+
+    background: transparent;
+
+    border: 0;
+}
+
+
+/* Firefox */
+
+.mk-price-range::-moz-range-track {
+    height: 0;
+
+    background: transparent;
+
+    border: 0;
+}
+
+
+/* Chrome / Edge / Safari thumb */
+
+.mk-price-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+
+    width: 19px;
+    height: 19px;
+
+    margin-top: -9.5px;
+
+    border-radius: 9999px;
+
+    border: 2px solid #ff6b7c;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 2px 7px rgba(255, 107, 124, 0.22),
+        0 1px 3px rgba(35, 31, 38, 0.12);
+
+    cursor: pointer;
+
+    pointer-events: auto;
+}
+
+
+/* Firefox thumb */
+
+.mk-price-range::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+
+    border-radius: 9999px;
+
+    border: 2px solid #ff6b7c;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 2px 7px rgba(255, 107, 124, 0.22),
+        0 1px 3px rgba(35, 31, 38, 0.12);
+
+    cursor: pointer;
+
+    pointer-events: auto;
+}
+
+
+/* Hai đầu slider */
+
+#price-range-min {
+    z-index: 3;
+}
+
+#price-range-max {
+    z-index: 4;
+}

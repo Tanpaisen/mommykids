@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
@@ -28,13 +30,33 @@ class Product extends Model
         'name',
         'slug',
         'description',
+
+        // Nội dung chi tiết sản phẩm
+        'origin',
+        'manufacturer',
+        'ingredients',
+        'usage_instructions',
+        'storage_instructions',
+        'warning',
+        'highlights',
+
         'image',
         'images',
+
         'price',
         'old_price',
         'discount_percent',
         'stock',
+
+        // Thông tin đóng gói dùng để tính phí vận chuyển GHN
+        'weight_grams',
+        'length_cm',
+        'width_cm',
+        'height_cm',
+
+        // Trạng thái
         'is_active',
+        'is_featured',
 
         // Audit soft delete
         'deleted_by',
@@ -43,16 +65,36 @@ class Product extends Model
     ];
 
     protected $casts = [
+        // Trạng thái
         'is_active' => 'boolean',
+        'is_featured' => 'boolean',
+
+        // Giá / tồn kho
         'price' => 'integer',
         'old_price' => 'integer',
         'discount_percent' => 'integer',
         'stock' => 'integer',
-        'images' => 'array',
 
+        // Thông tin đóng gói
+        'weight_grams' => 'integer',
+        'length_cm' => 'integer',
+        'width_cm' => 'integer',
+        'height_cm' => 'integer',
+
+        // JSON
+        'images' => 'array',
+        'highlights' => 'array',
+
+        // Datetime
         'deleted_at' => 'datetime',
         'restored_at' => 'datetime',
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
 
     public function category(): BelongsTo
     {
@@ -75,9 +117,27 @@ class Product extends Model
         )->withTimestamps();
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(
+            \App\Models\ProductReview::class
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeFeatured($query)
+    {
+        return $query->where('is_featured', true);
     }
 
     public function scopeLowStock($query, int $threshold = 10)
@@ -85,10 +145,22 @@ class Product extends Model
         return $query->where('stock', '<=', $threshold);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Routing
+    |--------------------------------------------------------------------------
+    */
+
     public function getRouteKeyName(): string
     {
         return 'slug';
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Card data
+    |--------------------------------------------------------------------------
+    */
 
     public function toCardArray(): array
     {

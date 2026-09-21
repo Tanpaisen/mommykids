@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use App\Models\VoucherUsage;
 class Order extends Model
 {
     use HasUlids;
@@ -17,6 +18,8 @@ class Order extends Model
         'ghn_province_id','ghn_district_id','ghn_ward_code',
         'subtotal','shipping_fee','discount','total',
         'status','payment_method','payment_status','note',
+        'points_used',
+        'points_discount',
     ];
 
 
@@ -44,6 +47,11 @@ class Order extends Model
         return $this->hasOne(Shipment::class);
     }
 
+    public function voucherUsages(): HasMany
+{
+    return $this->hasMany(VoucherUsage::class);
+}
+
     // Labels màu cho status
     public function statusLabel(): array
     {
@@ -57,5 +65,10 @@ class Order extends Model
             'refunded'   => ['text' => 'Đã hoàn tiền',  'color' => 'gray'],
             default      => ['text' => $this->status,   'color' => 'gray'],
         };
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'code';
     }
 }

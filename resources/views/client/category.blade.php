@@ -15,11 +15,97 @@
 
         $activeSort = $sort ?? request('sort', 'default');
 
-        $priceOptions = [
-            'under_300' => 'Dưới 300.000đ',
-            '300_500' => '300.000đ - 500.000đ',
-            '500_800' => '500.000đ - 800.000đ',
-            'over_800' => 'Trên 800.000đ',
+        $priceFloor = $priceFloor ?? 0;
+        $priceCeiling = $priceCeiling ?? 100000;
+        $priceStep = $priceStep ?? 10000;
+        $minPrice = $minPrice ?? $priceFloor;
+        $maxPrice = $maxPrice ?? $priceCeiling;
+        $hasPriceFilter = $hasPriceFilter ?? false;
+
+        /*
+         * Sidebar riêng cho category Vitamin & sức khỏe.
+         * Vẫn dùng name="attribute[]" để giữ nguyên logic filter hiện tại.
+         */
+        $isVitaminHealthCategory =
+            $category->slug === 'vitamin-suc-khoe';
+
+        $vitaminFilterGroups = [
+            [
+                'title' => 'Độ tuổi',
+                'slugs' => [
+                    'tu-so-sinh',
+                    'tu-4-thang',
+                    'tu-2-tuoi',
+                ],
+            ],
+            [
+                'title' => 'Dạng sản phẩm',
+                'slugs' => [
+                    'dang-nho-giot',
+                    'dang-xit',
+                    'dang-siro',
+                    'vien-nhai',
+                    'vien-nang-mem',
+                ],
+            ],
+            [
+                'title' => 'Dưỡng chất / Nhóm',
+                'slugs' => [
+                    'vitamin-d3',
+                    'vitamin-k2',
+                    'vitamin-tong-hop',
+                    'dha',
+                    'men-vi-sinh',
+                    'sat',
+                    'canxi',
+                ],
+            ],
+        ];
+
+
+        /*
+         * Sidebar riêng cho category Đồ dùng mẹ & bé.
+         * Vẫn dùng attribute[] nên giữ nguyên controller/filter hiện tại.
+         */
+        $isMotherBabyCategory =
+            $category->slug === 'do-dung-me-be';
+
+        $motherBabyFilterGroups = [
+            [
+                'title' => 'Loại sản phẩm',
+                'slugs' => [
+                    'diu-em-be',
+                    'tui-dung-do-me-be',
+                    'ghe-an-dam',
+                    'may-xay-thuc-an',
+                    'khay-tru-thuc-an',
+                    'hop-chia-sua',
+                    'yem-an-dam',
+                    'dai-xe-may',
+                ],
+            ],
+            [
+                'title' => 'Nhu cầu sử dụng',
+                'slugs' => [
+                    'do-dung-an-dam',
+                    'di-chuyen-cung-be',
+                ],
+            ],
+            [
+                'title' => 'Đặc điểm',
+                'slugs' => [
+                    '6in1',
+                    '4-tu-the',
+                    'nhieu-ngan',
+                    'quai-deo-cheo',
+                    '3-ngan',
+                    'nhua-pp',
+                    'silicone',
+                    'de-ve-sinh',
+                    'co-do-co',
+                    'dung-tich-0-3l',
+                ],
+            ],
         ];
     @endphp
 
@@ -35,6 +121,7 @@
     >
 
         <form
+            id="category-filter-form"
             method="GET"
             action="{{ route('category.show', $category->slug) }}"
         >
@@ -45,6 +132,184 @@
                 name="sort"
                 value="{{ $activeSort }}"
             >
+
+            @php
+                $hasSidebarFilters =
+                    !empty($selectedBrands)
+                    || !empty($selectedAttributes)
+                    || !empty($selectedStageIds)
+                    || $hasPriceFilter;
+            @endphp
+
+            @if ($hasSidebarFilters)
+                <div class="border-b border-coral-light/70 bg-coral-light/10">
+                    <div class="flex items-center justify-between gap-3 px-5 pt-3.5 pb-2.5">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-ink">
+                            <svg class="w-3.5 h-3.5 text-coral" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M7 12h10M10 18h4"/>
+                            </svg>
+                            Bộ lọc đang chọn
+                        </span>
+
+                        <a
+                            href="{{ route('category.show', [
+                                'category' => $category->slug,
+                                'sort' => $activeSort,
+                            ]) }}"
+                            class="shrink-0 text-xs font-bold text-coral hover:underline"
+                        >
+                            Xóa tất cả
+                        </a>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 px-5 pb-4">
+                        @foreach ($selectedBrands as $selectedBrand)
+                            @php
+                                $selectedBrandTag = $brandTags->firstWhere('slug', $selectedBrand);
+                            @endphp
+
+                            @if ($selectedBrandTag)
+                                @php
+                                    $removeBrandQuery = request()->except('page');
+                                    $removeBrandQuery['brand'] = array_values(array_filter(
+                                        (array) ($removeBrandQuery['brand'] ?? []),
+                                        fn ($value) => (string) $value !== (string) $selectedBrand
+                                    ));
+
+                                    if (empty($removeBrandQuery['brand'])) {
+                                        unset($removeBrandQuery['brand']);
+                                    }
+                                @endphp
+
+                                <a
+                                    href="{{ route(
+                                        'category.show',
+                                        array_merge(
+                                            ['category' => $category->slug],
+                                            $removeBrandQuery
+                                        )
+                                    ) }}"
+                                    class="inline-flex items-center gap-1.5 rounded-full
+                                           border border-coral-light bg-white
+                                           px-3 py-1.5 text-xs font-semibold text-ink
+                                           shadow-sm shadow-coral-light/20
+                                           hover:border-coral hover:bg-coral-light/30 hover:text-coral transition"
+                                >
+                                    <span>{{ $selectedBrandTag->name }}</span>
+                                    <span class="text-base leading-none" aria-hidden="true">×</span>
+                                </a>
+                            @endif
+                        @endforeach
+
+                        @foreach ($selectedStageIds as $selectedStageId)
+                            @php
+                                $selectedStage = $stages->firstWhere('id', (int) $selectedStageId);
+                            @endphp
+
+                            @if ($selectedStage)
+                                @php
+                                    $removeStageQuery = request()->except('page');
+                                    $removeStageQuery['stage'] = array_values(array_filter(
+                                        (array) ($removeStageQuery['stage'] ?? []),
+                                        fn ($value) => (string) $value !== (string) $selectedStageId
+                                    ));
+
+                                    if (empty($removeStageQuery['stage'])) {
+                                        unset($removeStageQuery['stage']);
+                                    }
+                                @endphp
+
+                                <a
+                                    href="{{ route(
+                                        'category.show',
+                                        array_merge(
+                                            ['category' => $category->slug],
+                                            $removeStageQuery
+                                        )
+                                    ) }}"
+                                    class="inline-flex items-center gap-1.5 rounded-full
+                                           border border-coral-light bg-white
+                                           px-3 py-1.5 text-xs font-semibold text-ink
+                                           shadow-sm shadow-coral-light/20
+                                           hover:border-coral hover:bg-coral-light/30 hover:text-coral transition"
+                                >
+                                    <span>{{ $selectedStage->name }}</span>
+                                    <span class="text-base leading-none" aria-hidden="true">×</span>
+                                </a>
+                            @endif
+                        @endforeach
+
+                        @foreach ($selectedAttributes as $selectedAttribute)
+                            @php
+                                $selectedAttributeTag = $attributeTags->firstWhere('slug', $selectedAttribute);
+                            @endphp
+
+                            @if ($selectedAttributeTag)
+                                @php
+                                    $removeAttributeQuery = request()->except('page');
+                                    $removeAttributeQuery['attribute'] = array_values(array_filter(
+                                        (array) ($removeAttributeQuery['attribute'] ?? []),
+                                        fn ($value) => (string) $value !== (string) $selectedAttribute
+                                    ));
+
+                                    if (empty($removeAttributeQuery['attribute'])) {
+                                        unset($removeAttributeQuery['attribute']);
+                                    }
+                                @endphp
+
+                                <a
+                                    href="{{ route(
+                                        'category.show',
+                                        array_merge(
+                                            ['category' => $category->slug],
+                                            $removeAttributeQuery
+                                        )
+                                    ) }}"
+                                    class="inline-flex items-center gap-1.5 rounded-full
+                                           border border-coral-light bg-white
+                                           px-3 py-1.5 text-xs font-semibold text-ink
+                                           shadow-sm shadow-coral-light/20
+                                           hover:border-coral hover:bg-coral-light/30 hover:text-coral transition"
+                                >
+                                    <span>{{ $selectedAttributeTag->name }}</span>
+                                    <span class="text-base leading-none" aria-hidden="true">×</span>
+                                </a>
+                            @endif
+                        @endforeach
+
+                        @if ($hasPriceFilter)
+                            @php
+                                if ($minPrice > $priceFloor && $maxPrice < $priceCeiling) {
+                                    $sidebarPriceLabel =
+                                        number_format($minPrice, 0, ',', '.') . 'đ - '
+                                        . number_format($maxPrice, 0, ',', '.') . 'đ';
+                                } elseif ($minPrice > $priceFloor) {
+                                    $sidebarPriceLabel = 'Từ ' . number_format($minPrice, 0, ',', '.') . 'đ';
+                                } else {
+                                    $sidebarPriceLabel = 'Đến ' . number_format($maxPrice, 0, ',', '.') . 'đ';
+                                }
+                            @endphp
+
+                            <a
+                                href="{{ route(
+                                    'category.show',
+                                    array_merge(
+                                        ['category' => $category->slug],
+                                        request()->except('page', 'min_price', 'max_price')
+                                    )
+                                ) }}"
+                                class="inline-flex items-center gap-1.5 rounded-lg
+                                       border border-coral-light bg-cream/50
+                                       px-2.5 py-1.5 text-xs font-semibold text-ink
+                                       hover:border-coral hover:text-coral transition"
+                            >
+                                <span>{{ $sidebarPriceLabel }}</span>
+                                <span class="text-base leading-none" aria-hidden="true">×</span>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            @endif
 
 
             {{-- =====================================================
@@ -77,6 +342,118 @@
 
 
             {{-- =====================================================
+                 KHOẢNG GIÁ - SLIDER 2 ĐẦU
+            ====================================================== --}}
+            <div class="p-5 border-b border-coral-light/70">
+
+                <div class="flex items-center justify-between gap-3">
+                    <h3 class="font-display font-bold text-sm text-ink">
+                        Khoảng giá
+                    </h3>
+
+                    @if ($hasPriceFilter)
+                        <a
+                            href="{{ route(
+                                'category.show',
+                                array_merge(
+                                    ['category' => $category->slug],
+                                    request()->except('page', 'min_price', 'max_price')
+                                )
+                            ) }}"
+                            class="text-[11px] font-semibold text-coral hover:underline"
+                        >
+                            Đặt lại
+                        </a>
+                    @endif
+                </div>
+
+                <div class="mt-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <span
+                            id="price-min-label"
+                            class="inline-flex min-w-0 items-center rounded-lg
+                                   border border-coral-light/80 bg-cream/60
+                                   px-2.5 py-1.5 text-[11px] font-semibold text-ink"
+                        >
+                            {{ number_format($minPrice, 0, ',', '.') }}đ
+                        </span>
+
+                        <span class="text-[11px] font-medium text-ink-soft/70">đến</span>
+
+                        <span
+                            id="price-max-label"
+                            class="inline-flex min-w-0 items-center justify-end rounded-lg
+                                   border border-coral-light/80 bg-cream/60
+                                   px-2.5 py-1.5 text-[11px] font-semibold text-ink text-right"
+                        >
+                            {{ number_format($maxPrice, 0, ',', '.') }}đ
+                        </span>
+                    </div>
+
+                    <div
+                        id="price-slider"
+                        class="relative mt-3 h-8"
+                        data-floor="{{ $priceFloor }}"
+                        data-ceiling="{{ $priceCeiling }}"
+                    >
+                        <div
+                            class="absolute left-0 right-0 top-1/2 h-1.5
+                                   -translate-y-1/2 rounded-full bg-coral-light/70"
+                        ></div>
+
+                        <div
+                            id="price-range-progress"
+                            class="absolute top-1/2 h-1.5
+                                   -translate-y-1/2 rounded-full bg-coral"
+                        ></div>
+
+                        <input
+                            id="price-range-min"
+                            type="range"
+                            min="{{ $priceFloor }}"
+                            max="{{ $priceCeiling }}"
+                            step="{{ $priceStep }}"
+                            value="{{ $minPrice }}"
+                            aria-label="Giá thấp nhất"
+                            class="mk-price-range absolute inset-0 w-full"
+                        >
+
+                        <input
+                            id="price-range-max"
+                            type="range"
+                            min="{{ $priceFloor }}"
+                            max="{{ $priceCeiling }}"
+                            step="{{ $priceStep }}"
+                            value="{{ $maxPrice }}"
+                            aria-label="Giá cao nhất"
+                            class="mk-price-range absolute inset-0 w-full"
+                        >
+                    </div>
+
+                    <input
+                        id="min-price-input"
+                        type="hidden"
+                        name="min_price"
+                        value="{{ $minPrice }}"
+                        @disabled(!$hasPriceFilter)
+                    >
+
+                    <input
+                        id="max-price-input"
+                        type="hidden"
+                        name="max_price"
+                        value="{{ $maxPrice }}"
+                        @disabled(!$hasPriceFilter)
+                    >
+
+                    <p class="mt-2.5 text-[10px] leading-4 text-ink-soft/75">
+                        Lọc theo giá bán hiện tại của sản phẩm.
+                    </p>
+                </div>
+
+            </div>
+
+            {{-- =====================================================
                  THƯƠNG HIỆU - TAG TYPE BRAND
             ====================================================== --}}
             @if ($brandTags->isNotEmpty())
@@ -105,7 +482,8 @@
                                     name="brand[]"
                                     value="{{ $tag->slug }}"
                                     @checked(in_array($tag->slug, $selectedBrands, true))
-                                    class="w-4 h-4
+                                    class="js-auto-filter
+                                           w-4 h-4
                                            rounded
                                            border-coral-light
                                            text-coral
@@ -130,7 +508,7 @@
             {{-- =====================================================
                  GIAI ĐOẠN / ĐỘ TUỔI - PRODUCT_STAGE
             ====================================================== --}}
-            @if ($stages->isNotEmpty())
+            @if (!$isVitaminHealthCategory && !$isMotherBabyCategory && $stages->isNotEmpty())
 
                 <div class="p-5 border-b border-coral-light/70">
 
@@ -156,7 +534,8 @@
                                     name="stage[]"
                                     value="{{ $stage->id }}"
                                     @checked(in_array((int) $stage->id, $selectedStageIds, true))
-                                    class="mt-0.5
+                                    class="js-auto-filter
+                                           mt-0.5
                                            w-4 h-4
                                            rounded
                                            border-coral-light
@@ -190,9 +569,140 @@
 
 
             {{-- =====================================================
-                 THUỘC TÍNH - TAG TYPE ATTRIBUTE
+                 FILTER THUỘC TÍNH
+                 Vitamin & sức khỏe: chia 3 nhóm riêng.
+                 Đồ dùng mẹ & bé: chia Loại sản phẩm / Nhu cầu sử dụng / Đặc điểm.
+                 Category khác: giữ nguyên danh sách thuộc tính cũ.
             ====================================================== --}}
-            @if ($attributeTags->isNotEmpty())
+            @if ($isVitaminHealthCategory)
+
+                @foreach ($vitaminFilterGroups as $filterGroup)
+
+                    @php
+                        $groupTags = collect($filterGroup['slugs'])
+                            ->map(
+                                fn ($slug) =>
+                                    $attributeTags->firstWhere('slug', $slug)
+                            )
+                            ->filter()
+                            ->values();
+                    @endphp
+
+                    @if ($groupTags->isNotEmpty())
+
+                        <div class="p-5 border-b border-coral-light/70">
+
+                            <h3 class="font-display font-bold text-sm text-ink mb-3">
+                                {{ $filterGroup['title'] }}
+                            </h3>
+
+                            <div class="space-y-2">
+
+                                @foreach ($groupTags as $tag)
+
+                                    <label
+                                        class="flex items-center gap-3
+                                               px-2 py-1.5
+                                               rounded-lg
+                                               cursor-pointer
+                                               hover:bg-cream
+                                               transition"
+                                    >
+
+                                        <input
+                                            type="checkbox"
+                                            name="attribute[]"
+                                            value="{{ $tag->slug }}"
+                                            @checked(in_array($tag->slug, $selectedAttributes, true))
+                                            class="js-auto-filter
+                                                   w-4 h-4
+                                                   rounded
+                                                   border-coral-light
+                                                   text-coral
+                                                   focus:ring-coral/30"
+                                        >
+
+                                        <span class="text-sm text-ink">
+                                            {{ $tag->name }}
+                                        </span>
+
+                                    </label>
+
+                                @endforeach
+
+                            </div>
+
+                        </div>
+
+                    @endif
+
+                @endforeach
+
+            @elseif ($isMotherBabyCategory)
+
+                @foreach ($motherBabyFilterGroups as $filterGroup)
+
+                    @php
+                        $groupTags = collect($filterGroup['slugs'])
+                            ->map(
+                                fn ($slug) =>
+                                    $attributeTags->firstWhere('slug', $slug)
+                            )
+                            ->filter()
+                            ->values();
+                    @endphp
+
+                    @if ($groupTags->isNotEmpty())
+
+                        <div class="p-5 border-b border-coral-light/70">
+
+                            <h3 class="font-display font-bold text-sm text-ink mb-3">
+                                {{ $filterGroup['title'] }}
+                            </h3>
+
+                            <div class="space-y-2">
+
+                                @foreach ($groupTags as $tag)
+
+                                    <label
+                                        class="flex items-center gap-3
+                                               px-2 py-1.5
+                                               rounded-lg
+                                               cursor-pointer
+                                               hover:bg-cream
+                                               transition"
+                                    >
+
+                                        <input
+                                            type="checkbox"
+                                            name="attribute[]"
+                                            value="{{ $tag->slug }}"
+                                            @checked(in_array($tag->slug, $selectedAttributes, true))
+                                            class="js-auto-filter
+                                                   w-4 h-4
+                                                   rounded
+                                                   border-coral-light
+                                                   text-coral
+                                                   focus:ring-coral/30"
+                                        >
+
+                                        <span class="text-sm text-ink">
+                                            {{ $tag->name }}
+                                        </span>
+
+                                    </label>
+
+                                @endforeach
+
+                            </div>
+
+                        </div>
+
+                    @endif
+
+                @endforeach
+
+            @elseif ($attributeTags->isNotEmpty())
 
                 <div class="p-5 border-b border-coral-light/70">
 
@@ -218,7 +728,8 @@
                                     name="attribute[]"
                                     value="{{ $tag->slug }}"
                                     @checked(in_array($tag->slug, $selectedAttributes, true))
-                                    class="w-4 h-4
+                                    class="js-auto-filter
+                                           w-4 h-4
                                            rounded
                                            border-coral-light
                                            text-coral
@@ -240,96 +751,6 @@
             @endif
 
 
-            {{-- =====================================================
-                 KHOẢNG GIÁ
-            ====================================================== --}}
-            <div class="p-5 border-b border-coral-light/70">
-
-                <h3 class="font-display font-bold text-sm text-ink mb-3">
-                    Khoảng giá
-                </h3>
-
-                <div class="space-y-2">
-
-                    @foreach ($priceOptions as $key => $label)
-
-                        <label
-                            class="flex items-center gap-3
-                                   px-2 py-1.5
-                                   rounded-lg
-                                   cursor-pointer
-                                   hover:bg-cream
-                                   transition"
-                        >
-
-                            <input
-                                type="radio"
-                                name="price"
-                                value="{{ $key }}"
-                                @checked(request('price') === $key)
-                                class="w-4 h-4
-                                       border-coral-light
-                                       text-coral
-                                       focus:ring-coral/30"
-                            >
-
-                            <span class="text-sm text-ink">
-                                {{ $label }}
-                            </span>
-
-                        </label>
-
-                    @endforeach
-
-                </div>
-
-            </div>
-
-
-            {{-- =====================================================
-                 ACTION
-            ====================================================== --}}
-            <div class="p-4 space-y-2">
-
-                <button
-                    type="submit"
-                    class="w-full
-                           px-4 py-2.5
-                           rounded-full
-                           bg-coral
-                           text-white
-                           text-sm
-                           font-bold
-                           hover:opacity-90
-                           transition"
-                >
-                    Áp dụng bộ lọc
-                </button>
-
-                <a
-                    href="{{ route('category.show', [
-                        'category' => $category->slug,
-                        'sort' => $activeSort,
-                    ]) }}"
-                    class="w-full
-                           inline-flex
-                           items-center
-                           justify-center
-                           px-4 py-2.5
-                           rounded-full
-                           border border-coral-light
-                           bg-white
-                           text-sm
-                           font-semibold
-                           text-ink-soft
-                           hover:text-coral
-                           hover:border-coral
-                           transition"
-                >
-                    Xóa bộ lọc
-                </a>
-
-            </div>
 
         </form>
 
@@ -474,7 +895,7 @@
                 !empty($selectedBrands)
                 || !empty($selectedAttributes)
                 || !empty($selectedStageIds)
-                || request()->filled('price');
+                || $hasPriceFilter;
         @endphp
 
         @if ($hasFilters)
@@ -548,20 +969,35 @@
 
 
                     {{-- PRICE --}}
-                    @if (request()->filled('price') && isset($priceOptions[request('price')]))
+                    @if ($hasPriceFilter)
+                        @php
+                            if ($minPrice > $priceFloor && $maxPrice < $priceCeiling) {
+                                $priceFilterLabel =
+                                    number_format($minPrice, 0, ',', '.') . 'đ - '
+                                    . number_format($maxPrice, 0, ',', '.') . 'đ';
+                            } elseif ($minPrice > $priceFloor) {
+                                $priceFilterLabel = 'Từ ' . number_format($minPrice, 0, ',', '.') . 'đ';
+                            } else {
+                                $priceFilterLabel = 'Đến ' . number_format($maxPrice, 0, ',', '.') . 'đ';
+                            }
+                        @endphp
 
-                        <span
-                            class="inline-flex items-center
-                                   px-3 py-1.5
-                                   rounded-full
-                                   bg-white
-                                   border border-coral-light
-                                   text-xs font-semibold
-                                   text-coral"
+                        <a
+                            href="{{ route(
+                                'category.show',
+                                array_merge(
+                                    ['category' => $category->slug],
+                                    request()->except('page', 'min_price', 'max_price')
+                                )
+                            ) }}"
+                            class="inline-flex items-center gap-1.5
+                                   px-3 py-1.5 rounded-full bg-white
+                                   border border-coral-light text-xs font-semibold text-coral
+                                   hover:bg-coral-light/30 transition"
                         >
-                            {{ $priceOptions[request('price')] }}
-                        </span>
-
+                            <span>{{ $priceFilterLabel }}</span>
+                            <span aria-hidden="true">×</span>
+                        </a>
                     @endif
 
 
@@ -707,7 +1143,11 @@
 
                     <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div class="flex items-center gap-3">
-                            <span class="w-9 h-9 shrink-0 rounded-full bg-white border border-coral-light flex items-center justify-center text-coral font-bold">✦</span>
+                            <span class="w-9 h-9 shrink-0 rounded-full bg-white border border-coral-light flex items-center justify-center text-coral">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M7 4v6M17 4v6M6 13h5v5H6zM14 13h4M14 17h4"/>
+                                </svg>
+                            </span>
                             <div>
                                 <p class="text-xs font-bold text-ink">Đa dạng thương hiệu</p>
                                 <p class="text-[11px] text-ink-soft">Nhiều lựa chọn cho ba mẹ</p>
@@ -715,7 +1155,12 @@
                         </div>
 
                         <div class="flex items-center gap-3">
-                            <span class="w-9 h-9 shrink-0 rounded-full bg-white border border-coral-light flex items-center justify-center text-coral font-bold">✓</span>
+                            <span class="w-9 h-9 shrink-0 rounded-full bg-white border border-coral-light flex items-center justify-center text-coral">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="8"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 1.5"/>
+                                </svg>
+                            </span>
                             <div>
                                 <p class="text-xs font-bold text-ink">Chọn theo độ tuổi</p>
                                 <p class="text-[11px] text-ink-soft">Dễ tìm theo từng giai đoạn</p>
@@ -723,7 +1168,11 @@
                         </div>
 
                         <div class="flex items-center gap-3">
-                            <span class="w-9 h-9 shrink-0 rounded-full bg-white border border-coral-light flex items-center justify-center text-coral font-bold">♡</span>
+                            <span class="w-9 h-9 shrink-0 rounded-full bg-white border border-coral-light flex items-center justify-center text-coral">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10Z"/>
+                                </svg>
+                            </span>
                             <div>
                                 <p class="text-xs font-bold text-ink">Dễ dàng lựa chọn</p>
                                 <p class="text-[11px] text-ink-soft">Bộ lọc rõ ràng, tiện lợi</p>
@@ -743,14 +1192,22 @@
                     </button>
                 </div>
 
-                <div class="relative hidden lg:flex items-center justify-center overflow-hidden bg-coral-light/35" aria-hidden="true">
-                    <div class="absolute w-64 h-64 rounded-full bg-white/60 -right-10 -top-10"></div>
-                    <div class="absolute w-40 h-40 rounded-full bg-white/50 left-8 bottom-6"></div>
-                    <div class="relative z-10 flex items-end gap-4 text-center">
-                        <div class="text-7xl">🍼</div>
-                        <div class="text-8xl">🥛</div>
-                        <div class="text-7xl">🧸</div>
-                    </div>
+                <div
+                    class="relative hidden lg:flex
+                           items-center justify-center
+                           overflow-hidden
+                           bg-coral-light/30
+                           p-5"
+                >
+                    <img
+                        src="{{ asset('images/categories/suaaa.jpg') }}"
+                        alt="Sữa công thức cho bé"
+                        class="w-full h-full
+                               object-cover
+                               object-center
+                               rounded-2xl
+                               shadow-sm"
+                    >
                 </div>
             </div>
 
@@ -786,7 +1243,12 @@
     <section class="mt-5 rounded-2xl border border-coral-light/70 bg-white px-4 sm:px-5 py-5">
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
             <div class="flex items-center gap-3">
-                <span class="w-12 h-12 shrink-0 rounded-full bg-coral-light/70 flex items-center justify-center text-xl">✓</span>
+                <span class="w-11 h-11 shrink-0 rounded-full bg-coral-light/55 text-coral flex items-center justify-center">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.7-2.8 8.2-7 10-4.2-1.8-7-5.3-7-10V6l7-3Z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m9 12 2 2 4-5"/>
+                    </svg>
+                </span>
                 <div>
                     <h3 class="text-sm font-bold text-ink">Hàng chính hãng</h3>
                     <p class="mt-1 text-xs leading-5 text-ink-soft">Thông tin sản phẩm và nguồn gốc rõ ràng.</p>
@@ -794,7 +1256,13 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <span class="w-12 h-12 shrink-0 rounded-full bg-emerald-50 flex items-center justify-center text-xl">🚚</span>
+                <span class="w-11 h-11 shrink-0 rounded-full bg-coral-light/55 text-coral flex items-center justify-center">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h11v10H3zM14 9h4l3 3v4h-7z"/>
+                        <circle cx="7" cy="18" r="2"/>
+                        <circle cx="18" cy="18" r="2"/>
+                    </svg>
+                </span>
                 <div>
                     <h3 class="text-sm font-bold text-ink">Giao hàng nhanh</h3>
                     <p class="mt-1 text-xs leading-5 text-ink-soft">Quy trình giao nhận thuận tiện cho ba mẹ.</p>
@@ -802,7 +1270,12 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <span class="w-12 h-12 shrink-0 rounded-full bg-amber-50 flex items-center justify-center text-xl">🎁</span>
+                <span class="w-11 h-11 shrink-0 rounded-full bg-coral-light/55 text-coral flex items-center justify-center">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 9h16v11H4zM3 6h18v3H3zM12 6v14"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6c-2.5 0-4-1-4-2.2C8 2.8 9 2 10.3 2 12 2 12 4 12 6Zm0 0c2.5 0 4-1 4-2.2C16 2.8 15 2 13.7 2 12 2 12 4 12 6Z"/>
+                    </svg>
+                </span>
                 <div>
                     <h3 class="text-sm font-bold text-ink">Ưu đãi hấp dẫn</h3>
                     <p class="mt-1 text-xs leading-5 text-ink-soft">Dễ dàng cập nhật các chương trình khuyến mãi.</p>
@@ -810,7 +1283,12 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <span class="w-12 h-12 shrink-0 rounded-full bg-sky-50 flex items-center justify-center text-xl">↺</span>
+                <span class="w-11 h-11 shrink-0 rounded-full bg-coral-light/55 text-coral flex items-center justify-center">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v5h5"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.5 12A7 7 0 1 0 8 6.5L4 10"/>
+                    </svg>
+                </span>
                 <div>
                     <h3 class="text-sm font-bold text-ink">Hỗ trợ đổi trả</h3>
                     <p class="mt-1 text-xs leading-5 text-ink-soft">Hỗ trợ theo chính sách hiện hành của MommyKids.</p>
@@ -818,27 +1296,5 @@
             </div>
         </div>
     </section>
-
-
-    @if ($category->slug === 'sua-cho-be')
-        <script>
-            (() => {
-                const button = document.getElementById('milk-guide-toggle');
-                const more = document.getElementById('milk-guide-more');
-                const label = document.getElementById('milk-guide-toggle-label');
-                const icon = document.getElementById('milk-guide-toggle-icon');
-
-                if (!button || !more || !label || !icon) return;
-
-                button.addEventListener('click', () => {
-                    const isOpen = button.getAttribute('aria-expanded') === 'true';
-                    button.setAttribute('aria-expanded', String(!isOpen));
-                    more.classList.toggle('hidden', isOpen);
-                    label.textContent = isOpen ? 'Xem thêm' : 'Thu gọn';
-                    icon.textContent = isOpen ? '↓' : '↑';
-                });
-            })();
-        </script>
-    @endif
 
 @endsection

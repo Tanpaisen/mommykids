@@ -14,8 +14,8 @@ return new class extends Migration
         if (!Schema::hasTable('point_logs')) {
             Schema::create('point_logs', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('user_id')->constrained()->onDelete('cascade');
-                $table->foreignId('order_id')->nullable()->constrained()->onDelete('set null');
+                $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
+                $table->foreignUlid('order_id')->nullable()->constrained('orders')->nullOnDelete();
                 $table->integer('points'); // Số điểm cộng (+10, +50) hoặc trừ (-20, -100)
                 $table->string('type'); // 'earn' (tích điểm), 'redeem' (tiêu điểm), 'refund' (hoàn điểm)
                 $table->string('description'); // Mô tả giao dịch (VD: Tích điểm đơn hàng #1002)

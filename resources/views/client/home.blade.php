@@ -12,42 +12,72 @@
                     <p class="font-display font-extrabold text-2xl lg:text-4xl text-white leading-tight">
                         {!! nl2br(e($globalSetting->hero_title ?? "Sữa thùng\ngiá tốt tháng này")) !!}
                     </p>
-                    <p class="mt-3 text-white/90 text-sm lg:text-base">Chính hãng · Hóa đơn VAT đầy đủ · Bảo giá tốt nhất thị trường</p>
-                    <a href="#" class="btn-primary bg-white !text-coral hover:!bg-cream mt-5">Mua ngay</a>
+                    <p class="mt-3 text-white/90 text-sm lg:text-base">
+                        Chính hãng · Hóa đơn VAT đầy đủ · Bảo giá tốt nhất thị trường
+                    </p>
+                    <a href="#" class="btn-primary bg-white !text-coral hover:!bg-cream mt-5">
+                        Mua ngay
+                    </a>
                 </div>
-                <img src="https://via.placeholder.com/260x260?text=Milk" alt="Sữa thùng giá tốt" class="hidden lg:block w-56 h-56 object-contain drop-shadow-xl">
+
+                <img src="https://via.placeholder.com/260x260?text=Milk"
+                     alt="Sữa thùng giá tốt"
+                     class="hidden lg:block w-56 h-56 object-contain drop-shadow-xl">
             </div>
+
             <div class="w-full shrink-0 bg-gradient-to-br from-mint to-mint/70 flex items-center justify-between px-6 lg:px-12 py-10 lg:py-16">
                 <div class="max-w-md">
-                    <p class="font-display font-extrabold text-2xl lg:text-4xl text-white leading-tight">Voucher tặng<br>bạn mới</p>
-                    <p class="mt-3 text-white/90 text-sm lg:text-base">Nhận ngay ưu đãi 30K cho đơn hàng đầu tiên</p>
-                    <a href="#" class="btn-primary bg-white !text-mint hover:!bg-cream mt-5">Nhận ngay</a>
+                    <p class="font-display font-extrabold text-2xl lg:text-4xl text-white leading-tight">
+                        Voucher tặng<br>bạn mới
+                    </p>
+
+                    <p class="mt-3 text-white/90 text-sm lg:text-base">
+                        Nhận ngay ưu đãi 30K cho đơn hàng đầu tiên
+                    </p>
+
+                    <a href="{{ route('vouchers.index') }}"
+                       class="btn-primary bg-white !text-mint hover:!bg-cream mt-5">
+                        Nhận ngay
+                    </a>
                 </div>
-                <img src="https://via.placeholder.com/260x260?text=Voucher" alt="Voucher tặng bạn mới" class="hidden lg:block w-56 h-56 object-contain drop-shadow-xl">
+
+                <img src="https://via.placeholder.com/260x260?text=Voucher"
+                     alt="Voucher tặng bạn mới"
+                     class="hidden lg:block w-56 h-56 object-contain drop-shadow-xl">
             </div>
         </div>
 
         {{-- Dots --}}
         <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-            <span data-hero-dot class="w-2.5 h-2.5 rounded-full bg-coral"></span>
-            <span data-hero-dot class="w-2.5 h-2.5 rounded-full bg-white/60"></span>
+            <span data-hero-dot
+                  class="w-2.5 h-2.5 rounded-full bg-coral"></span>
+
+            <span data-hero-dot
+                  class="w-2.5 h-2.5 rounded-full bg-white/60"></span>
         </div>
     </section>
 
     {{-- ============ QUICK ACTION ICONS ============ --}}
     <section class="card p-4 grid grid-cols-4 lg:grid-cols-7 gap-4">
         @foreach ([
-            ['icon' => '🆕', 'label' => 'Hàng mới'],
-            ['icon' => '🏬', 'label' => 'Tìm cửa hàng'],
-            ['icon' => '📞', 'label' => 'Hotline'],
-            ['icon' => '🎁', 'label' => 'Đổi quà'],
-            ['icon' => '🎟️', 'label' => 'Voucher'],
-            ['icon' => '📱', 'label' => 'Mini App'],
-            ['icon' => '📅', 'label' => 'Sự kiện'],
+            ['icon' => '🆕', 'label' => 'Hàng mới', 'url' => '#'],
+            ['icon' => '🏬', 'label' => 'Tìm cửa hàng', 'url' => '#'],
+            ['icon' => '📞', 'label' => 'Hotline', 'url' => '#'],
+            ['icon' => '🎁', 'label' => 'Đổi quà', 'url' => '#'],
+            ['icon' => '🎟️', 'label' => 'Voucher', 'url' => route('vouchers.index')],
+            ['icon' => '📱', 'label' => 'Mini App', 'url' => '#'],
+            ['icon' => '📅', 'label' => 'Sự kiện', 'url' => '#'],
         ] as $action)
-            <a href="#" class="flex flex-col items-center gap-2 group">
-                <span class="w-12 h-12 rounded-2xl bg-coral-light flex items-center justify-center text-xl group-hover:bg-coral group-hover:text-white transition-colors">{{ $action['icon'] }}</span>
-                <span class="text-xs text-ink-soft text-center">{{ $action['label'] }}</span>
+            <a href="{{ $action['url'] }}"
+               class="flex flex-col items-center gap-2 group">
+
+                <span class="w-12 h-12 rounded-2xl bg-coral-light flex items-center justify-center text-xl group-hover:bg-coral group-hover:text-white transition-colors">
+                    {{ $action['icon'] }}
+                </span>
+
+                <span class="text-xs text-ink-soft text-center">
+                    {{ $action['label'] }}
+                </span>
             </a>
         @endforeach
     </section>
@@ -65,60 +95,134 @@
         
         <div class="hidden sm:flex gap-3">
             @if(!empty($globalSetting->yellow_banner_box1 ?? $globalSetting->promo_box1))
-                <div class="card px-4 py-3 text-center">
+                <div class="card px-4 py-3 text-center flex flex-col justify-center">
                     <p class="font-display font-bold text-coral text-sm">
-                        {{ $globalSetting->yellow_banner_box1 ?? $globalSetting->promo_box1 }}
+                        {!! nl2br(e($globalSetting->yellow_banner_box1 ?? $globalSetting->promo_box1)) !!}
                     </p>
                 </div>
             @endif
 
             @if(!empty($globalSetting->yellow_banner_box2 ?? $globalSetting->promo_box2))
-                <div class="card px-4 py-3 text-center">
+                <div class="card px-4 py-3 text-center flex flex-col justify-center">
                     <p class="font-display font-bold text-coral text-sm">
-                        {{ $globalSetting->yellow_banner_box2 ?? $globalSetting->promo_box2 }}
+                        {!! nl2br(e($globalSetting->yellow_banner_box2 ?? $globalSetting->promo_box2)) !!}
                     </p>
                 </div>
             @endif
 
             @if(!empty($globalSetting->yellow_banner_box3 ?? $globalSetting->promo_box3))
-                <div class="card px-4 py-3 text-center">
+                <div class="card px-4 py-3 text-center flex flex-col justify-center">
                     <p class="font-display font-bold text-coral text-sm">
-                        {{ $globalSetting->yellow_banner_box3 ?? $globalSetting->promo_box3 }}
+                        {!! nl2br(e($globalSetting->yellow_banner_box3 ?? $globalSetting->promo_box3)) !!}
                     </p>
                 </div>
             @endif
         </div>
 
-        <a href="#" class="btn-primary shrink-0">
+        <a href="{{ route('vouchers.index') }}" class="btn-primary shrink-0">
             {{ $globalSetting->yellow_banner_button_text ?? ($globalSetting->promo_button_text ?? 'Nhận ngay') }}
         </a>
     </section>
+
+    {{-- ============ FEATURED PRODUCTS ============ --}}
+    @if ($featuredProducts->isNotEmpty())
+        <section class="card p-4 lg:p-6 flex flex-col">
+
+            {{-- Header --}}
+            <div class="w-full flex items-center justify-between gap-4 mb-5">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span class="text-2xl shrink-0">⭐</span>
+
+                    <div class="min-w-0">
+                        <h2 class="font-display font-bold text-lg lg:text-xl text-ink">
+                            Sản phẩm nổi bật
+                        </h2>
+
+                        <p class="text-xs text-ink-soft mt-1">
+                            Những sản phẩm được MommyKids lựa chọn dành cho ba mẹ
+                        </p>
+                    </div>
+                </div>
+
+                <a href="{{ route('products.featured') }}"
+                   class="shrink-0 text-sm font-semibold text-coral flex items-center gap-1 hover:opacity-80 transition">
+                    Xem tất cả
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="w-4 h-4"
+                         fill="none"
+                         viewBox="0 0 24 24"
+                         stroke="currentColor"
+                         stroke-width="2">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+
+            {{-- Product grid --}}
+            <div class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                @foreach ($featuredProducts as $product)
+                    <x-product-card
+                        :product="$product"
+                        :product-id="$product['id']"
+                    />
+                @endforeach
+            </div>
+
+        </section>
+    @endif
 
     {{-- ============ PRODUCT SECTIONS ============ --}}
     @forelse ($sections as $section)
         <section class="card p-4 lg:p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-2">
-                    <span class="text-2xl">{{ $section['icon'] ?? '🛍️' }}</span>
-                    <h2 class="font-display font-bold text-lg lg:text-xl text-ink">{{ $section['title'] }}</h2>
+                    <span class="text-2xl">
+                        {{ $section['icon'] ?? '🛍️' }}
+                    </span>
+
+                    <h2 class="font-display font-bold text-lg lg:text-xl text-ink">
+                        {{ $section['title'] }}
+                    </h2>
                 </div>
-                <a href="{{ $section['url'] }}" class="text-sm font-semibold text-coral flex items-center gap-1">
+
+                <a href="{{ $section['url'] }}"
+                   class="text-sm font-semibold text-coral flex items-center gap-1">
                     Xem tất cả
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="w-4 h-4"
+                         fill="none"
+                         viewBox="0 0 24 24"
+                         stroke="currentColor"
+                         stroke-width="2">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M9 5l7 7-7 7" />
                     </svg>
                 </a>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                 @foreach ($section['products'] as $product)
-                    <x-product-card :product="$product" :product-id="$product['id']" />
+                    <x-product-card
+                        :product="$product"
+                        :product-id="$product['id']"
+                    />
                 @endforeach
             </div>
         </section>
+
     @empty
         <section class="card p-8 text-center text-ink-soft">
-            Chưa có danh mục/sản phẩm nào. Chạy <code class="bg-cream px-1.5 py-0.5 rounded">php artisan db:seed</code> để nạp dữ liệu mẫu.
+            Chưa có danh mục/sản phẩm nào.
+            Chạy
+            <code class="bg-cream px-1.5 py-0.5 rounded">
+                php artisan db:seed
+            </code>
+            để nạp dữ liệu mẫu.
         </section>
     @endforelse
 

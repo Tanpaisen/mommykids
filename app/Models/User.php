@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +15,11 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasUlids;
 
+    /**
+     * Các thuộc tính được phép mass assignment.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
         'email',
@@ -30,11 +37,21 @@ class User extends Authenticatable
         'last_seen_at',
     ];
 
+    /**
+     * Các thuộc tính bị ẩn khi serialize.
+     *
+     * @var array<int, string>
+     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    /**
+     * Cast dữ liệu.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_seen_at'      => 'datetime',
@@ -97,6 +114,13 @@ class User extends Authenticatable
             return $this->hasMany(\App\Models\PointLog::class, 'user_id')->latest();
         }
         return $this->hasMany(self::class, 'id')->whereRaw('1 = 0');
+    }
+
+    public function productReviews(): HasMany
+    {
+        return $this->hasMany(
+            \App\Models\ProductReview::class
+        );
     }
 
     public function getTierNameAttribute(): string
@@ -185,5 +209,15 @@ class User extends Authenticatable
             'needed'    => max(0, $target - $spent),
             'percent'   => $percent,
         ];
+    }
+
+    public function savedVouchers()
+    {
+        return $this->belongsToMany(
+            Voucher::class,
+            'voucher_users',
+            'user_id',
+            'voucher_id'
+        );
     }
 }

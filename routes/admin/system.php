@@ -17,7 +17,8 @@ Route::controller(AdminController::class)
     });
     
 // ── Nhóm quyền ──
-Route::resource('nhom-quyen', RoleController::class)
+Route::middleware('permission:roles.manage')
+    ->resource('nhom-quyen', RoleController::class)
     ->except(['show'])
     ->parameters(['nhom-quyen' => 'role'])
     ->names([
@@ -30,7 +31,8 @@ Route::resource('nhom-quyen', RoleController::class)
     ]);
 
 // ── Phân quyền ──
-Route::controller(PermissionController::class)
+Route::middleware('permission:roles.manage')
+    ->controller(PermissionController::class)
     ->prefix('phan-quyen')
     ->name('permissions.')
     ->group(function () {

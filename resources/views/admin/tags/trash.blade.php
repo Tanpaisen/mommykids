@@ -356,52 +356,58 @@
 
                             <div class="flex justify-end gap-2">
 
-                                {{-- RESTORE --}}
-                                <button
-                                    type="button"
-                                    data-action="{{ route(
-                                        'admin.tags.restore',
-                                        $tag->id
-                                    ) }}"
-                                    data-name="{{ $tag->name }}"
-                                    onclick="openRestoreTagModal(this)"
-                                    class="inline-flex
-                                           items-center gap-2
-                                           rounded-xl
-                                           bg-green-50
-                                           px-4 py-2.5
-                                           text-sm
-                                           font-medium
-                                           text-green-600
-                                           hover:bg-green-100
-                                           transition"
-                                >
-                                    ↶ Khôi phục
-                                </button>
+                                @can('catalog.manage')
+
+                                    {{-- RESTORE --}}
+                                    <button
+                                        type="button"
+                                        data-action="{{ route(
+                                            'admin.tags.restore',
+                                            $tag->id
+                                        ) }}"
+                                        data-name="{{ $tag->name }}"
+                                        onclick="openRestoreTagModal(this)"
+                                        class="inline-flex
+                                            items-center gap-2
+                                            rounded-xl
+                                            bg-green-50
+                                            px-4 py-2.5
+                                            text-sm
+                                            font-medium
+                                            text-green-600
+                                            hover:bg-green-100
+                                            transition"
+                                    >
+                                        ↶ Khôi phục
+                                    </button>
 
 
-                                {{-- FORCE DELETE --}}
-                                <button
-                                    type="button"
-                                    data-action="{{ route(
-                                        'admin.tags.forceDelete',
-                                        $tag->id
-                                    ) }}"
-                                    data-name="{{ $tag->name }}"
-                                    onclick="openForceDeleteTagModal(this)"
-                                    class="inline-flex
-                                           items-center gap-2
-                                           rounded-xl
-                                           bg-red-50
-                                           px-4 py-2.5
-                                           text-sm
-                                           font-medium
-                                           text-red-500
-                                           hover:bg-red-100
-                                           transition"
-                                >
-                                    🗑 Xóa vĩnh viễn
-                                </button>
+                                    {{-- FORCE DELETE --}}
+                                    <button
+                                        type="button"
+                                        data-action="{{ route(
+                                            'admin.tags.forceDelete',
+                                            $tag->id
+                                        ) }}"
+                                        data-name="{{ $tag->name }}"
+                                        onclick="openForceDeleteTagModal(this)"
+                                        class="inline-flex
+                                            items-center gap-2
+                                            rounded-xl
+                                            bg-red-50
+                                            px-4 py-2.5
+                                            text-sm
+                                            font-medium
+                                            text-red-500
+                                            hover:bg-red-100
+                                            transition"
+                                    >
+                                        🗑 Xóa vĩnh viễn
+                                    </button>
+
+                                @else
+                                    <span class="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-lg">Không có quyền thao tác</span>
+                                @endcan
 
                             </div>
 

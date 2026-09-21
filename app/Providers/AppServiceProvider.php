@@ -8,6 +8,7 @@ use App\Services\CartService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,6 +26,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Ép buộc toàn bộ hệ thống tự động dùng HTTPS khi lên môi trường production (Render)
+        if (str_contains(request()->getHost(), 'onrender.com') || $this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         // Chia sẻ dữ liệu Cài đặt chung ($globalSetting) toàn cục ra TẤT CẢ các file Blade view (Bọc Cache để tối ưu tốc độ)
         if (Schema::hasTable('settings')) {
             $globalSetting = Cache::rememberForever('global_settings', function () {

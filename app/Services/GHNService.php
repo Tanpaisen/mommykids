@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class GHNService
@@ -24,23 +25,29 @@ class GHNService
     /** Lấy danh sách tỉnh/thành */
     public function getProvinces(): array
     {
-        return $this->get('/shiip/public-api/master-data/province');
+        return Cache::remember('ghn_provinces', 86400, fn () =>
+            $this->get('/shiip/public-api/master-data/province')
+        );
     }
 
     /** Lấy danh sách quận/huyện theo tỉnh */
     public function getDistricts(int $provinceId): array
     {
-        return $this->post('/shiip/public-api/master-data/district', [
-            'province_id' => $provinceId,
-        ]);
+        return Cache::remember("ghn_districts_{$provinceId}", 86400, fn () =>
+            $this->post('/shiip/public-api/master-data/district', [
+                'province_id' => $provinceId,
+            ])
+        );
     }
 
     /** Lấy danh sách phường/xã theo quận */
     public function getWards(int $districtId): array
     {
-        return $this->post('/shiip/public-api/master-data/ward', [
-            'district_id' => $districtId,
-        ]);
+        return Cache::remember("ghn_wards_{$districtId}", 86400, fn () =>
+            $this->post('/shiip/public-api/master-data/ward', [
+                'district_id' => $districtId,
+            ])
+        );
     }
 
     // ─── Phí vận chuyển ──────────────────────────────────────────────────────
@@ -121,14 +128,16 @@ class GHNService
             'order_codes' => $orderCodes,
         ]);
 
+        Log::info('GHN gen-token response', ['resp' => $resp, 'orderCodes' => $orderCodes]);
+
         $printToken = $resp['token'] ?? null;
 
         if (! $printToken) {
             throw new \RuntimeException('Không lấy được print token từ GHN: ' . json_encode($resp));
         }
 
-        return "https://dev-online-gateway.ghn.vn/a5/public-api/print?" .
-               http_build_query(['token' => $printToken]);
+        return "https://dev-online-gateway.ghn.vn/a5/public-api/printA5?" .
+            http_build_query(['token' => $printToken]);
     }
 
     // ─── Huỷ đơn ─────────────────────────────────────────────────────────────

@@ -74,23 +74,25 @@
     function openLoginModal() { document.getElementById('loginModal').classList.remove('hidden'); }
     function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
 
-    // Tự động nhảy ô khi nhập 6 số OTP
-    const boxes = document.querySelectorAll('.otp-box');
-    boxes.forEach((box, idx) => {
-        box.addEventListener('input', (e) => {
-            if (e.target.value && idx < boxes.length - 1) boxes[idx + 1].focus();
-        });
-        box.addEventListener('keydown', (e) => {
-            if (e.key === 'Backspace' && !e.target.value && idx > 0) boxes[idx - 1].focus();
-        });
-    });
-
     function showAlert(msg, isSuccess) {
         const el = document.getElementById('modalAlert');
         el.className = `mb-3 p-2 text-xs rounded-xl text-center ${isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
         el.innerText = msg;
         el.classList.remove('hidden');
     }
+
+    // Gói việc khởi tạo OTP vào DOMContentLoaded để không bị tràn biến ra ngoài
+    document.addEventListener('DOMContentLoaded', function() {
+        const otpBoxes = document.querySelectorAll('.otp-box');
+        otpBoxes.forEach((box, idx) => {
+            box.addEventListener('input', (e) => {
+                if (e.target.value && idx < otpBoxes.length - 1) otpBoxes[idx + 1].focus();
+            });
+            box.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && idx > 0) otpBoxes[idx - 1].focus();
+            });
+        });
+    });
 
     // AJAX 1: Gửi OTP
     async function handleSendOtp() {
@@ -138,8 +140,10 @@
     async function handleVerifyOtp(e) {
         e.preventDefault();
         const email = document.getElementById('clientEmail').value;
+        
+        // Query trực tiếp các ô OTP lúc submit để lấy giá trị (Tránh lỗi đụng biến)
         let otp = '';
-        boxes.forEach(box => otp += box.value);
+        document.querySelectorAll('.otp-box').forEach(box => otp += box.value);
 
         if (otp.length < 6) return showAlert('Vui lòng nhập đủ 6 số OTP!', false);
 
@@ -152,6 +156,12 @@
                 },
                 body: JSON.stringify({ email, otp })
             });
+            
+            // Xử lý nếu Server ném ra lỗi 500
+            if (res.status === 500) {
+                return showAlert('Lỗi Server: Vui lòng kiểm tra lại laravel.log', false);
+            }
+
             const data = await res.json();
 
             if (data.success) {

@@ -29,9 +29,11 @@
     <div>
         <div class="flex items-center justify-between mb-3">
             <label class="block text-sm font-semibold text-ink">Ma trận phân quyền theo module</label>
-            @unless ($isSuperAdmin)
-                <button type="button" onclick="mkToggleAllPermissions(true)" class="text-xs text-coral font-semibold hover:underline">Chọn tất cả</button>
-            @endunless
+            @can('roles.manage')
+                @unless ($isSuperAdmin)
+                    <button type="button" onclick="mkToggleAllPermissions(true)" class="text-xs text-coral font-semibold hover:underline">Chọn tất cả</button>
+                @endunless
+            @endcan
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -66,11 +68,12 @@
 
 <script>
     function mkToggleModule(moduleKey, checked) {
-        document.querySelectorAll(`.mk-permission-checkbox[data-module="${moduleKey}"]`)
+        document.querySelectorAll(`.mk-permission-checkbox[data-module="${moduleKey}"]:not([disabled])`)
             .forEach(cb => cb.checked = checked);
     }
     function mkToggleAllPermissions(checked) {
-        document.querySelectorAll('.mk-permission-checkbox, .mk-module-toggle').forEach(cb => cb.checked = checked);
+        document.querySelectorAll('.mk-permission-checkbox:not([disabled]), .mk-module-toggle:not([disabled])')
+            .forEach(cb => cb.checked = checked);
     }
     // Keep each module's "select all" checkbox in sync when individual items change.
     document.addEventListener('change', (e) => {

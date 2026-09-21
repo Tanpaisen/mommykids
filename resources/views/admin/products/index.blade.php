@@ -28,64 +28,65 @@
 
     <div class="flex flex-wrap items-center gap-3">
 
-        {{-- THÙNG RÁC SẢN PHẨM --}}
-        <a
-            href="{{ route('admin.products.trash') }}"
-            class="inline-flex items-center gap-2
-                   h-11 px-4
-                   rounded-xl
-                   border border-admin-border
-                   bg-white
-                   text-sm font-medium text-ink
-                   hover:border-red-300
-                   hover:text-red-500
-                   transition"
-        >
-            <span class="text-base">
-                🗑️
-            </span>
-
-            <span>
-                Thùng rác
-            </span>
-
-            @if (($trashCount ?? 0) > 0)
-                <span
-                    class="inline-flex
-                           min-w-5 h-5
-                           items-center justify-center
-                           rounded-full
-                           bg-red-500
-                           px-1.5
-                           text-[11px]
-                           font-semibold
-                           text-white"
-                >
-                    {{ $trashCount }}
+        @can('products.manage')
+            {{-- THÙNG RÁC SẢN PHẨM --}}
+            <a
+                href="{{ route('admin.products.trash') }}"
+                class="inline-flex items-center gap-2
+                    h-11 px-4
+                    rounded-xl
+                    border border-admin-border
+                    bg-white
+                    text-sm font-medium text-ink
+                    hover:border-red-300
+                    hover:text-red-500
+                    transition"
+            >
+                <span class="text-base">
+                    🗑️
                 </span>
-            @endif
-        </a>
+
+                <span>
+                    Thùng rác
+                </span>
+
+                @if (($trashCount ?? 0) > 0)
+                    <span
+                        class="inline-flex
+                            min-w-5 h-5
+                            items-center justify-center
+                            rounded-full
+                            bg-red-500
+                            px-1.5
+                            text-[11px]
+                            font-semibold
+                            text-white"
+                    >
+                        {{ $trashCount }}
+                    </span>
+                @endif
+            </a>
 
 
-        {{-- THÊM SẢN PHẨM --}}
-        <a
-            href="{{ route('admin.products.create') }}"
-            class="inline-flex items-center justify-center gap-2
-                   h-11 px-5
-                   rounded-xl
-                   bg-coral
-                   text-white
-                   text-sm font-semibold
-                   hover:opacity-90
-                   transition"
-        >
-            <span>+</span>
+            {{-- THÊM SẢN PHẨM --}}
+            <a
+                href="{{ route('admin.products.create') }}"
+                class="inline-flex items-center justify-center gap-2
+                    h-11 px-5
+                    rounded-xl
+                    bg-coral
+                    text-white
+                    text-sm font-semibold
+                    hover:opacity-90
+                    transition"
+            >
+                <span>+</span>
 
-            <span>
-                Thêm sản phẩm
-            </span>
-        </a>
-
+                <span>
+                    Thêm sản phẩm
+                </span>
+            </a>
+        @endcan
     </div>
 
 </div>
@@ -179,6 +180,13 @@
                 @selected(request('status') === 'inactive')
             >
                 Đã ẩn
+            </option>
+
+            <option
+                value="featured"
+                @selected(request('status') === 'featured')
+            >
+                ⭐ Sản phẩm nổi bật
             </option>
         </select>
 
@@ -477,53 +485,75 @@
                         {{-- STATUS --}}
                         <td class="px-5 py-4">
 
-                            @if ($product->is_active)
+                            <div class="flex flex-wrap items-center gap-2">
 
-                                <span
-                                    class="inline-flex
-                                           items-center gap-2
-                                           rounded-full
-                                           bg-green-50
-                                           text-green-600
-                                           px-3 py-1.5
-                                           text-xs
-                                           font-semibold"
-                                >
+                                @if ($product->is_active)
 
                                     <span
-                                        class="w-2 h-2
+                                        class="inline-flex
+                                               items-center gap-2
                                                rounded-full
-                                               bg-green-500"
-                                    ></span>
+                                               bg-green-50
+                                               text-green-600
+                                               px-3 py-1.5
+                                               text-xs
+                                               font-semibold"
+                                    >
 
-                                    Đang bán
+                                        <span
+                                            class="w-2 h-2
+                                                   rounded-full
+                                                   bg-green-500"
+                                        ></span>
 
-                                </span>
+                                        Đang bán
 
-                            @else
+                                    </span>
 
-                                <span
-                                    class="inline-flex
-                                           items-center gap-2
-                                           rounded-full
-                                           bg-gray-100
-                                           text-gray-500
-                                           px-3 py-1.5
-                                           text-xs
-                                           font-semibold"
-                                >
+                                @else
 
                                     <span
-                                        class="w-2 h-2
+                                        class="inline-flex
+                                               items-center gap-2
                                                rounded-full
-                                               bg-gray-400"
-                                    ></span>
+                                               bg-gray-100
+                                               text-gray-500
+                                               px-3 py-1.5
+                                               text-xs
+                                               font-semibold"
+                                    >
 
-                                    Đã ẩn
+                                        <span
+                                            class="w-2 h-2
+                                                   rounded-full
+                                                   bg-gray-400"
+                                        ></span>
 
-                                </span>
+                                        Đã ẩn
 
-                            @endif
+                                    </span>
+
+                                @endif
+
+
+                                @if ($product->is_featured)
+
+                                    <span
+                                        class="inline-flex
+                                               items-center gap-1.5
+                                               rounded-full
+                                               bg-amber-50
+                                               text-amber-600
+                                               px-3 py-1.5
+                                               text-xs
+                                               font-semibold"
+                                    >
+                                        ⭐ Nổi bật
+                                    </span>
+
+                                @endif
+
+                            </div>
 
                         </td>
 
@@ -532,46 +562,50 @@
                         <td class="px-5 py-4">
 
                             <div class="flex justify-end gap-2">
+                                @can('products.manage')
+                                    {{-- EDIT --}}
+                                    <a
+                                        href="{{ route(
+                                            'admin.products.edit',
+                                            $product
+                                        ) }}"
+                                        class="px-4 py-2
+                                            border border-admin-border
+                                            rounded-lg
+                                            text-ink
+                                            hover:border-coral
+                                            hover:text-coral
+                                            transition"
+                                    >
+                                        Sửa
+                                    </a>
 
-                                {{-- EDIT --}}
-                                <a
-                                    href="{{ route(
-                                        'admin.products.edit',
-                                        $product
-                                    ) }}"
-                                    class="px-4 py-2
-                                           border border-admin-border
-                                           rounded-lg
-                                           text-ink
-                                           hover:border-coral
-                                           hover:text-coral
-                                           transition"
-                                >
-                                    Sửa
-                                </a>
 
-
-                                {{-- SOFT DELETE --}}
-                                <button
-                                    type="button"
-                                    data-action="{{ route(
-                                        'admin.products.destroy',
-                                        $product
-                                    ) }}"
-                                    data-name="{{ $product->name }}"
-                                    onclick="openDeleteProductModal(this)"
-                                    class="px-4 py-2
-                                           bg-red-50
-                                           text-red-500
-                                           rounded-lg
-                                           hover:bg-red-100
-                                           transition"
-                                >
-                                    Xóa
-                                </button>
-
+                                    {{-- SOFT DELETE --}}
+                                    <button
+                                        type="button"
+                                        data-action="{{ route(
+                                            'admin.products.destroy',
+                                            $product
+                                        ) }}"
+                                        data-name="{{ $product->name }}"
+                                        onclick="openDeleteProductModal(this)"
+                                        class="px-4 py-2
+                                            bg-red-50
+                                            text-red-500
+                                            rounded-lg
+                                            hover:bg-red-100
+                                            transition"
+                                    >
+                                        Xóa
+                                    </button>
+                                @else
+                                    {{-- CHỈ XEM --}}
+                                    <a href="{{ route('admin.products.edit', $product) }}" class="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition text-xs font-semibold">
+                                        Xem chi tiết
+                                    </a>
+                                @endcan
                             </div>
-
                         </td>
 
                     </tr>
