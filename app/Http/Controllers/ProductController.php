@@ -39,6 +39,7 @@ class ProductController extends Controller
         */
         $related = Product::query()
             ->active()
+            ->withReviewStats()
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->latest()
@@ -218,6 +219,7 @@ class ProductController extends Controller
         $products = Product::query()
             ->active()
             ->featured()
+            ->withReviewStats()
             ->latest()
             ->paginate(12);
 

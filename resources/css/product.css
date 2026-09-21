@@ -9836,3 +9836,465 @@ body.product-detail-active::-webkit-scrollbar {
 
 @media (max-width: 430px) {
 }
+
+/* =========================================================
+   ĐỒ SƠ SINH - PROFESSIONAL PRODUCT DETAIL
+   Scoped riêng trong .product-newborn-detail
+========================================================= */
+
+.product-newborn-detail {
+    display: grid;
+    gap: 1rem;
+}
+
+.product-newborn-detail .product-content-card,
+.product-newborn-detail .product-info-box {
+    border-color: rgba(255, 111, 129, .16);
+    box-shadow: 0 14px 32px -29px rgba(43, 37, 48, .38);
+}
+
+.product-newborn-overview-grid {
+    grid-template-columns: minmax(0, .94fr) minmax(0, 1.06fr);
+    align-items: stretch;
+}
+
+.product-newborn-spec-card,
+.product-newborn-description-card {
+    height: 100%;
+}
+
+.product-newborn-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.product-newborn-heading > div {
+    min-width: 0;
+}
+
+.product-newborn-heading-badge,
+.product-newborn-heading-note {
+    flex: 0 0 auto;
+    max-width: 12rem;
+    padding: .34rem .58rem;
+    border: 1px solid #f5dfe4;
+    border-radius: 999px;
+    background: #fff7f9;
+    color: #8a7f87;
+    font-size: .59rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.product-newborn-detail .product-detail-eyebrow {
+    display: block;
+    margin-bottom: .18rem;
+    color: #ff4167;
+    font-size: .54rem;
+    font-weight: 900;
+    letter-spacing: .055em;
+}
+
+.product-newborn-detail .product-section-heading h2,
+.product-newborn-section-heading h2 {
+    margin: 0;
+    color: #19223d;
+    font-family: var(--font-display);
+    font-size: 1.03rem;
+    font-weight: 800;
+    line-height: 1.28;
+}
+
+.product-newborn-spec-table .product-spec-row {
+    grid-template-columns: 8.7rem minmax(0, 1fr);
+    min-height: 2.58rem;
+}
+
+.product-newborn-spec-table .product-spec-row strong,
+.product-newborn-spec-table .product-spec-row > span {
+    display: flex;
+    align-items: center;
+    padding: .62rem .72rem;
+    font-size: .66rem;
+    line-height: 1.42;
+}
+
+.product-newborn-spec-table .product-spec-row strong {
+    color: #39323d;
+    background: #fff9fa;
+}
+
+.product-newborn-spec-table .product-spec-row > span {
+    color: #625a66;
+}
+
+.product-newborn-description-card .product-description-text-demo {
+    color: #4f4854;
+    font-size: .7rem;
+    line-height: 1.72;
+}
+
+.product-newborn-context-copy {
+    display: grid;
+    gap: .42rem;
+    margin-top: .65rem;
+}
+
+.product-newborn-context-copy p {
+    margin: 0;
+    color: #68616d;
+    font-size: .65rem;
+    line-height: 1.68;
+}
+
+.product-newborn-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .52rem;
+    margin-top: .85rem;
+}
+
+.product-newborn-quick-item {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    align-items: start;
+    gap: .58rem;
+    min-height: 4.25rem;
+    padding: .62rem .68rem;
+    border: 1px solid #f0e1e5;
+    border-radius: .72rem;
+    background: linear-gradient(145deg, #fff 0%, #fff9fa 100%);
+}
+
+.product-newborn-quick-icon {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .65rem;
+    background: #fff0f3;
+    color: #ff4167;
+    font-size: .72rem;
+}
+
+.product-newborn-quick-item strong,
+.product-newborn-quick-item span {
+    display: block;
+}
+
+.product-newborn-quick-item strong {
+    color: #302a34;
+    font-size: .65rem;
+    font-weight: 800;
+    line-height: 1.36;
+}
+
+.product-newborn-quick-item div > span {
+    margin-top: .18rem;
+    color: #837b87;
+    font-size: .57rem;
+    line-height: 1.42;
+}
+
+.product-newborn-trust-banner {
+    margin-top: .72rem;
+    border: 1px solid #efdfe3;
+    background: linear-gradient(90deg, #fff3f6 0%, #fffafa 100%);
+}
+
+.product-newborn-section-card {
+    padding: 1rem 1.08rem 1.08rem;
+    overflow: hidden;
+}
+
+.product-newborn-section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-bottom: .82rem;
+}
+
+.product-newborn-section-heading > div {
+    min-width: 0;
+}
+
+.product-newborn-section-heading > p {
+    max-width: 28rem;
+    margin: .08rem 0 0;
+    color: #918995;
+    font-size: .58rem;
+    line-height: 1.52;
+    text-align: right;
+}
+
+.product-newborn-feature-grid,
+.product-newborn-benefit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .62rem;
+}
+
+.product-newborn-feature-card {
+    position: relative;
+    min-height: 7.2rem;
+    padding: .78rem .82rem .82rem;
+    overflow: hidden;
+    border: 1px solid #efdee2;
+    border-radius: .82rem;
+    background: linear-gradient(145deg, #fff 0%, #fff8fa 100%);
+}
+
+.product-newborn-feature-card::before {
+    content: "";
+    position: absolute;
+    top: .65rem;
+    bottom: .65rem;
+    left: 0;
+    width: 3px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ff9caf, #ff5272);
+}
+
+.product-newborn-feature-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .7rem;
+    margin-bottom: .48rem;
+}
+
+.product-newborn-feature-icon {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .62rem;
+    background: #fff0f3;
+    color: #ff4167;
+    font-size: .7rem;
+}
+
+.product-newborn-card-number {
+    color: rgba(255, 65, 103, .22);
+    font-size: .82rem;
+    font-weight: 900;
+}
+
+.product-newborn-feature-card strong,
+.product-newborn-benefit-card strong,
+.product-newborn-suitable-card strong {
+    display: block;
+    color: #302a34;
+    font-size: .69rem;
+    font-weight: 800;
+    line-height: 1.42;
+}
+
+.product-newborn-feature-card p,
+.product-newborn-benefit-card p,
+.product-newborn-suitable-card p {
+    margin: .28rem 0 0;
+    color: #77707c;
+    font-size: .61rem;
+    line-height: 1.58;
+}
+
+.product-newborn-benefit-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.3rem minmax(0, 1fr);
+    gap: .7rem;
+    min-height: 6.55rem;
+    padding: .82rem .85rem;
+    border: 1px solid #efdfe3;
+    border-radius: .82rem;
+    background: #fff;
+    box-shadow: 0 8px 18px -20px rgba(43, 37, 48, .3);
+}
+
+.product-newborn-benefit-number {
+    display: grid;
+    place-items: center;
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: .72rem;
+    background: linear-gradient(145deg, #fff0f4, #ffe8ed);
+    color: #ff4167;
+    font-size: .61rem;
+    font-weight: 900;
+}
+
+.product-newborn-suitable-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .62rem;
+}
+
+.product-newborn-suitable-card {
+    position: relative;
+    min-height: 7rem;
+    padding: .82rem .82rem .82rem 3.45rem;
+    border: 1px solid #efe1e4;
+    border-radius: .82rem;
+    background: linear-gradient(145deg, #fff 0%, #fffafa 100%);
+}
+
+.product-newborn-suitable-index {
+    position: absolute;
+    top: .82rem;
+    left: .78rem;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .65rem;
+    background: #fff0f3;
+    color: #ff4167;
+    font-size: .58rem;
+    font-weight: 900;
+}
+
+.product-newborn-guide-card {
+    overflow: hidden;
+}
+
+.product-newborn-guide-steps {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .58rem;
+}
+
+.product-newborn-guide-step {
+    position: relative;
+    min-height: 7.35rem;
+    padding: .78rem .7rem .72rem;
+    border: 1px solid #f0e2e5;
+    border-radius: .8rem;
+    background: linear-gradient(180deg, #fff 0%, #fff9fa 100%);
+    text-align: center;
+}
+
+.product-newborn-step-number {
+    display: grid;
+    place-items: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    margin: 0 auto .5rem;
+    border-radius: 50%;
+    background: #fff0f3;
+    color: #ff4167;
+    font-size: .61rem;
+    font-weight: 900;
+}
+
+.product-newborn-guide-step strong {
+    display: block;
+    color: #302a34;
+    font-size: .67rem;
+    font-weight: 800;
+}
+
+.product-newborn-guide-step p {
+    margin: .28rem auto 0;
+    color: #7a737f;
+    font-size: .58rem;
+    line-height: 1.55;
+}
+
+.product-newborn-bottom-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .72rem;
+}
+
+.product-newborn-info-card {
+    min-height: 13rem;
+    padding: .9rem .95rem 1rem;
+}
+
+.product-newborn-info-card .product-info-box-title {
+    align-items: flex-start;
+}
+
+.product-newborn-info-card .product-info-box-title h3 {
+    font-size: .79rem;
+}
+
+.product-newborn-info-card li {
+    margin: .38rem 0;
+    color: #615a66;
+    font-size: .61rem;
+    line-height: 1.55;
+}
+
+.product-newborn-care-card {
+    border-color: rgba(126, 184, 112, .22);
+    background: linear-gradient(145deg, #fff 0%, #f8fff7 100%);
+}
+
+.product-newborn-care-card .product-newborn-info-icon {
+    color: #6aa75e;
+}
+
+@media (max-width: 980px) {
+    .product-newborn-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-newborn-suitable-grid,
+    .product-newborn-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-newborn-guide-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .product-newborn-heading,
+    .product-newborn-section-heading {
+        display: block;
+    }
+
+    .product-newborn-heading-badge,
+    .product-newborn-heading-note {
+        display: inline-flex;
+        margin-top: .48rem;
+    }
+
+    .product-newborn-section-heading > p {
+        max-width: none;
+        margin-top: .42rem;
+        text-align: left;
+    }
+
+    .product-newborn-feature-grid,
+    .product-newborn-benefit-grid,
+    .product-newborn-quick-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-newborn-spec-table .product-spec-row {
+        grid-template-columns: 7.3rem minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 460px) {
+    .product-newborn-guide-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .product-newborn-suitable-card {
+        min-height: auto;
+    }
+
+    .product-newborn-spec-table .product-spec-row {
+        grid-template-columns: 1fr;
+    }
+}

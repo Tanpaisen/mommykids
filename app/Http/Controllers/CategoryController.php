@@ -11,7 +11,10 @@ class CategoryController extends Controller
 {
     public function show(Request $request, Category $category)
     {
-        $query = $category->products()->active();
+       $query = $category
+    ->products()
+    ->active()
+    ->withReviewStats();
 
         $selectedBrands = array_values(array_filter(
             (array) $request->input('brand', [])

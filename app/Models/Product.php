@@ -16,6 +16,12 @@ class Product extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cache
+    |--------------------------------------------------------------------------
+    */
+
     protected static function booted(): void
     {
         $clearCache = function (Product $product) {
@@ -26,6 +32,12 @@ class Product extends Model
         static::saved($clearCache);
         static::deleted($clearCache);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fillable
+    |--------------------------------------------------------------------------
+    */
 
     protected $fillable = [
         'category_id',
@@ -42,15 +54,24 @@ class Product extends Model
         'warning',
         'highlights',
 
+        // Hình ảnh
         'image',
         'images',
 
+        // Giá / tồn kho
         'price',
         'old_price',
         'discount_percent',
         'stock',
 
-        // Thông tin đóng gói dùng để tính phí vận chuyển GHN
+        /*
+         * Không đưa sold_count vào fillable.
+         *
+         * Lượt bán được hệ thống tự cập nhật khi
+         * đơn hàng được giao thành công.
+         */
+
+        // Thông tin đóng gói dùng cho GHN
         'weight_grams',
         'length_cm',
         'width_cm',
@@ -66,18 +87,25 @@ class Product extends Model
         'restored_at',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | Casts
+    |--------------------------------------------------------------------------
+    */
+
     protected $casts = [
         // Trạng thái
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
 
-        // Giá / tồn kho
+        // Giá / kho / lượt bán
         'price' => 'integer',
         'old_price' => 'integer',
         'discount_percent' => 'integer',
         'stock' => 'integer',
+        'sold_count' => 'integer',
 
-        // Thông tin đóng gói
+        // Đóng gói
         'weight_grams' => 'integer',
         'length_cm' => 'integer',
         'width_cm' => 'integer',
@@ -100,7 +128,9 @@ class Product extends Model
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(
+            Category::class
+        );
     }
 
     public function stages(): BelongsToMany
@@ -122,7 +152,7 @@ class Product extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(
-            \App\Models\ProductReview::class
+            ProductReview::class
         );
     }
 
@@ -134,17 +164,62 @@ class Product extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where(
+            'is_active',
+            true
+        );
     }
 
     public function scopeFeatured($query)
     {
-        return $query->where('is_featured', true);
+        return $query->where(
+            'is_featured',
+            true
+        );
     }
 
-    public function scopeLowStock($query, int $threshold = 10)
+    public function scopeLowStock(
+        $query,
+        int $threshold = 10
+    ) {
+        return $query->where(
+            'stock',
+            '<=',
+            $threshold
+        );
+    }
+
+    /*
+     * Sản phẩm bán chạy.
+     *
+     * Ví dụ:
+     *
+     * Product::bestSelling()->get();
+     */
+    public function scopeBestSelling($query)
     {
-        return $query->where('stock', '<=', $threshold);
+        return $query
+            ->orderByDesc('sold_count')
+            ->orderByDesc('id');
+    }
+
+    /*
+     * Lấy thống kê review ngay trong query.
+     *
+     * reviews_count
+     * reviews_avg_rating
+     *
+     * Giúp card sản phẩm không phát sinh
+     * một query review cho từng sản phẩm.
+     */
+    public function scopeWithReviewStats($query)
+    {
+        return $query
+            ->withCount('reviews')
+            ->withAvg(
+                'reviews',
+                'rating'
+            );
     }
 
     /*
@@ -166,14 +241,53 @@ class Product extends Model
 
     public function toCardArray(): array
     {
+        $rating = round(
+            (float) (
+                $this->reviews_avg_rating ?? 0
+            ),
+            1
+        );
+
+        $reviewCount = (int) (
+            $this->reviews_count ?? 0
+        );
+
+        $soldCount = max(
+            0,
+            (int) (
+                $this->sold_count ?? 0
+            )
+        );
+
         return [
             'id' => $this->id,
+
             'name' => $this->name,
+
             'image' => $this->image,
-            'price' => $this->price,
-            'old_price' => $this->old_price,
-            'discount' => $this->discount_percent,
-            'url' => route('product.show', $this->slug),
+
+            'price' => (int) $this->price,
+
+            'old_price' => $this->old_price
+                ? (int) $this->old_price
+                : null,
+
+            'discount' => $this->discount_percent
+                ? (int) $this->discount_percent
+                : null,
+
+            // Review thật
+            'rating' => $rating,
+
+            'review_count' => $reviewCount,
+
+            // Lượt bán thật
+            'sold_count' => $soldCount,
+
+            'url' => route(
+                'product.show',
+                $this->slug
+            ),
         ];
     }
 }
