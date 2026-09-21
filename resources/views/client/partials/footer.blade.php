@@ -35,9 +35,9 @@
         <div>
             <h4 class="font-display font-semibold mb-3">Về {{ $globalSetting->site_name ?? 'MommyKids' }}</h4>
             <ul class="space-y-2 text-ink-soft">
-                <li><a href="#" class="hover:text-coral">Giới thiệu</a></li>
-                <li><a href="#" class="hover:text-coral">Hệ thống cửa hàng</a></li>
-                <li><a href="#" class="hover:text-coral">Tuyển dụng</a></li>
+                <li><a href="{{ route('pages.about') }}" class="hover:text-coral transition-colors">Giới thiệu</a></li>
+                <li><a href="{{ route('pages.stores') }}" class="hover:text-coral transition-colors">Hệ thống cửa hàng</a></li>
+                <li><a href="{{ route('pages.recruitment') }}" class="hover:text-coral transition-colors">Tuyển dụng</a></li>
             </ul>
         </div>
 
@@ -45,9 +45,9 @@
         <div>
             <h4 class="font-display font-semibold mb-3">Chính sách</h4>
             <ul class="space-y-2 text-ink-soft">
-                <li><a href="#" class="hover:text-coral">Đổi trả hàng</a></li>
-                <li><a href="#" class="hover:text-coral">Vận chuyển</a></li>
-                <li><a href="#" class="hover:text-coral">Bảo mật</a></li>
+                <li><a href="{{ route('pages.return') }}" class="hover:text-coral transition-colors">Đổi trả hàng</a></li>
+                <li><a href="{{ route('pages.shipping') }}" class="hover:text-coral transition-colors">Vận chuyển</a></li>
+                <li><a href="{{ route('pages.privacy') }}" class="hover:text-coral transition-colors">Bảo mật</a></li>
             </ul>
         </div>
 

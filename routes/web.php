@@ -13,11 +13,12 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PageController; // Khai báo PageController
 
 // --- CONTROLLERS ADMIN ---
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\HandbookCategoryController;
-use App\Http\Controllers\Admin\SettingController; // <- Đã cập nhật SettingController
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\HandbookController;
 
 /*
@@ -42,6 +43,14 @@ Route::get('/gio-hang', [CartController::class, 'index'])
 
 // ROUTE CẨM NANG PHÍA CLIENT
 Route::get('/cam-nang/{slug?}', [HandbookController::class, 'index'])->name('handbook.show');
+
+// ROUTE CÁC TRANG THÔNG TIN & CHÍNH SÁCH FOOTER
+Route::get('/gioi-thieu', [PageController::class, 'about'])->name('pages.about');
+Route::get('/he-thong-cua-hang', [PageController::class, 'stores'])->name('pages.stores');
+Route::get('/tuyen-dung', [PageController::class, 'recruitment'])->name('pages.recruitment');
+Route::get('/chinh-sach-doi-tra', [PageController::class, 'returnPolicy'])->name('pages.return');
+Route::get('/chinh-sach-van-chuyen', [PageController::class, 'shippingPolicy'])->name('pages.shipping');
+Route::get('/chinh-sach-bao-mat', [PageController::class, 'privacyPolicy'])->name('pages.privacy');
 
 Route::get('/thong-bao', [NotificationController::class, 'index'])
     ->middleware('auth')
