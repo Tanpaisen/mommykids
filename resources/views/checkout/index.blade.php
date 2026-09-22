@@ -298,9 +298,49 @@
                     @foreach($items as $item)
                         @php
                             $product = $item->product;
+
                             $imageUrl = $product
                                 ? $resolveImage($product->image)
                                 : null;
+
+                            /*
+                             * CartService đã đồng bộ giá hiệu lực vào
+                             * $item->price:
+                             *
+                             * - Có Campaign  -> giá Campaign
+                             * - Không Campaign -> Product.price
+                             */
+                            $effectivePrice = (int) $item->price;
+
+                            /*
+                             * base_price là thuộc tính runtime do CartService
+                             * gắn vào CartItem khi đọc giỏ.
+                             *
+                             * Nếu vì lý do nào đó không có base_price thì
+                             * fallback về Product.price.
+                             */
+                            $basePrice = (int) (
+                                $item->base_price
+                                ?? $product?->price
+                                ?? $effectivePrice
+                            );
+
+                            $hasCampaignPrice =
+                                $basePrice > 0
+                                && $effectivePrice < $basePrice;
+
+                            $campaignPercent = $hasCampaignPrice
+                                ? (int) round(
+                                    (
+                                        ($basePrice - $effectivePrice)
+                                        / $basePrice
+                                    ) * 100
+                                )
+                                : 0;
+
+                            $lineTotal =
+                                $effectivePrice
+                                * (int) $item->quantity;
                         @endphp
 
                         @if($product)
@@ -332,15 +372,40 @@
 
                                 <div>
                                     <strong>{{ $product->name }}</strong>
-                                    <small>
-                                        {{ number_format($product->price, 0, ',', '.') }}đ
-                                        × {{ $item->quantity }}
+
+                                    <small class="mk-product-price-line">
+                                        <span>
+                                            {{ number_format(
+                                                $effectivePrice,
+                                                0,
+                                                ',',
+                                                '.'
+                                            ) }}đ
+                                            × {{ $item->quantity }}
+                                        </span>
+
+                                        @if ($hasCampaignPrice)
+                                            <span class="mk-product-campaign-meta">
+                                                <span class="mk-product-old-price">
+                                                    {{ number_format(
+                                                        $basePrice,
+                                                        0,
+                                                        ',',
+                                                        '.'
+                                                    ) }}đ
+                                                </span>
+
+                                                <span class="mk-product-campaign-badge">
+                                                    Khuyến mãi -{{ $campaignPercent }}%
+                                                </span>
+                                            </span>
+                                        @endif
                                     </small>
                                 </div>
 
                                 <b>
                                     {{ number_format(
-                                        $product->price * $item->quantity,
+                                        $lineTotal,
                                         0,
                                         ',',
                                         '.'
@@ -421,6 +486,10 @@
 .mk-product-image{position:relative;width:64px;height:64px;border-radius:12px;overflow:hidden;background:#fff0f2;flex-shrink:0}
 .mk-product-image img{width:100%;height:100%;object-fit:contain;background:#fff;padding:3px;box-sizing:border-box}
 .mk-image-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#fff0f2;font-size:22px}.mk-product small{display:block;color:#8b8287;margin-top:4px}.mk-product>b{color:#ff5f76;white-space:nowrap}
+.mk-product-price-line>span:first-child{display:block}
+.mk-product-campaign-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}
+.mk-product-old-price{text-decoration:line-through;color:#8b8287}
+.mk-product-campaign-badge{display:inline-flex;align-items:center;border-radius:999px;background:#ffe8ed;color:#ff536e;font-size:11px;font-weight:700;padding:2px 7px}
 .mk-card hr{border:0;border-top:1px solid #f0e4e6;margin:18px 0}.mk-row{display:flex;justify-content:space-between;margin:12px 0}.mk-total{font-size:18px}.mk-total strong{color:#ff5f76;font-size:24px}
 .mk-primary{width:100%;border:0;border-radius:28px;background:#ff536e;color:#fff;font-weight:700;padding:15px;margin-top:18px;cursor:pointer}
 .mk-alert{padding:14px 16px;border-radius:12px;margin:0 0 18px}.mk-alert-error{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}.mk-alert ul{margin:8px 0 0 18px}

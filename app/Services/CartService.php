@@ -22,6 +22,10 @@ class CartService
      */
     public const COOKIE_DAYS = 30;
 
+    public function __construct(
+        protected CampaignService $campaignService
+    ) {}
+
     /**
      * ============================================================
      * LẤY HOẶC TẠO GIỎ HÀNG HIỆN TẠI
@@ -109,13 +113,59 @@ class CartService
      */
     public function items(): Collection
     {
-        return $this->getCart()
+        $items = $this->getCart()
             ->items()
             ->whereHas('product')
             ->with([
                 'product.category',
             ])
             ->get();
+
+        foreach ($items as $item) {
+            $product = $item->product;
+
+            if (!$product) {
+                continue;
+            }
+
+            $campaign = $this->campaignService
+                ->getBestCampaignForProduct($product);
+
+            $basePrice = (int) $product->price;
+
+            $effectivePrice = $campaign
+                ? (int) $this->campaignService
+                    ->getCampaignPrice($campaign, $product)
+                : $basePrice;
+
+            /*
+             * Đồng bộ giá hiệu lực vào cart_items để giao diện hiện tại
+             * (đang đọc $item->price) tự dùng đúng giá Campaign.
+             *
+             * Khi Campaign hết hạn/tắt, lần đọc giỏ tiếp theo sẽ tự
+             * đưa giá về Product.price.
+             */
+            if ((int) $item->price !== $effectivePrice) {
+                $item->price = $effectivePrice;
+                $item->save();
+            }
+
+            /*
+             * Thuộc tính runtime phục vụ UI nếu muốn hiển thị thêm
+             * giá gốc / campaign / số tiền giảm.
+             * Không ghi các field này xuống database.
+             */
+            $item->setAttribute('base_price', $basePrice);
+            $item->setAttribute('effective_price', $effectivePrice);
+            $item->setAttribute('campaign_id', $campaign?->id);
+            $item->setAttribute('campaign_type', $campaign?->type);
+            $item->setAttribute(
+                'campaign_discount_amount',
+                max(0, $basePrice - $effectivePrice)
+            );
+        }
+
+        return $items;
     }
 
     /**
@@ -142,15 +192,15 @@ class CartService
      * TỔNG TIỀN
      * ============================================================
      *
-     * Hiện tại sử dụng giá bán hiện tại của Product.
+     * Dùng giá hiệu lực đã được items() đồng bộ:
+     * Campaign nếu có, ngược lại là Product.price.
      */
     public function total(): int
     {
         return (int) $this->items()->sum(
             function (CartItem $item) {
-                $price = (int) ($item->product?->price ?? 0);
-
-                return (int) $item->quantity * $price;
+                return (int) $item->quantity
+                    * (int) $item->price;
             }
         );
     }
@@ -242,6 +292,14 @@ class CartService
 
         $cart = $this->getCart();
 
+        $campaign = $this->campaignService
+            ->getBestCampaignForProduct($product);
+
+        $effectivePrice = $campaign
+            ? (int) $this->campaignService
+                ->getCampaignPrice($campaign, $product)
+            : (int) $product->price;
+
         /*
          * Kiểm tra sản phẩm đã tồn tại trong cart chưa.
          */
@@ -262,10 +320,10 @@ class CartService
             );
 
             /*
-             * Đồng bộ lại giá hiện tại.
+             * Đồng bộ lại giá hiệu lực hiện tại.
              */
             $item->update([
-                'price' => (int) $product->price,
+                'price' => $effectivePrice,
             ]);
 
             return $item->fresh();
@@ -280,7 +338,7 @@ class CartService
         return $cart->items()->create([
             'product_id' => $product->id,
             'quantity' => $quantity,
-            'price' => (int) $product->price,
+            'price' => $effectivePrice,
         ]);
     }
 
@@ -310,8 +368,25 @@ class CartService
             return;
         }
 
+        $product = $item->product;
+
+        $campaign = $product
+            ? $this->campaignService
+                ->getBestCampaignForProduct($product)
+            : null;
+
+        $effectivePrice = $product
+            ? (
+                $campaign
+                    ? (int) $this->campaignService
+                        ->getCampaignPrice($campaign, $product)
+                    : (int) $product->price
+            )
+            : (int) $item->price;
+
         $item->update([
             'quantity' => $quantity,
+            'price' => $effectivePrice,
         ]);
     }
 
@@ -435,11 +510,19 @@ public function clear(): void
                     $guestItem->quantity
                 );
 
+                $campaign = $this->campaignService
+                    ->getBestCampaignForProduct($product);
+
+                $effectivePrice = $campaign
+                    ? (int) $this->campaignService
+                        ->getCampaignPrice($campaign, $product)
+                    : (int) $product->price;
+
                 /*
-                 * Đồng bộ giá hiện tại.
+                 * Đồng bộ giá hiệu lực hiện tại.
                  */
                 $userItem->update([
-                    'price' => (int) $product->price,
+                    'price' => $effectivePrice,
                 ]);
 
                 $guestItem->delete();
@@ -452,9 +535,17 @@ public function clear(): void
              * → chuyển trực tiếp CartItem từ guest cart
              * sang user cart.
              */
+            $campaign = $this->campaignService
+                ->getBestCampaignForProduct($product);
+
+            $effectivePrice = $campaign
+                ? (int) $this->campaignService
+                    ->getCampaignPrice($campaign, $product)
+                : (int) $product->price;
+
             $guestItem->update([
                 'cart_id' => $userCart->id,
-                'price' => (int) $product->price,
+                'price' => $effectivePrice,
             ]);
         }
 

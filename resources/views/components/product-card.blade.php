@@ -15,26 +15,42 @@
         ) {
             $imageUrl = $image;
         } else {
-            $imageUrl = asset('storage/' . ltrim($image, '/'));
+            $imageUrl = asset(
+                'storage/' . ltrim($image, '/')
+            );
         }
     } else {
         $imageUrl = null;
     }
 
-    $name = $product['name'] ?? 'Sản phẩm';
-    $price = max(0, (int) ($product['price'] ?? 0));
+    $name =
+        $product['name']
+        ?? 'Sản phẩm';
 
-    $oldPrice = !empty($product['old_price'])
-        ? (int) $product['old_price']
-        : null;
+    $price = max(
+        0,
+        (int) ($product['price'] ?? 0)
+    );
 
-    $discount = !empty($product['discount'])
-        ? (int) $product['discount']
-        : null;
+    $oldPrice =
+        !empty($product['old_price'])
+            ? (int) $product['old_price']
+            : null;
+
+    $discount =
+        !empty($product['discount'])
+            ? (int) $product['discount']
+            : null;
+
+    $isCampaign =
+        !empty($product['is_campaign']);
 
     $rating = max(
         0,
-        min(5, (float) ($product['rating'] ?? 0))
+        min(
+            5,
+            (float) ($product['rating'] ?? 0)
+        )
     );
 
     $reviewCount = max(
@@ -42,14 +58,17 @@
         (int) ($product['review_count'] ?? 0)
     );
 
-    $filledStars = (int) round($rating);
+    $filledStars =
+        (int) round($rating);
 
     $soldCount = max(
         0,
         (int) ($product['sold_count'] ?? 0)
     );
 
-    $url = $product['url'] ?? '#';
+    $url =
+        $product['url']
+        ?? '#';
 @endphp
 
 <div
@@ -57,10 +76,16 @@
            hover:-translate-y-1
            transition-transform duration-200"
 >
-    <a href="{{ $url }}" class="block">
+    <a
+        href="{{ $url }}"
+        class="block"
+    >
 
         {{-- PRODUCT IMAGE --}}
-        <div class="relative aspect-square bg-cream overflow-hidden">
+        <div
+            class="relative aspect-square
+                   bg-cream overflow-hidden"
+        >
 
             @if ($imageUrl)
                 <img
@@ -87,9 +112,15 @@
                            bg-cream text-center p-4"
                 >
                     <div>
-                        <div class="text-4xl">🖼️</div>
+                        <div class="text-4xl">
+                            🖼️
+                        </div>
 
-                        <p class="mt-2 text-xs text-ink-soft line-clamp-2">
+                        <p
+                            class="mt-2 text-xs
+                                   text-ink-soft
+                                   line-clamp-2"
+                        >
                             Chưa có ảnh sản phẩm
                         </p>
                     </div>
@@ -101,25 +132,37 @@
                            bg-cream text-center p-4"
                 >
                     <div>
-                        <div class="text-4xl">🖼️</div>
+                        <div class="text-4xl">
+                            🖼️
+                        </div>
 
-                        <p class="mt-2 text-xs text-ink-soft">
+                        <p
+                            class="mt-2 text-xs
+                                   text-ink-soft"
+                        >
                             Chưa có ảnh sản phẩm
                         </p>
                     </div>
                 </div>
             @endif
 
-            {{-- DISCOUNT --}}
+
+            {{-- DISCOUNT / CAMPAIGN BADGE --}}
             @if ($discount)
                 <span
                     class="badge-discount
                            absolute top-2 left-2 z-10"
                 >
-                    -{{ $discount }}%
+                    @if ($isCampaign)
+                        Khuyến mãi -{{ $discount }}%
+                    @else
+                        -{{ $discount }}%
+                    @endif
                 </span>
             @endif
+
         </div>
+
 
         {{-- PRODUCT INFO --}}
         <div class="p-3 pb-14">
@@ -135,22 +178,42 @@
                 {{ $name }}
             </p>
 
-            {{-- PRICE --}}
-            <div class="mt-2 flex items-end gap-2 flex-wrap">
 
+            {{-- PRICE --}}
+            <div
+                class="mt-2 flex items-end
+                       gap-2 flex-wrap"
+            >
                 <span class="price-tag">
-                    {{ number_format($price, 0, ',', '.') }}đ
+                    {{ number_format(
+                        $price,
+                        0,
+                        ',',
+                        '.'
+                    ) }}đ
                 </span>
 
-                @if ($oldPrice && $oldPrice > $price)
-                    <span class="text-xs text-ink-soft line-through">
-                        {{ number_format($oldPrice, 0, ',', '.') }}đ
+                @if (
+                    $oldPrice
+                    && $oldPrice > $price
+                )
+                    <span
+                        class="text-xs
+                               text-ink-soft
+                               line-through"
+                    >
+                        {{ number_format(
+                            $oldPrice,
+                            0,
+                            ',',
+                            '.'
+                        ) }}đ
                     </span>
                 @endif
-
             </div>
 
-            {{-- REVIEW + SOLD COUNT: CÙNG MỘT HÀNG --}}
+
+            {{-- REVIEW + SOLD COUNT --}}
             <div
                 class="mt-2
                        min-h-[1.25rem]
@@ -160,6 +223,7 @@
                        justify-between
                        gap-2"
             >
+
                 {{-- REVIEW --}}
                 <div
                     class="min-w-0
@@ -175,9 +239,18 @@
                                    items-center
                                    gap-[1px]
                                    whitespace-nowrap"
-                            aria-label="{{ number_format($rating, 1, ',', '.') }} trên 5 sao"
+                            aria-label="{{ number_format(
+                                $rating,
+                                1,
+                                ',',
+                                '.'
+                            ) }} trên 5 sao"
                         >
-                            @for ($star = 1; $star <= 5; $star++)
+                            @for (
+                                $star = 1;
+                                $star <= 5;
+                                $star++
+                            )
                                 <span
                                     class="text-[10px]
                                            sm:text-[11px]
@@ -200,7 +273,12 @@
                                    text-ink-soft
                                    whitespace-nowrap"
                         >
-                            ({{ number_format($reviewCount, 0, ',', '.') }})
+                            ({{ number_format(
+                                $reviewCount,
+                                0,
+                                ',',
+                                '.'
+                            ) }})
                         </span>
 
                     @else
@@ -216,6 +294,7 @@
 
                     @endif
                 </div>
+
 
                 {{-- SOLD COUNT --}}
                 @if ($soldCount > 0)
@@ -249,19 +328,30 @@
                         </svg>
 
                         <span>
-                            Đã bán {{ number_format($soldCount, 0, ',', '.') }}
+                            Đã bán
+                            {{ number_format(
+                                $soldCount,
+                                0,
+                                ',',
+                                '.'
+                            ) }}
                         </span>
                     </div>
                 @endif
             </div>
+
         </div>
     </a>
+
 
     {{-- ADD TO CART --}}
     @if ($productId)
         <button
             type="button"
-            onclick="mkAddToCart({{ $productId }}, this)"
+            onclick="mkAddToCart(
+                {{ $productId }},
+                this
+            )"
             aria-label="Thêm {{ $name }} vào giỏ hàng"
             title="Thêm vào giỏ hàng"
             class="absolute

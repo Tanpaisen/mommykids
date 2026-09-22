@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\CampaignService;
 
 class ProductController extends Controller
 {
@@ -12,8 +13,10 @@ class ProductController extends Controller
     | Chi tiết sản phẩm
     |--------------------------------------------------------------------------
     */
-    public function show(Product $product)
-    {
+    public function show(
+        Product $product,
+        CampaignService $campaignService
+    ) {
         /*
         |--------------------------------------------------------------------------
         | Dữ liệu sản phẩm
@@ -34,19 +37,146 @@ class ProductController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | Campaign đang áp dụng cho sản phẩm hiện tại
+        |--------------------------------------------------------------------------
+        */
+        $campaign = $campaignService
+            ->getBestCampaignForProduct($product);
+
+        $campaignBasePrice = (int) $product->price;
+
+        $campaignPrice = $campaign
+            ? (int) $campaignService
+                ->getCampaignPrice(
+                    $campaign,
+                    $product
+                )
+            : $campaignBasePrice;
+
+        $campaignDiscountAmount = $campaign
+            ? max(
+                0,
+                $campaignBasePrice - $campaignPrice
+            )
+            : 0;
+
+        $campaignDiscountPercent = (
+            $campaign
+            && $campaignBasePrice > 0
+            && $campaignPrice < $campaignBasePrice
+        )
+            ? (int) round(
+                (
+                    $campaignDiscountAmount
+                    / $campaignBasePrice
+                ) * 100
+            )
+            : 0;
+
+        /*
+        |--------------------------------------------------------------------------
         | Sản phẩm liên quan
         |--------------------------------------------------------------------------
+        |
+        | Mỗi sản phẩm liên quan cũng được tính Campaign riêng.
+        | Không thay đổi Product.price trong DB.
         */
         $related = Product::query()
             ->active()
             ->withReviewStats()
-            ->where('category_id', $product->category_id)
-            ->where('id', '!=', $product->id)
+            ->where(
+                'category_id',
+                $product->category_id
+            )
+            ->where(
+                'id',
+                '!=',
+                $product->id
+            )
             ->latest()
             ->limit(5)
             ->get()
-            ->map
-            ->toCardArray();
+            ->map(
+                function (
+                    Product $relatedProduct
+                ) use ($campaignService) {
+                    $card =
+                        $relatedProduct->toCardArray();
+
+                    $relatedCampaign =
+                        $campaignService
+                            ->getBestCampaignForProduct(
+                                $relatedProduct
+                            );
+
+                    if (!$relatedCampaign) {
+                        $card['is_campaign'] = false;
+                        $card['campaign_id'] = null;
+                        $card['campaign_type'] = null;
+
+                        return $card;
+                    }
+
+                    $basePrice =
+                        (int) $relatedProduct->price;
+
+                    $effectivePrice =
+                        (int) $campaignService
+                            ->getCampaignPrice(
+                                $relatedCampaign,
+                                $relatedProduct
+                            );
+
+                    if (
+                        $effectivePrice >= $basePrice
+                        || $basePrice <= 0
+                    ) {
+                        $card['is_campaign'] = false;
+                        $card['campaign_id'] = null;
+                        $card['campaign_type'] = null;
+
+                        return $card;
+                    }
+
+                    $discountPercent =
+                        (int) round(
+                            (
+                                (
+                                    $basePrice
+                                    - $effectivePrice
+                                )
+                                / $basePrice
+                            ) * 100
+                        );
+
+                    /*
+                     * Card hiện tại đã hiểu:
+                     * price / old_price / discount
+                     *
+                     * Vì vậy chỉ cần map Campaign vào
+                     * đúng cấu trúc này.
+                     */
+                    $card['price'] =
+                        $effectivePrice;
+
+                    $card['old_price'] =
+                        $basePrice;
+
+                    $card['discount'] =
+                        $discountPercent;
+
+                    $card['is_campaign'] =
+                        true;
+
+                    $card['campaign_id'] =
+                        $relatedCampaign->id;
+
+                    $card['campaign_type'] =
+                        $relatedCampaign->type;
+
+                    return $card;
+                }
+            );
 
         /*
         |--------------------------------------------------------------------------
@@ -80,7 +210,9 @@ class ProductController extends Controller
          */
         $averageRating = $reviewCount > 0
             ? round(
-                (float) $product->reviews()->avg('rating'),
+                (float) $product
+                    ->reviews()
+                    ->avg('rating'),
                 1
             )
             : 0;
@@ -103,7 +235,11 @@ class ProductController extends Controller
          */
         $ratingDistribution = [];
 
-        for ($rating = 5; $rating >= 1; $rating--) {
+        for (
+            $rating = 5;
+            $rating >= 1;
+            $rating--
+        ) {
             $count = (int) (
                 $ratingCounts[$rating] ?? 0
             );
@@ -111,11 +247,15 @@ class ProductController extends Controller
             $ratingDistribution[$rating] = [
                 'count' => $count,
 
-                'percentage' => $reviewCount > 0
-                    ? round(
-                        ($count / $reviewCount) * 100
-                    )
-                    : 0,
+                'percentage' =>
+                    $reviewCount > 0
+                        ? round(
+                            (
+                                $count
+                                / $reviewCount
+                            ) * 100
+                        )
+                        : 0,
             ];
         }
 
@@ -146,25 +286,26 @@ class ProductController extends Controller
         $hasPurchasedProduct = false;
 
         if (auth()->check()) {
-            $hasPurchasedProduct = Order::query()
-                ->where(
-                    'user_id',
-                    auth()->id()
-                )
-                ->where(
-                    'status',
-                    'delivered'
-                )
-                ->whereHas(
-                    'items',
-                    function ($query) use ($product) {
-                        $query->where(
-                            'product_id',
-                            $product->id
-                        );
-                    }
-                )
-                ->exists();
+            $hasPurchasedProduct =
+                Order::query()
+                    ->where(
+                        'user_id',
+                        auth()->id()
+                    )
+                    ->where(
+                        'status',
+                        'delivered'
+                    )
+                    ->whereHas(
+                        'items',
+                        function ($query) use ($product) {
+                            $query->where(
+                                'product_id',
+                                $product->id
+                            );
+                        }
+                    )
+                    ->exists();
         }
 
         /*
@@ -198,7 +339,12 @@ class ProductController extends Controller
                 'ratingDistribution',
                 'userReview',
                 'hasPurchasedProduct',
-                'canReview'
+                'canReview',
+                'campaign',
+                'campaignBasePrice',
+                'campaignPrice',
+                'campaignDiscountAmount',
+                'campaignDiscountPercent'
             )
         );
     }
@@ -227,10 +373,12 @@ class ProductController extends Controller
          * Component <x-product-card> hiện đang nhận
          * dữ liệu dạng array từ Product::toCardArray().
          */
-        $products->getCollection()->transform(
-            fn (Product $product) =>
-                $product->toCardArray()
-        );
+        $products
+            ->getCollection()
+            ->transform(
+                fn (Product $product) =>
+                    $product->toCardArray()
+            );
 
         return view(
             'client.products.featured',

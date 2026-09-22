@@ -368,20 +368,61 @@
             @endif
 
             <div class="product-prices">
-                <strong class="product-price">
-                    {{ number_format($product->price, 0, ',', '.') }}đ
-                </strong>
+                @if (
+                    $campaign
+                    && $campaignPrice < $campaignBasePrice
+                )
+                    <strong class="product-price">
+                        {{ number_format(
+                            $campaignPrice,
+                            0,
+                            ',',
+                            '.'
+                        ) }}đ
+                    </strong>
 
-                @if ($product->old_price && $product->old_price > $product->price)
                     <span class="product-old-price">
-                        {{ number_format($product->old_price, 0, ',', '.') }}đ
+                        {{ number_format(
+                            $campaignBasePrice,
+                            0,
+                            ',',
+                            '.'
+                        ) }}đ
                     </span>
-                @endif
 
-                @if ($product->discount_percent)
                     <span class="product-price-discount">
-                        -{{ $product->discount_percent }}%
+                        Khuyến mãi
+                        -{{ $campaignDiscountPercent }}%
                     </span>
+                @else
+                    <strong class="product-price">
+                        {{ number_format(
+                            $product->price,
+                            0,
+                            ',',
+                            '.'
+                        ) }}đ
+                    </strong>
+
+                    @if (
+                        $product->old_price
+                        && $product->old_price > $product->price
+                    )
+                        <span class="product-old-price">
+                            {{ number_format(
+                                $product->old_price,
+                                0,
+                                ',',
+                                '.'
+                            ) }}đ
+                        </span>
+                    @endif
+
+                    @if ($product->discount_percent)
+                        <span class="product-price-discount">
+                            -{{ $product->discount_percent }}%
+                        </span>
+                    @endif
                 @endif
             </div>
             <div class="product-info-row product-stock-row">
