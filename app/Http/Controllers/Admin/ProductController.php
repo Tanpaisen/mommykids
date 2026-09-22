@@ -27,9 +27,22 @@ class ProductController extends Controller
         /*
          * Product sử dụng SoftDeletes nên Product::query()
          * tự động loại các bản ghi deleted_at != NULL.
+         *
+         * Join categories để giữ cách sắp xếp mặc định theo danh mục.
+         * withReviewStats() thêm:
+         * - reviews_count
+         * - reviews_avg_rating
          */
         $query = Product::query()
-            ->with('category');
+            ->with('category')
+            ->join(
+                'categories',
+                'products.category_id',
+                '=',
+                'categories.id'
+            )
+            ->select('products.*')
+            ->withReviewStats();
 
         /*
          * Tìm kiếm.
@@ -89,7 +102,7 @@ class ProductController extends Controller
         }
 
         /*
-         * Sắp hết hàng.
+         * Lọc tồn kho thấp.
          */
         if ($request->boolean('low_stock')) {
             $query->where(
@@ -100,16 +113,66 @@ class ProductController extends Controller
         }
 
         /*
+         * Sắp xếp.
+         *
+         * Không dùng dữ liệu giả:
+         * - Bán chạy: products.sold_count
+         * - Đánh giá: reviews_avg_rating + reviews_count
+         */
+        $sort = (string) $request->input(
+            'sort',
+            'default'
+        );
+
+        switch ($sort) {
+            case 'newest':
+                $query
+                    ->orderByDesc('products.created_at')
+                    ->orderByDesc('products.id');
+                break;
+
+            case 'best_selling':
+    $query
+        ->orderByDesc('products.sold_count')
+        ->orderByDesc('reviews_avg_rating')
+        ->orderBy('products.name');
+    break;
+
+            case 'rating_desc':
+                $query
+                    ->orderByDesc('reviews_avg_rating')
+                    ->orderByDesc('reviews_count')
+                    ->orderByDesc('products.sold_count')
+                    ->orderBy('products.name');
+                break;
+
+            case 'price_asc':
+                $query
+                    ->orderBy('products.price')
+                    ->orderBy('products.name');
+                break;
+
+            case 'price_desc':
+                $query
+                    ->orderByDesc('products.price')
+                    ->orderBy('products.name');
+                break;
+
+            default:
+                $query
+                    ->orderBy('categories.sort_order')
+                    ->orderBy('categories.name')
+                    ->orderBy('products.name');
+                break;
+        }
+
+        /*
          * Phân trang.
          */
         $products = $query
-    ->join('categories', 'products.category_id', '=', 'categories.id')
-    ->select('products.*')
-    ->orderBy('categories.sort_order', 'asc')
-    ->orderBy('categories.name', 'asc')
-    ->orderBy('products.name', 'asc')
-    ->paginate(10)
-    ->withQueryString();
+            ->paginate(10)
+            ->withQueryString();
+
         /*
          * Danh mục cho filter.
          */
