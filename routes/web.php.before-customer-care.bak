@@ -306,6 +306,4 @@ require __DIR__ . '/auth/admin.php';
 
 require __DIR__ . '/chat.php';
 
-require __DIR__ . '/customer-care.php';
-
 require __DIR__ . '/admin.php';

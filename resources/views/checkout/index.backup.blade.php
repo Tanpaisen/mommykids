@@ -19,55 +19,9 @@
         return asset('storage/' . ltrim($image, '/'));
     };
 
-    $savedAddresses = auth()->check()
-        ? auth()->user()->addresses()->get()
-        : collect();
-
-    $defaultAddress = $savedAddresses->firstWhere('is_default', true)
-        ?? $savedAddresses->first();
-
-    $initialFullName = old(
-        'full_name',
-        $defaultAddress?->recipient_name ?? auth()->user()?->name ?? ''
-    );
-
-    $initialPhone = old(
-        'phone',
-        $defaultAddress?->phone ?? auth()->user()?->phone ?? ''
-    );
-
-    $initialEmail = old(
-        'email',
-        auth()->user()?->email ?? ''
-    );
-
-    $initialProvinceId = old(
-        'province_id',
-        $defaultAddress?->province_id ?? ''
-    );
-
-    $initialDistrictId = old(
-        'to_district_id',
-        $defaultAddress?->district_id ?? ''
-    );
-
-    $initialWardCode = old(
-        'to_ward_code',
-        $defaultAddress?->ward_code ?? ''
-    );
-
-    $initialAddress = old(
-        'address',
-        $defaultAddress?->address_detail ?? ''
-    );
-
-    $initialAddressLine = $defaultAddress
-        ? $defaultAddress->full_address
-        : $initialAddress;
-
-    $hasAddressValue = filled($initialFullName)
-        || filled($initialPhone)
-        || filled($initialAddress);
+    $hasAddressValue = filled(old('full_name'))
+        || filled(old('phone'))
+        || filled(old('address'));
 @endphp
 
 <div class="tt-checkout-page">
@@ -111,16 +65,16 @@
                             <span class="tt-address-copy">
                                 <span class="tt-address-title-row">
                                     <strong id="address-summary-name">
-                                        {{ $initialFullName ?: 'Địa chỉ giao hàng' }}
+                                        {{ old('full_name') ?: 'Địa chỉ giao hàng' }}
                                     </strong>
                                     <span id="address-summary-phone">
-                                        {{ $initialPhone }}
+                                        {{ old('phone') }}
                                     </span>
                                 </span>
 
                                 <span class="tt-address-line" id="address-summary-line">
                                     @if($hasAddressValue)
-                                        {{ $initialAddressLine }}
+                                        {{ old('address') }}
                                     @else
                                         Thêm địa chỉ nhận hàng
                                     @endif
@@ -273,12 +227,11 @@
                                         </select>
 
                                         <button
-                                        type="button"
-                                        class="tt-voucher-remove"
-                                        data-voucher-remove="order"
-                                        {{ empty($checkoutVouchers['order']) ? 'hidden' : '' }}
+                                            type="button"
+                                            data-voucher-apply="order"
+                                            {{ auth()->guest() || $availableOrderVouchers->isEmpty() ? 'disabled' : '' }}
                                         >
-                                        Gỡ
+                                            Áp dụng
                                         </button>
 
                                         <button
@@ -334,7 +287,13 @@
                                             @endforeach
                                         </select>
 
-                                       
+                                        <button
+                                            type="button"
+                                            data-voucher-apply="shipping"
+                                            {{ auth()->guest() || $availableShippingVouchers->isEmpty() ? 'disabled' : '' }}
+                                        >
+                                            Áp dụng
+                                        </button>
 
                                         <button
                                             type="button"
@@ -536,167 +495,85 @@
                     </div>
 
                     <div class="tt-address-sheet-body">
-                        @auth
-                            <div class="tt-saved-addresses">
-                                <div class="tt-saved-addresses-head">
-                                    <div>
-                                        <strong>Địa chỉ đã lưu</strong>
-                                        <small>Chọn một địa chỉ để dùng ngay cho đơn hàng này</small>
-                                    </div>
-                                    <a href="{{ url('/ho-so/dia-chi') }}">＋ Thêm địa chỉ</a>
-                                </div>
-
-                                @forelse($savedAddresses as $savedAddress)
-                                    <label class="tt-saved-address-item">
-                                        <input
-                                            type="radio"
-                                            name="checkout_saved_address"
-                                            value="{{ $savedAddress->id }}"
-                                            data-saved-address
-                                            data-recipient-name="{{ $savedAddress->recipient_name }}"
-                                            data-phone="{{ $savedAddress->phone }}"
-                                            data-province-id="{{ $savedAddress->province_id }}"
-                                            data-district-id="{{ $savedAddress->district_id }}"
-                                            data-ward-code="{{ $savedAddress->ward_code }}"
-                                            data-address-detail="{{ $savedAddress->address_detail }}"
-                                            {{ $defaultAddress?->id === $savedAddress->id ? 'checked' : '' }}
-                                        >
-
-                                        <span class="tt-saved-radio-ui"></span>
-
-                                        <span class="tt-saved-address-copy">
-                                            <span class="tt-saved-name-row">
-                                                <strong>{{ $savedAddress->recipient_name }}</strong>
-                                                <span>{{ $savedAddress->phone }}</span>
-                                            </span>
-
-                                            <span class="tt-saved-address-line">
-                                                {{ $savedAddress->full_address }}
-                                            </span>
-
-                                            <span class="tt-saved-tags">
-                                                @if($savedAddress->is_default)
-                                                    <em>Mặc định</em>
-                                                @endif
-
-                                                @if($savedAddress->label)
-                                                    <em>{{ $savedAddress->label }}</em>
-                                                @endif
-                                            </span>
-                                        </span>
-                                    </label>
-                                @empty
-                                    <div class="tt-saved-empty">
-                                        Bạn chưa có địa chỉ nào trong kho.
-                                        Hãy thêm địa chỉ để lần sau chỉ cần chọn.
-                                    </div>
-                                @endforelse
-
-                                @if($savedAddresses->isNotEmpty())
-                                    <button
-                                        type="button"
-                                        class="tt-use-saved-address"
-                                        id="use-saved-address"
-                                    >
-                                        Dùng địa chỉ đã chọn
-                                    </button>
-                                @endif
-                            </div>
-                        @endauth
-
-                        {{-- Form nhập tay chỉ hiện khi tài khoản chưa có địa chỉ đã lưu --}}
-                        <div
-                            id="manual-address-fields"
-                            style="{{ $savedAddresses->isNotEmpty() ? 'display:none;' : '' }}"
-                        >
-                            <div class="tt-address-divider">
-                                <span>Nhập địa chỉ nhận hàng</span>
-                            </div>
-
-                            <div class="tt-address-form-title">
-                                <span>＋</span>
-                                <strong>Thông tin nhận hàng</strong>
-                            </div>
-
-                            <div class="tt-form-grid">
-                                <label class="tt-field tt-full">
-                                    <span>Họ và tên <b>*</b></span>
-                                    <input
-                                        id="full_name"
-                                        name="full_name"
-                                        value="{{ $initialFullName }}"
-                                        placeholder="Nguyễn Văn An"
-                                        required
-                                    >
-                                </label>
-
-                                <label class="tt-field">
-                                    <span>Số điện thoại <b>*</b></span>
-                                    <input
-                                        id="phone"
-                                        name="phone"
-                                        value="{{ $initialPhone }}"
-                                        placeholder="0901234567"
-                                        required
-                                    >
-                                </label>
-
-                                <label class="tt-field">
-                                    <span>Email</span>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        value="{{ $initialEmail }}"
-                                        placeholder="an@example.com"
-                                    >
-                                </label>
-
-                                <label class="tt-field">
-                                    <span>Tỉnh / Thành phố <b>*</b></span>
-                                    <select id="province" name="province_id" required>
-                                        <option value="">-- Chọn tỉnh/thành --</option>
-
-                                        @foreach($provinces as $province)
-                                            <option
-                                                value="{{ $province['ProvinceID'] }}"
-                                                {{ (string) $initialProvinceId === (string) $province['ProvinceID'] ? 'selected' : '' }}
-                                            >
-                                                {{ $province['ProvinceName'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </label>
-
-                                <label class="tt-field">
-                                    <span>Quận / Huyện <b>*</b></span>
-                                    <select id="district" name="to_district_id" required disabled>
-                                        <option value="">-- Chọn quận/huyện --</option>
-                                    </select>
-                                </label>
-
-                                <label class="tt-field tt-full">
-                                    <span>Phường / Xã <b>*</b></span>
-                                    <select id="ward" name="to_ward_code" required disabled>
-                                        <option value="">-- Chọn phường/xã --</option>
-                                    </select>
-                                </label>
-
-                                <label class="tt-field tt-full">
-                                    <span>Địa chỉ chi tiết <b>*</b></span>
-                                    <input
-                                        id="address"
-                                        name="address"
-                                        value="{{ $initialAddress }}"
-                                        placeholder="Số nhà, tên đường..."
-                                        required
-                                    >
-                                </label>
-                            </div>
+                        <div class="tt-address-form-title">
+                            <span>＋</span>
+                            <strong>Thông tin nhận hàng</strong>
                         </div>
 
-                        {{-- Ghi chú vẫn hiển thị dù chọn địa chỉ đã lưu --}}
-                        <div class="tt-form-grid" style="margin-top:14px;">
+                        <div class="tt-form-grid">
+                            <label class="tt-field tt-full">
+                                <span>Họ và tên <b>*</b></span>
+                                <input
+                                    id="full_name"
+                                    name="full_name"
+                                    value="{{ old('full_name') }}"
+                                    placeholder="Nguyễn Văn An"
+                                    required
+                                >
+                            </label>
+
+                            <label class="tt-field">
+                                <span>Số điện thoại <b>*</b></span>
+                                <input
+                                    id="phone"
+                                    name="phone"
+                                    value="{{ old('phone') }}"
+                                    placeholder="0901234567"
+                                    required
+                                >
+                            </label>
+
+                            <label class="tt-field">
+                                <span>Email</span>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value="{{ old('email') }}"
+                                    placeholder="an@example.com"
+                                >
+                            </label>
+
+                            <label class="tt-field">
+                                <span>Tỉnh / Thành phố <b>*</b></span>
+                                <select id="province" name="province_id" required>
+                                    <option value="">-- Chọn tỉnh/thành --</option>
+                                    @foreach($provinces as $province)
+                                        <option
+                                            value="{{ $province['ProvinceID'] }}"
+                                            {{ old('province_id') == $province['ProvinceID'] ? 'selected' : '' }}
+                                        >
+                                            {{ $province['ProvinceName'] }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </label>
+
+                            <label class="tt-field">
+                                <span>Quận / Huyện <b>*</b></span>
+                                <select id="district" name="to_district_id" required disabled>
+                                    <option value="">-- Chọn quận/huyện --</option>
+                                </select>
+                            </label>
+
+                            <label class="tt-field tt-full">
+                                <span>Phường / Xã <b>*</b></span>
+                                <select id="ward" name="to_ward_code" required disabled>
+                                    <option value="">-- Chọn phường/xã --</option>
+                                </select>
+                            </label>
+
+                            <label class="tt-field tt-full">
+                                <span>Địa chỉ chi tiết <b>*</b></span>
+                                <input
+                                    id="address"
+                                    name="address"
+                                    value="{{ old('address') }}"
+                                    placeholder="Số nhà, tên đường..."
+                                    required
+                                >
+                            </label>
+
                             <label class="tt-field tt-full">
                                 <span>Ghi chú</span>
                                 <textarea
@@ -709,10 +586,7 @@
                         </div>
                     </div>
 
-                    <div
-                        class="tt-address-sheet-footer"
-                        style="{{ $savedAddresses->isNotEmpty() ? 'display:none;' : '' }}"
-                    >
+                    <div class="tt-address-sheet-footer">
                         <button type="button" class="tt-address-save" id="save-address">
                             Xác nhận địa chỉ
                         </button>
@@ -861,31 +735,6 @@
 .tt-address-sheet-footer{border-top:1px solid #eee;padding:14px 20px;background:#fff}
 .tt-address-save{width:100%;border:0;border-radius:999px;background:var(--tt-pink);color:#fff;font-weight:800;font-size:16px;padding:14px;cursor:pointer}
 
-/* Kho địa chỉ */
-.tt-saved-addresses{border:1px solid #ececec;border-radius:12px;overflow:hidden;background:#fff;margin-bottom:18px}
-.tt-saved-addresses-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:15px 16px;border-bottom:1px solid #f0f0f0;background:#fafafa}
-.tt-saved-addresses-head strong{display:block;font-size:16px}
-.tt-saved-addresses-head small{display:block;color:var(--tt-muted);margin-top:3px;font-size:12px}
-.tt-saved-addresses-head a{color:var(--tt-pink);font-weight:800;font-size:13px;text-decoration:none;white-space:nowrap}
-.tt-saved-address-item{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;align-items:flex-start;padding:15px 16px;border-bottom:1px solid #f1f1f1;cursor:pointer;position:relative}
-.tt-saved-address-item:last-of-type{border-bottom:0}
-.tt-saved-address-item>input{position:absolute;opacity:0;pointer-events:none}
-.tt-saved-radio-ui{width:18px;height:18px;border:2px solid #c7cbd1;border-radius:50%;margin-top:2px;position:relative}
-.tt-saved-address-item:has(input:checked){background:#fff7f9}
-.tt-saved-address-item:has(input:checked) .tt-saved-radio-ui{border-color:var(--tt-pink)}
-.tt-saved-address-item:has(input:checked) .tt-saved-radio-ui:after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--tt-pink)}
-.tt-saved-address-copy{display:flex;flex-direction:column;gap:5px;min-width:0}
-.tt-saved-name-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.tt-saved-name-row strong{font-size:15px}
-.tt-saved-name-row span{color:#555;font-size:14px}
-.tt-saved-address-line{color:#555;line-height:1.45;font-size:14px}
-.tt-saved-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
-.tt-saved-tags em{font-style:normal;font-size:11px;border:1px solid #ffd0d9;color:var(--tt-pink);border-radius:4px;padding:2px 6px;background:#fff}
-.tt-saved-empty{padding:20px 16px;color:var(--tt-muted);font-size:14px;line-height:1.5}
-.tt-use-saved-address{display:block;width:calc(100% - 32px);margin:12px 16px 16px;border:0;border-radius:999px;background:var(--tt-pink);color:#fff;font-weight:800;padding:12px 16px;cursor:pointer}
-.tt-address-divider{display:flex;align-items:center;gap:12px;color:#9ca3af;font-size:12px;margin:4px 0 18px}
-.tt-address-divider:before,.tt-address-divider:after{content:"";height:1px;background:#eee;flex:1}
-
 .tt-mobile-bar{display:none}
 
 @media(max-width:900px){
@@ -939,9 +788,9 @@
     "orderVoucherDiscount": {{ (int) ($voucherBreakdown['order_discount'] ?? 0) }},
     "shippingVoucherDiscount": {{ (int) ($voucherBreakdown['shipping_discount'] ?? 0) }},
     "pointsDiscount": {{ (int) $pointsDiscount }},
-    "oldProvinceId": @json($initialProvinceId),
-    "oldDistrictId": @json($initialDistrictId),
-    "oldWardCode": @json($initialWardCode),
+    "oldProvinceId": @json(old('province_id')),
+    "oldDistrictId": @json(old('to_district_id')),
+    "oldWardCode": @json(old('to_ward_code')),
     "routes": {
         "districts": @json(route('checkout.districts', [], false)),
         "wards": @json(route('checkout.wards', [], false)),
@@ -985,7 +834,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const addressSummaryPhone = document.getElementById('address-summary-phone');
     const addressSummaryLine = document.getElementById('address-summary-line');
     const saveAddressButton = document.getElementById('save-address');
-    const useSavedAddressButton = document.getElementById('use-saved-address');
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
@@ -1067,41 +915,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return true;
     }
-
-    async function useSelectedSavedAddress() {
-        const selected = document.querySelector('[data-saved-address]:checked');
-
-        if (!selected) {
-            return;
-        }
-
-        fullName.value = selected.dataset.recipientName || '';
-        phone.value = selected.dataset.phone || '';
-        address.value = selected.dataset.addressDetail || '';
-
-        const provinceId = selected.dataset.provinceId || '';
-        const districtId = selected.dataset.districtId || '';
-        const wardCode = selected.dataset.wardCode || '';
-
-        province.value = provinceId;
-
-        if (provinceId) {
-            await loadDistricts(provinceId, districtId);
-        }
-
-        if (districtId) {
-            await loadWards(districtId, wardCode);
-        }
-
-        if (districtId && wardCode) {
-            await calculateShippingFee();
-        }
-
-        updateAddressSummary();
-        closeAddressEditor();
-    }
-
-    useSavedAddressButton?.addEventListener('click', useSelectedSavedAddress);
 
     document.querySelectorAll('[data-open-address]').forEach(button => {
         button.addEventListener('click', openAddressEditor);
@@ -1358,7 +1171,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function applyVoucher(type) {
         const select = document.getElementById(`voucher-${type}-id`);
         const status = document.getElementById(`voucher-${type}-status`);
-        
+        const button = document.querySelector(
+            `[data-voucher-apply="${type}"]`
+        );
         const removeButton = document.querySelector(
             `[data-voucher-remove="${type}"]`
         );
@@ -1372,7 +1187,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        select.disabled = true;
+        button.disabled = true;
         status.textContent = 'Đang kiểm tra mã...';
 
         try {
@@ -1405,7 +1220,7 @@ document.addEventListener('DOMContentLoaded', () => {
             status.textContent = error.message;
             status.classList.add('is-error');
         } finally {
-    select.disabled = false;
+            button.disabled = false;
         }
     }
 
@@ -1450,45 +1265,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const orderVoucherSelect =
-    document.getElementById('voucher-order-id');
-
-const shippingVoucherSelect =
-    document.getElementById('voucher-shipping-id');
-
-orderVoucherSelect?.addEventListener(
-    'change',
-    async () => {
-        if (orderVoucherSelect.value) {
-            await applyVoucher('order');
-        } else {
-            const removeButton = document.querySelector(
-                '[data-voucher-remove="order"]'
-            );
-
-            if (removeButton && !removeButton.hidden) {
-                await removeVoucher('order');
-            }
-        }
-    }
-);
-
-shippingVoucherSelect?.addEventListener(
-    'change',
-    async () => {
-        if (shippingVoucherSelect.value) {
-            await applyVoucher('shipping');
-        } else {
-            const removeButton = document.querySelector(
-                '[data-voucher-remove="shipping"]'
-            );
-
-            if (removeButton && !removeButton.hidden) {
-                await removeVoucher('shipping');
-            }
-        }
-    }
-);
+    document.querySelectorAll('[data-voucher-apply]').forEach(button => {
+        button.addEventListener('click', () => {
+            applyVoucher(button.dataset.voucherApply);
+        });
+    });
 
     document.querySelectorAll('[data-voucher-remove]').forEach(button => {
         button.addEventListener('click', () => {

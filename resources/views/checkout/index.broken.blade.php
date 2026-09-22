@@ -273,12 +273,11 @@
                                         </select>
 
                                         <button
-                                        type="button"
-                                        class="tt-voucher-remove"
-                                        data-voucher-remove="order"
-                                        {{ empty($checkoutVouchers['order']) ? 'hidden' : '' }}
+                                            type="button"
+                                            data-voucher-apply="order"
+                                            {{ auth()->guest() || $availableOrderVouchers->isEmpty() ? 'disabled' : '' }}
                                         >
-                                        Gỡ
+                                            Áp dụng
                                         </button>
 
                                         <button
@@ -334,7 +333,13 @@
                                             @endforeach
                                         </select>
 
-                                       
+                                        <button
+                                            type="button"
+                                            data-voucher-apply="shipping"
+                                            {{ auth()->guest() || $availableShippingVouchers->isEmpty() ? 'disabled' : '' }}
+                                        >
+                                            Áp dụng
+                                        </button>
 
                                         <button
                                             type="button"
@@ -578,7 +583,6 @@
                                                 @if($savedAddress->is_default)
                                                     <em>Mặc định</em>
                                                 @endif
-
                                                 @if($savedAddress->label)
                                                     <em>{{ $savedAddress->label }}</em>
                                                 @endif
@@ -602,126 +606,146 @@
                                     </button>
                                 @endif
                             </div>
-                        @endauth
 
-                        {{-- Form nhập tay chỉ hiện khi tài khoản chưa có địa chỉ đã lưu --}}
-                        <div
-                            id="manual-address-fields"
-                            style="{{ $savedAddresses->isNotEmpty() ? 'display:none;' : '' }}"
-                        >
-                            <div class="tt-address-divider">
-                                <span>Nhập địa chỉ nhận hàng</span>
-                            </div>
+                            <div
+    id="manual-address-fields"
+    @if($savedAddresses->isNotEmpty())
+        style="display:none;"
+    @endif
+>
+    <div class="tt-address-divider">
+        <span>Nhập địa chỉ nhận hàng</span>
+    </div>
 
-                            <div class="tt-address-form-title">
-                                <span>＋</span>
-                                <strong>Thông tin nhận hàng</strong>
-                            </div>
+    <div class="tt-address-form-title">
+        <span>＋</span>
+        <strong>Thông tin nhận hàng</strong>
+    </div>
 
-                            <div class="tt-form-grid">
-                                <label class="tt-field tt-full">
-                                    <span>Họ và tên <b>*</b></span>
-                                    <input
-                                        id="full_name"
-                                        name="full_name"
-                                        value="{{ $initialFullName }}"
-                                        placeholder="Nguyễn Văn An"
-                                        required
-                                    >
-                                </label>
+    <div class="tt-form-grid">
+        <label class="tt-field tt-full">
+            <span>Họ và tên <b>*</b></span>
+            <input
+                id="full_name"
+                name="full_name"
+                value="{{ $initialFullName }}"
+                required
+            >
+        </label>
 
-                                <label class="tt-field">
-                                    <span>Số điện thoại <b>*</b></span>
-                                    <input
-                                        id="phone"
-                                        name="phone"
-                                        value="{{ $initialPhone }}"
-                                        placeholder="0901234567"
-                                        required
-                                    >
-                                </label>
+        <label class="tt-field">
+            <span>Số điện thoại <b>*</b></span>
+            <input
+                id="phone"
+                name="phone"
+                value="{{ $initialPhone }}"
+                required
+            >
+        </label>
 
-                                <label class="tt-field">
-                                    <span>Email</span>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        value="{{ $initialEmail }}"
-                                        placeholder="an@example.com"
-                                    >
-                                </label>
+        <label class="tt-field">
+            <span>Email</span>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                value="{{ $initialEmail }}"
+            >
+        </label>
 
-                                <label class="tt-field">
-                                    <span>Tỉnh / Thành phố <b>*</b></span>
-                                    <select id="province" name="province_id" required>
-                                        <option value="">-- Chọn tỉnh/thành --</option>
+        <label class="tt-field">
+            <span>Tỉnh / Thành phố <b>*</b></span>
 
-                                        @foreach($provinces as $province)
-                                            <option
-                                                value="{{ $province['ProvinceID'] }}"
-                                                {{ (string) $initialProvinceId === (string) $province['ProvinceID'] ? 'selected' : '' }}
-                                            >
-                                                {{ $province['ProvinceName'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </label>
+            <select
+                id="province"
+                name="province_id"
+                required
+            >
+                <option value="">
+                    -- Chọn tỉnh/thành --
+                </option>
 
-                                <label class="tt-field">
-                                    <span>Quận / Huyện <b>*</b></span>
-                                    <select id="district" name="to_district_id" required disabled>
-                                        <option value="">-- Chọn quận/huyện --</option>
-                                    </select>
-                                </label>
-
-                                <label class="tt-field tt-full">
-                                    <span>Phường / Xã <b>*</b></span>
-                                    <select id="ward" name="to_ward_code" required disabled>
-                                        <option value="">-- Chọn phường/xã --</option>
-                                    </select>
-                                </label>
-
-                                <label class="tt-field tt-full">
-                                    <span>Địa chỉ chi tiết <b>*</b></span>
-                                    <input
-                                        id="address"
-                                        name="address"
-                                        value="{{ $initialAddress }}"
-                                        placeholder="Số nhà, tên đường..."
-                                        required
-                                    >
-                                </label>
-                            </div>
-                        </div>
-
-                        {{-- Ghi chú vẫn hiển thị dù chọn địa chỉ đã lưu --}}
-                        <div class="tt-form-grid" style="margin-top:14px;">
-                            <label class="tt-field tt-full">
-                                <span>Ghi chú</span>
-                                <textarea
-                                    id="note"
-                                    name="note"
-                                    rows="3"
-                                    placeholder="Giao hàng giờ hành chính"
-                                >{{ old('note') }}</textarea>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div
-                        class="tt-address-sheet-footer"
-                        style="{{ $savedAddresses->isNotEmpty() ? 'display:none;' : '' }}"
+                @foreach($provinces as $province)
+                    <option
+                        value="{{ $province['ProvinceID'] }}"
+                        {{ (string) $initialProvinceId ===
+                           (string) $province['ProvinceID']
+                           ? 'selected'
+                           : '' }}
                     >
-                        <button type="button" class="tt-address-save" id="save-address">
-                            Xác nhận địa chỉ
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </form>
+                        {{ $province['ProvinceName'] }}
+                    </option>
+                @endforeach
+            </select>
+        </label>
+
+        <label class="tt-field">
+            <span>Quận / Huyện <b>*</b></span>
+
+            <select
+                id="district"
+                name="to_district_id"
+                required
+                disabled
+            >
+                <option value="">
+                    -- Chọn quận/huyện --
+                </option>
+            </select>
+        </label>
+
+        <label class="tt-field tt-full">
+            <span>Phường / Xã <b>*</b></span>
+
+            <select
+                id="ward"
+                name="to_ward_code"
+                required
+                disabled
+            >
+                <option value="">
+                    -- Chọn phường/xã --
+                </option>
+            </select>
+        </label>
+
+        <label class="tt-field tt-full">
+            <span>Địa chỉ chi tiết <b>*</b></span>
+
+            <input
+                id="address"
+                name="address"
+                value="{{ $initialAddress }}"
+                required
+            >
+        </label>
     </div>
 </div>
+
+{{-- Ghi chú vẫn cho khách nhập --}}
+<div class="tt-form-grid" style="margin-top:14px;">
+    <label class="tt-field tt-full">
+        <span>Ghi chú</span>
+
+        <textarea
+            id="note"
+            name="note"
+            rows="3"
+            placeholder="Giao hàng giờ hành chính"
+        >{{ old('note') }}</textarea>
+    </label>
+</div>
+               @if($savedAddresses->isEmpty())
+    <div class="tt-address-sheet-footer">
+        <button
+            type="button"
+            class="tt-address-save"
+            id="save-address"
+        >
+            Xác nhận địa chỉ
+        </button>
+    </div>
+@endif
 
 <style>
 :root{
@@ -1358,7 +1382,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function applyVoucher(type) {
         const select = document.getElementById(`voucher-${type}-id`);
         const status = document.getElementById(`voucher-${type}-status`);
-        
+        const button = document.querySelector(
+            `[data-voucher-apply="${type}"]`
+        );
         const removeButton = document.querySelector(
             `[data-voucher-remove="${type}"]`
         );
@@ -1372,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        select.disabled = true;
+        button.disabled = true;
         status.textContent = 'Đang kiểm tra mã...';
 
         try {
@@ -1405,7 +1431,7 @@ document.addEventListener('DOMContentLoaded', () => {
             status.textContent = error.message;
             status.classList.add('is-error');
         } finally {
-    select.disabled = false;
+            button.disabled = false;
         }
     }
 
@@ -1450,45 +1476,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const orderVoucherSelect =
-    document.getElementById('voucher-order-id');
-
-const shippingVoucherSelect =
-    document.getElementById('voucher-shipping-id');
-
-orderVoucherSelect?.addEventListener(
-    'change',
-    async () => {
-        if (orderVoucherSelect.value) {
-            await applyVoucher('order');
-        } else {
-            const removeButton = document.querySelector(
-                '[data-voucher-remove="order"]'
-            );
-
-            if (removeButton && !removeButton.hidden) {
-                await removeVoucher('order');
-            }
-        }
-    }
-);
-
-shippingVoucherSelect?.addEventListener(
-    'change',
-    async () => {
-        if (shippingVoucherSelect.value) {
-            await applyVoucher('shipping');
-        } else {
-            const removeButton = document.querySelector(
-                '[data-voucher-remove="shipping"]'
-            );
-
-            if (removeButton && !removeButton.hidden) {
-                await removeVoucher('shipping');
-            }
-        }
-    }
-);
+    document.querySelectorAll('[data-voucher-apply]').forEach(button => {
+        button.addEventListener('click', () => {
+            applyVoucher(button.dataset.voucherApply);
+        });
+    });
 
     document.querySelectorAll('[data-voucher-remove]').forEach(button => {
         button.addEventListener('click', () => {

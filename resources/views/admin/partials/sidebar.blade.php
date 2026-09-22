@@ -40,15 +40,35 @@
             ],
         ],
         [
-            'label' => 'CRM & Marketing',
-            'icon' => '👥',
-            'can' => ['crm.view', 'vouchers.manage', 'marketing.manage'],
-            'items' => [
-                ['label' => 'Khách hàng', 'route' => 'admin.clients.index', 'can' => 'crm.view'], // Bạn nhớ bổ sung quyền này vào Seeder
-                ['label' => 'Voucher', 'route' => 'admin.vouchers.index', 'can' => 'vouchers.manage'],
-                ['label' => 'Banner', 'route' => 'admin.banners.index', 'can' => 'marketing.manage'],
-            ],
+    'label' => 'CRM & Marketing',
+    'icon' => '👥',
+    'can' => ['crm.view', 'vouchers.manage', 'marketing.manage'],
+    'items' => [
+        [
+            'label' => 'Khách hàng',
+            'route' => 'admin.clients.index',
+            'can' => 'crm.view',
         ],
+
+        [
+            'label' => 'Chăm sóc khách hàng',
+            'route' => 'admin.customer-care.index',
+            'can' => 'crm.view',
+        ],
+
+        [
+            'label' => 'Voucher',
+            'route' => 'admin.vouchers.index',
+            'can' => 'vouchers.manage',
+        ],
+
+        [
+            'label' => 'Banner',
+            'route' => 'admin.banners.index',
+            'can' => 'marketing.manage',
+        ],
+    ],
+],
         [
             'label' => 'Hệ thống',
             'icon' => '⚙️',

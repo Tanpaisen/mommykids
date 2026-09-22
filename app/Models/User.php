@@ -69,6 +69,12 @@ class User extends Authenticatable
         });
     }
 
+    public function addresses(): HasMany
+{
+    return $this->hasMany(UserAddress::class)
+        ->orderByDesc('is_default')
+        ->latest();
+}
     public function pointLogs()
     {
         return $this->hasMany(PointLog::class)->latest();

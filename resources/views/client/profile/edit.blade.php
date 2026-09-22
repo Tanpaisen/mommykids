@@ -368,21 +368,142 @@
                 </div>
             </div>
 
-            <!-- Box 3: Sổ địa chỉ nhận hàng -->
-            <div class="info-card-modern">
-                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                    <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                        <span style="color: #FF2A54;">📍</span> Sổ địa chỉ nhận hàng
-                    </h6>
-                    <button class="btn-gradient-danger" style="font-size: 12px; padding: 7px 18px;">+ Thêm địa chỉ mới</button>
+           <!-- Box 3: Sổ địa chỉ nhận hàng -->
+<div class="profile-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 fw-bold">
+            <span style="color: #FF2A54;">📍</span>
+            Sổ địa chỉ nhận hàng
+        </h5>
+
+        <a
+            href="{{ route('profile.addresses.index') }}"
+            class="btn-gradient-danger"
+            style="
+                font-size: 12px;
+                padding: 7px 18px;
+                text-decoration: none;
+            "
+        >
+            + Thêm địa chỉ mới
+        </a>
+    </div>
+
+    @php
+        $profileAddresses = auth()
+            ->user()
+            ->addresses()
+            ->get();
+    @endphp
+
+    @forelse($profileAddresses as $address)
+
+        <div
+            class="py-3"
+            style="
+                border-bottom: 1px solid #f1e5e8;
+            "
+        >
+            <div
+                class="d-flex
+                       justify-content-between
+                       align-items-start
+                       gap-3"
+            >
+                <div>
+                    <div class="fw-bold">
+                        {{ $address->recipient_name }}
+
+                        @if($address->is_default)
+                            <span
+                                style="
+                                    color: #FF2A54;
+                                    border: 1px solid #FF2A54;
+                                    padding: 2px 7px;
+                                    border-radius: 5px;
+                                    font-size: 11px;
+                                    margin-left: 6px;
+                                "
+                            >
+                                Mặc định
+                            </span>
+                        @endif
+                    </div>
+
+                    <div
+                        class="text-secondary mt-1"
+                        style="font-size: 14px;"
+                    >
+                        {{ $address->phone }}
+                    </div>
+
+                    <div
+                        class="text-secondary mt-1"
+                        style="font-size: 14px;"
+                    >
+                        {{ $address->address_detail }},
+                        {{ $address->ward_name }},
+                        {{ $address->district_name }},
+                        {{ $address->province_name }}
+                    </div>
+
+                    @if($address->label)
+                        <span
+                            style="
+                                display: inline-block;
+                                margin-top: 7px;
+                                background: #f3f3f3;
+                                color: #666;
+                                padding: 3px 8px;
+                                border-radius: 5px;
+                                font-size: 11px;
+                            "
+                        >
+                            {{ $address->label }}
+                        </span>
+                    @endif
                 </div>
 
-                <div class="text-center py-4">
-                    <div class="mb-2" style="font-size: 36px; opacity: 0.6;">🏡</div>
-                    <p class="text-secondary small mb-0">Bạn chưa lưu địa chỉ nhận hàng nào.</p>
-                </div>
+                <a
+                    href="{{ route('profile.addresses.index') }}"
+                    style="
+                        color: #FF2A54;
+                        font-weight: 600;
+                        text-decoration: none;
+                        white-space: nowrap;
+                    "
+                >
+                    Chỉnh sửa
+                </a>
             </div>
         </div>
-    </div>
+
+    @empty
+
+        <div
+            class="text-center py-4"
+            style="color: #777;"
+        >
+            <div style="font-size: 38px;">
+                🏠
+            </div>
+
+            <p class="text-secondary mb-2">
+                Bạn chưa lưu địa chỉ nhận hàng nào.
+            </p>
+
+            <a
+                href="{{ route('profile.addresses.index') }}"
+                style="
+                    color: #FF2A54;
+                    text-decoration: none;
+                    font-weight: 600;
+                "
+            >
+                Thêm địa chỉ đầu tiên
+            </a>
+        </div>
+
+    @endforelse
 </div>
 @endsection
