@@ -3,23 +3,37 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Campaign;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Shipment;
+use App\Services\CampaignService;
 use App\Services\GHNService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    public function __construct(private GHNService $ghn) {}
+    public function __construct(
+        private GHNService $ghn,
+        private CampaignService $campaignService
+    ) {}
 
     /** Danh sách đơn hàng */
     public function index(Request $request)
     {
         $query = Order::query()
             ->with(['user', 'shipment'])
-            ->withCount('items');
+            ->withCount([
+                'items',
+                'items as campaign_items_count' => function ($query) {
+                    $query->whereNotNull('campaign_id');
+                },
+            ])
+            ->withSum(
+                'items as campaign_discount_total',
+                'campaign_discount_amount'
+            );
 
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($q) use ($search) {
@@ -42,6 +56,23 @@ class OrderController extends Controller
             $query->where('payment_method', $paymentMethod);
         }
 
+        /*
+         * Lọc đơn có/không có sản phẩm áp dụng Campaign.
+         */
+        $campaignFilter = (string) $request->input('campaign', '');
+
+        if ($campaignFilter === 'yes') {
+            $query->whereHas('items', function ($itemQuery) {
+                $itemQuery->whereNotNull('campaign_id');
+            });
+        }
+
+        if ($campaignFilter === 'no') {
+            $query->whereDoesntHave('items', function ($itemQuery) {
+                $itemQuery->whereNotNull('campaign_id');
+            });
+        }
+
         if ($from = $request->input('from')) {
             $query->whereDate('created_at', '>=', $from);
         }
@@ -62,6 +93,11 @@ class OrderController extends Controller
             'shipping' => Order::where('status', 'shipping')->count(),
             'delivered' => Order::where('status', 'delivered')->count(),
             'paid' => Order::where('payment_status', 'paid')->count(),
+            'campaign_orders' => Order::query()
+                ->whereHas('items', function ($itemQuery) {
+                    $itemQuery->whereNotNull('campaign_id');
+                })
+                ->count(),
             'revenue' => Order::where('payment_status', 'paid')
                 ->whereNotIn('status', ['cancelled', 'refunded'])
                 ->sum('total'),
@@ -208,11 +244,26 @@ class OrderController extends Controller
             }
 
             /*
-             * Chỉ load items khi thay đổi có liên quan delivered.
+             * Load items khi:
+             * - thay đổi có liên quan delivered để cập nhật sold_count
+             * - chuyển sang cancelled/refunded để hoàn lại quota Campaign
              */
+            $isEnteringCancelledOrRefunded =
+                !in_array(
+                    $oldStatus,
+                    ['cancelled', 'refunded'],
+                    true
+                )
+                && in_array(
+                    $newStatus,
+                    ['cancelled', 'refunded'],
+                    true
+                );
+
             if (
                 $oldStatus === 'delivered'
                 || $newStatus === 'delivered'
+                || $isEnteringCancelledOrRefunded
             ) {
                 $lockedOrder->loadMissing('items');
             }
@@ -231,6 +282,17 @@ class OrderController extends Controller
                 && $newStatus !== 'delivered'
             ) {
                 $this->decreaseSoldCount(
+                    $lockedOrder
+                );
+            }
+
+            /*
+             * Campaign được reserve ngay khi tạo đơn.
+             * Khi đơn lần đầu chuyển sang cancelled/refunded,
+             * hoàn lại sold_quantity của Campaign.
+             */
+            if ($isEnteringCancelledOrRefunded) {
+                $this->releaseCampaignReservations(
                     $lockedOrder
                 );
             }
@@ -325,6 +387,47 @@ class OrderController extends Controller
             );
 
             $product->save();
+        }
+    }
+
+    /**
+     * Hoàn lại quota Campaign khi đơn bị hủy/hoàn tiền.
+     *
+     * Chỉ OrderItem có campaign_id mới được xử lý.
+     * withTrashed() vẫn tìm được Campaign đã soft delete.
+     */
+    private function releaseCampaignReservations(
+        Order $order
+    ): void {
+        foreach ($order->items as $item) {
+            $campaignId = (int) ($item->campaign_id ?? 0);
+            $productId = (int) ($item->product_id ?? 0);
+            $quantity = max(
+                0,
+                (int) $item->quantity
+            );
+
+            if (
+                $campaignId <= 0
+                || $productId <= 0
+                || $quantity <= 0
+            ) {
+                continue;
+            }
+
+            $campaign = Campaign::withTrashed()
+                ->find($campaignId);
+
+            if (!$campaign) {
+                continue;
+            }
+
+            $this->campaignService
+                ->releaseCampaignStock(
+                    $campaign,
+                    $productId,
+                    $quantity
+                );
         }
     }
 
