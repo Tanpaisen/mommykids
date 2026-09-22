@@ -160,9 +160,22 @@ class CheckoutController extends Controller
 
         $items = $this->cart->items();
         $subtotal = (int) $this->cart->total();
-        $weight = method_exists($this->cart, 'totalWeightGrams')
-            ? max(500, (int) $this->cart->totalWeightGrams())
-            : 500;
+        if ($this->cart->hasMissingWeights()) {
+    return response()->json([
+        'message' =>
+            'Có sản phẩm chưa khai báo khối lượng. '
+            . 'Không thể tính chính xác phí GHN.',
+    ], 422);
+}
+
+$weight = $this->cart->totalWeightGrams();
+
+if ($weight <= 0) {
+    return response()->json([
+        'message' =>
+            'Tổng khối lượng giỏ hàng không hợp lệ.',
+    ], 422);
+}
 
         $feeData = $this->ghn->calculateFee(
             (int) $data['district_id'],
@@ -530,10 +543,26 @@ return response()->json([
             'payment_method.required' => 'Vui lòng chọn phương thức thanh toán.',
         ]);
 
-        $weight = method_exists($this->cart, 'totalWeightGrams')
-            ? max(500, (int) $this->cart->totalWeightGrams())
-            : 500;
+        if ($this->cart->hasMissingWeights()) {
+    return back()
+        ->withInput()
+        ->with(
+            'error',
+            'Có sản phẩm chưa khai báo khối lượng. '
+            . 'Không thể tính chính xác phí vận chuyển GHN.'
+        );
+}
 
+$weight = $this->cart->totalWeightGrams();
+
+if ($weight <= 0) {
+    return back()
+        ->withInput()
+        ->with(
+            'error',
+            'Tổng khối lượng đơn hàng không hợp lệ.'
+        );
+}
         $feeData = $this->ghn->calculateFee(
             (int) $data['to_district_id'],
             $data['to_ward_code'],

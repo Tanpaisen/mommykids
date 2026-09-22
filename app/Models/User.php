@@ -72,6 +72,12 @@ class User extends Authenticatable
         });
     }
 
+    public function addresses(): HasMany
+{
+    return $this->hasMany(UserAddress::class)
+        ->orderByDesc('is_default')
+        ->latest();
+}
     /**
      * Mối quan hệ với Đơn hàng
      */

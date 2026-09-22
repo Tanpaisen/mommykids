@@ -3,7 +3,7 @@
     use Illuminate\Support\Facades\Route;
 
     // ==============================================================
-    // 1. MẢNG MENU TĨNH (CỐT LÕI - GIỮ NGUYÊN 100% ROUTE GỐC CỦA BẠN)
+    // 1. MẢNG MENU TĨNH (CỐT LÕI - GỘP ĐỦ 100% TẤT CẢ CÁC TÍNH NĂNG)
     // ==============================================================
     $staticMenu = [
         [
@@ -50,6 +50,7 @@
             'can' => ['crm.view', 'vouchers.manage', 'marketing.manage'],
             'items' => [
                 ['label' => 'Khách hàng', 'route' => 'admin.clients.index', 'can' => 'crm.view'], 
+                ['label' => 'Chăm sóc khách hàng', 'route' => 'admin.customer-care.index', 'can' => 'crm.view'],
                 ['label' => 'Voucher', 'route' => 'admin.vouchers.index', 'can' => 'vouchers.manage'],
                 ['label' => 'Cài đặt chung', 'route' => 'admin.settings.index', 'can' => 'marketing.manage'], 
             ],
@@ -75,10 +76,8 @@
             $dbMenus = \App\Models\AdminMenu::where('is_active', true)->orderBy('order')->get()->groupBy('group_name');
             
             foreach ($dbMenus as $groupName => $items) {
-                // Thu thập quyền của nhóm
                 $groupPermissions = $items->pluck('permission')->filter()->unique()->toArray();
                 
-                // Chuẩn hóa item con thành Array giống hệt mảng tĩnh
                 $dynamicItems = [];
                 foreach ($items as $item) {
                     $dynamicItems[] = [
@@ -120,11 +119,9 @@
 
     <nav class="py-3">
         @foreach ($mergedMenu as $group)
-            {{-- KIỂM TRA QUYỀN TRÊN LEVEL NHÓM (HỖ TRỢ MẢNG QUYỀN BẰNG CANANY) --}}
             @if(empty($group['can']) || auth()->user()->hasAnyPermission((array) $group['can']) || auth()->user()->hasRole('Super Admin'))
             
             @php
-                // KIỂM TRA ACTIVE CHO DROPDOWN CỦA NHÓM NÀY
                 $isGroupActive = collect($group['items'])->contains(function($item) {
                     if ($item['route'] === 'admin.dashboard') {
                         return request()->routeIs('admin.dashboard') || request()->path() === 'admin';
@@ -160,7 +157,6 @@
                     class="mt-1 space-y-0.5">
                     
                     @foreach ($group['items'] as $item)
-                        {{-- KIỂM TRA QUYỀN TRÊN TỪNG ITEM CON --}}
                         @if(empty($item['can']) || auth()->user()->can($item['can']) || auth()->user()->hasRole('Super Admin'))
                             @php
                                 $itemUrl = Route::has($item['route']) ? route($item['route']) : url('#');
