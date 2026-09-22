@@ -14,6 +14,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;
+use App\Http\Controllers\Auth\SocialLoginController; // <-- Đã thêm Controller Social Login
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\PageController;
 
@@ -49,6 +50,17 @@ Route::get('/danh-muc/{category:slug}', [CategoryController::class, 'show'])
 
 Route::get('/san-pham/{product:slug}', [ProductController::class, 'show'])
     ->name('product.show');
+
+/*
+|--------------------------------------------------------------------------
+| Facebook Social Login Routes
+|--------------------------------------------------------------------------
+*/
+Route::get('/auth/facebook', [SocialLoginController::class, 'redirectToFacebook'])
+    ->name('auth.facebook');
+
+Route::get('/auth/facebook/callback', [SocialLoginController::class, 'handleFacebookCallback'])
+    ->name('auth.facebook.callback');
 
 /*
 |--------------------------------------------------------------------------

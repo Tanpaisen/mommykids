@@ -35,6 +35,9 @@ class User extends Authenticatable
         'status',
         'is_active',
         'last_seen_at',
+        'provider',      // <-- Thêm để lưu social network (facebook)
+        'provider_id',   // <-- Thêm để lưu Facebook User ID
+        'avatar',        // <-- Thêm để lưu link ảnh đại diện Facebook
     ];
 
     /**

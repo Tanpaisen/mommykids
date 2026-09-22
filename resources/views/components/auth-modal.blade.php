@@ -14,7 +14,7 @@
             </div>
         </div>
 
-        <!-- Bên phải: Form Đăng nhập Email OTP -->
+        <!-- Bên phải: Form Đăng nhập Email OTP & Social -->
         <div class="md:w-1/2 p-6 md:p-8 flex flex-col justify-center">
             <div class="text-center mb-6">
                 <h2 class="text-2xl font-bold text-rose-600">ĐĂNG NHẬP</h2>
@@ -60,11 +60,24 @@
                     </label>
                 </div>
 
-                <!-- Nút Đăng Nhập -->
+                <!-- Nút Đăng Nhập OTP -->
                 <button type="submit" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-full text-sm shadow-md transition">
                     ĐĂNG NHẬP
                 </button>
             </form>
+
+            <!-- Khối Đăng Nhập Mạng Xã Hội -->
+            <div class="mt-4 pt-3 border-t border-gray-100 text-center">
+                <p class="text-[11px] text-gray-400 font-medium mb-2.5">Hoặc đăng nhập bằng</p>
+                
+                <a href="{{ route('auth.facebook') }}" 
+                   class="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#1877F2] text-white rounded-xl hover:bg-blue-700 transition text-xs font-bold shadow-sm w-full">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    Đăng nhập bằng Facebook
+                </a>
+            </div>
         </div>
     </div>
 </div>
