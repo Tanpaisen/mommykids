@@ -1,6 +1,6 @@
 @extends('client.layouts.app')
 
-@section('title', 'MommyKids - Đồ dùng mẹ và bé chính hãng')
+@section('title', $globalSetting->site_name ?? 'MommyKids - Đồ dùng mẹ và bé chính hãng')
 
 @section('content')
 
@@ -10,15 +10,12 @@
             <div class="w-full shrink-0 bg-gradient-to-br from-peach to-coral flex items-center justify-between px-6 lg:px-12 py-10 lg:py-16">
                 <div class="max-w-md">
                     <p class="font-display font-extrabold text-2xl lg:text-4xl text-white leading-tight">
-                        Sữa thùng<br>giá tốt tháng này
+                        {!! nl2br(e($globalSetting->hero_title ?? "Sữa thùng\ngiá tốt tháng này")) !!}
                     </p>
-
                     <p class="mt-3 text-white/90 text-sm lg:text-base">
                         Chính hãng · Hóa đơn VAT đầy đủ · Bảo giá tốt nhất thị trường
                     </p>
-
-                    <a href="#"
-                       class="btn-primary bg-white !text-coral hover:!bg-cream mt-5">
+                    <a href="#" class="btn-primary bg-white !text-coral hover:!bg-cream mt-5">
                         Mua ngay
                     </a>
                 </div>
@@ -85,38 +82,45 @@
         @endforeach
     </section>
 
-    {{-- ============ VOUCHER / PROMO STRIP ============ --}}
+    {{-- ============ VOUCHER / PROMO STRIP (BANNER VÀNG DYNAMIC) ============ --}}
     <section class="rounded-card overflow-hidden bg-gradient-to-r from-gold-light to-peach-light p-5 lg:p-8 flex items-center justify-between gap-4">
         <div>
             <p class="font-display font-extrabold text-xl lg:text-2xl text-ink">
-                Ưu đãi dành cho ba mẹ
+                {{ $globalSetting->yellow_banner_title ?? ($globalSetting->promo_title ?? 'Ưu đãi dành cho ba mẹ') }}
             </p>
-
             <p class="text-sm text-ink-soft mt-1">
-                Nhập mã ngay để nhận ưu đãi cho lần mua đầu tiên
+                {{ $globalSetting->yellow_banner_subtitle ?? ($globalSetting->promo_subtitle ?? 'Nhập mã ngay để nhận ưu đãi cho lần mua đầu tiên') }}
             </p>
         </div>
-
+        
         <div class="hidden sm:flex gap-3">
-            <div class="card px-4 py-3 text-center">
-                <p class="font-display font-bold text-coral">30K</p>
-                <p class="text-xs text-ink-soft">Voucher</p>
-            </div>
+            @if(!empty($globalSetting->yellow_banner_box1 ?? $globalSetting->promo_box1))
+                <div class="card px-4 py-3 text-center flex flex-col justify-center">
+                    <p class="font-display font-bold text-coral text-sm">
+                        {!! nl2br(e($globalSetting->yellow_banner_box1 ?? $globalSetting->promo_box1)) !!}
+                    </p>
+                </div>
+            @endif
 
-            <div class="card px-4 py-3 text-center">
-                <p class="font-display font-bold text-coral">-12%</p>
-                <p class="text-xs text-ink-soft">Tã & Bỉm</p>
-            </div>
+            @if(!empty($globalSetting->yellow_banner_box2 ?? $globalSetting->promo_box2))
+                <div class="card px-4 py-3 text-center flex flex-col justify-center">
+                    <p class="font-display font-bold text-coral text-sm">
+                        {!! nl2br(e($globalSetting->yellow_banner_box2 ?? $globalSetting->promo_box2)) !!}
+                    </p>
+                </div>
+            @endif
 
-            <div class="card px-4 py-3 text-center">
-                <p class="font-display font-bold text-coral">-15%</p>
-                <p class="text-xs text-ink-soft">Sữa bột</p>
-            </div>
+            @if(!empty($globalSetting->yellow_banner_box3 ?? $globalSetting->promo_box3))
+                <div class="card px-4 py-3 text-center flex flex-col justify-center">
+                    <p class="font-display font-bold text-coral text-sm">
+                        {!! nl2br(e($globalSetting->yellow_banner_box3 ?? $globalSetting->promo_box3)) !!}
+                    </p>
+                </div>
+            @endif
         </div>
 
-        <a href="{{ route('vouchers.index') }}"
-           class="btn-primary shrink-0">
-            Nhận ngay
+        <a href="{{ route('vouchers.index') }}" class="btn-primary shrink-0">
+            {{ $globalSetting->yellow_banner_button_text ?? ($globalSetting->promo_button_text ?? 'Nhận ngay') }}
         </a>
     </section>
 

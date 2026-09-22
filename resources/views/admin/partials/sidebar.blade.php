@@ -1,5 +1,11 @@
 @php
-    $menu = [
+    use Illuminate\Support\Facades\Schema;
+    use Illuminate\Support\Facades\Route;
+
+    // ==============================================================
+    // 1. MẢNG MENU TĨNH (CỐT LÕI - GỘP ĐỦ 100% TẤT CẢ CÁC TÍNH NĂNG)
+    // ==============================================================
+    $staticMenu = [
         [
             'label' => 'Dashboard & Thống kê',
             'icon' => '📊',
@@ -11,7 +17,6 @@
         [
             'label' => 'Kiến thức & Sản phẩm',
             'icon' => '📦',
-            // Chỉ cần có 1 trong 2 quyền này thì sẽ thấy header menu
             'can' => ['catalog.manage', 'products.manage'],
             'items' => [
                 ['label' => 'Giai đoạn của bé', 'route' => 'admin.stages.index', 'can' => 'catalog.manage'],
@@ -23,7 +28,7 @@
         [
             'label' => 'Cẩm nang & Tương tác',
             'icon' => '📚',
-            'can' => 'handbook.view', // Bạn nhớ bổ sung quyền này vào Seeder
+            'can' => 'handbook.view', 
             'items' => [
                 ['label' => 'Bài viết Cẩm nang', 'route' => 'admin.articles.index'],
                 ['label' => 'Trung tâm Hỏi đáp', 'route' => 'admin.comments.index'],
@@ -40,35 +45,16 @@
             ],
         ],
         [
-    'label' => 'CRM & Marketing',
-    'icon' => '👥',
-    'can' => ['crm.view', 'vouchers.manage', 'marketing.manage'],
-    'items' => [
-        [
-            'label' => 'Khách hàng',
-            'route' => 'admin.clients.index',
-            'can' => 'crm.view',
+            'label' => 'CRM & Marketing',
+            'icon' => '👥',
+            'can' => ['crm.view', 'vouchers.manage', 'marketing.manage'],
+            'items' => [
+                ['label' => 'Khách hàng', 'route' => 'admin.clients.index', 'can' => 'crm.view'], 
+                ['label' => 'Chăm sóc khách hàng', 'route' => 'admin.customer-care.index', 'can' => 'crm.view'],
+                ['label' => 'Voucher', 'route' => 'admin.vouchers.index', 'can' => 'vouchers.manage'],
+                ['label' => 'Cài đặt chung', 'route' => 'admin.settings.index', 'can' => 'marketing.manage'], 
+            ],
         ],
-
-        [
-            'label' => 'Chăm sóc khách hàng',
-            'route' => 'admin.customer-care.index',
-            'can' => 'crm.view',
-        ],
-
-        [
-            'label' => 'Voucher',
-            'route' => 'admin.vouchers.index',
-            'can' => 'vouchers.manage',
-        ],
-
-        [
-            'label' => 'Banner',
-            'route' => 'admin.banners.index',
-            'can' => 'marketing.manage',
-        ],
-    ],
-],
         [
             'label' => 'Hệ thống',
             'icon' => '⚙️',
@@ -80,6 +66,43 @@
             ],
         ],
     ];
+
+    // ==============================================================
+    // 2. LẤY MENU ĐỘNG TỪ DATABASE (CÓ FALLBACK CHỐNG LỖI)
+    // ==============================================================
+    $dynamicMenu = [];
+    try {
+        if (Schema::hasTable('admin_menus')) {
+            $dbMenus = \App\Models\AdminMenu::where('is_active', true)->orderBy('order')->get()->groupBy('group_name');
+            
+            foreach ($dbMenus as $groupName => $items) {
+                $groupPermissions = $items->pluck('permission')->filter()->unique()->toArray();
+                
+                $dynamicItems = [];
+                foreach ($items as $item) {
+                    $dynamicItems[] = [
+                        'label' => $item->title,
+                        'route' => $item->route_name,
+                        'can'   => $item->permission, 
+                    ];
+                }
+
+                $dynamicMenu[] = [
+                    'label' => $groupName,
+                    'icon'  => $items->first()->icon ?? '📁',
+                    'can'   => empty($groupPermissions) ? null : $groupPermissions,
+                    'items' => $dynamicItems,
+                ];
+            }
+        }
+    } catch (\Exception $e) {
+        // Fallback im lặng nếu sập Database hoặc chưa có bảng
+    }
+
+    // ==============================================================
+    // 3. GỘP CẢ 2 NGUỒN LẠI THÀNH MỘT MẢNG DUY NHẤT
+    // ==============================================================
+    $mergedMenu = array_merge($staticMenu, $dynamicMenu);
 @endphp
 
 <aside id="admin-sidebar"
@@ -95,13 +118,16 @@
     </div>
 
     <nav class="py-3">
-        @foreach ($menu as $group)
-            {{-- Đã thay @can thành @canany và ép kiểu (array) để hỗ trợ mảng quyền --}}
-            @canany((array) $group['can'])
+        @foreach ($mergedMenu as $group)
+            @if(empty($group['can']) || auth()->user()->hasAnyPermission((array) $group['can']) || auth()->user()->hasRole('Super Admin'))
+            
             @php
-                $isGroupActive = collect($group['items'])->contains(
-                    fn($item) => request()->routeIs($item['route'] . '*')
-                );
+                $isGroupActive = collect($group['items'])->contains(function($item) {
+                    if ($item['route'] === 'admin.dashboard') {
+                        return request()->routeIs('admin.dashboard') || request()->path() === 'admin';
+                    }
+                    return Route::has($item['route']) && request()->routeIs($item['route'] . '*');
+                });
             @endphp
 
             <div class="px-3 py-1" x-data="{ open: {{ $isGroupActive ? 'true' : 'false' }} }">
@@ -129,24 +155,30 @@
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
                     class="mt-1 space-y-0.5">
+                    
                     @foreach ($group['items'] as $item)
-                        {{-- Áp dụng tương tự cho các item con --}}
-                        @canany((array) ($item['can'] ?? $group['can']))
+                        @if(empty($item['can']) || auth()->user()->can($item['can']) || auth()->user()->hasRole('Super Admin'))
+                            @php
+                                $itemUrl = Route::has($item['route']) ? route($item['route']) : url('#');
+                                if ($item['route'] === 'admin.dashboard') {
+                                    $isActive = request()->routeIs('admin.dashboard') || request()->path() === 'admin';
+                                } else {
+                                    $isActive = Route::has($item['route']) && request()->routeIs($item['route'] . '*');
+                                }
+                            @endphp
                             <li>
-                                <a href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}"
+                                <a href="{{ $itemUrl }}"
                                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors
-                                          {{ request()->routeIs($item['route'].'*')
-                                             ? 'bg-coral text-white font-semibold'
-                                             : 'text-white/70 hover:bg-admin-sidebar-hover hover:text-white' }}">
+                                          {{ $isActive ? 'bg-coral text-white font-semibold' : 'text-white/70 hover:bg-admin-sidebar-hover hover:text-white' }}">
                                     <span class="w-1.5 h-1.5 rounded-full bg-current opacity-60 shrink-0"></span>
                                     {{ $item['label'] }}
                                 </a>
                             </li>
-                        @endcanany
+                        @endif
                     @endforeach
                 </ul>
             </div>
-            @endcanany
+            @endif
         @endforeach
     </nav>
 </aside>
