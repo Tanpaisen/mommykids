@@ -23,11 +23,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Đăng xuất
         Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
 
-       require __DIR__ . '/admin/products.php';
-require __DIR__ . '/admin/orders.php';
-require __DIR__ . '/admin/marketing.php';
-require __DIR__ . '/admin/system.php';
-require __DIR__ . '/admin/articles.php';
-require __DIR__ . '/admin/reviews.php';
+        require __DIR__ . '/admin/products.php';
+        require __DIR__ . '/admin/orders.php';
+        require __DIR__ . '/admin/marketing.php';
+        require __DIR__ . '/admin/system.php';
+        require __DIR__ . '/admin/articles.php';
+        require __DIR__ . '/admin/reviews.php';
+        require __DIR__ . '/admin/inventory.php';
     });
 });
