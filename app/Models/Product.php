@@ -92,28 +92,23 @@ class Product extends Model
     */
 
     protected $casts = [
-        // Trạng thái
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
 
-        // Giá / kho / lượt bán
         'price' => 'integer',
         'old_price' => 'integer',
         'discount_percent' => 'integer',
         'stock' => 'integer',
         'sold_count' => 'integer',
 
-        // Đóng gói
         'weight_grams' => 'integer',
         'length_cm' => 'integer',
         'width_cm' => 'integer',
         'height_cm' => 'integer',
 
-        // JSON
         'images' => 'array',
         'highlights' => 'array',
 
-        // Datetime
         'deleted_at' => 'datetime',
         'restored_at' => 'datetime',
     ];
@@ -154,6 +149,22 @@ class Product extends Model
         );
     }
 
+    public function campaigns(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Campaign::class,
+            'campaign_products'
+        )
+            ->withPivot([
+                'sale_price',
+                'discount_percent',
+                'stock_limit',
+                'sold_quantity',
+                'max_per_user',
+            ])
+            ->withTimestamps();
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes
@@ -187,13 +198,6 @@ class Product extends Model
         );
     }
 
-    /*
-     * Sản phẩm bán chạy.
-     *
-     * Ví dụ:
-     *
-     * Product::bestSelling()->get();
-     */
     public function scopeBestSelling($query)
     {
         return $query
@@ -201,15 +205,6 @@ class Product extends Model
             ->orderByDesc('id');
     }
 
-    /*
-     * Lấy thống kê review ngay trong query.
-     *
-     * reviews_count
-     * reviews_avg_rating
-     *
-     * Giúp card sản phẩm không phát sinh
-     * một query review cho từng sản phẩm.
-     */
     public function scopeWithReviewStats($query)
     {
         return $query
@@ -259,11 +254,8 @@ class Product extends Model
 
         return [
             'id' => $this->id,
-
             'name' => $this->name,
-
             'image' => $this->image,
-
             'price' => (int) $this->price,
 
             'old_price' => $this->old_price
@@ -274,12 +266,8 @@ class Product extends Model
                 ? (int) $this->discount_percent
                 : null,
 
-            // Review thật
             'rating' => $rating,
-
             'review_count' => $reviewCount,
-
-            // Lượt bán thật
             'sold_count' => $soldCount,
 
             'url' => route(
