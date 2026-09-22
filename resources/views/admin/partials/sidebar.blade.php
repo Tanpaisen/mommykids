@@ -22,6 +22,7 @@
                 ['label' => 'Giai đoạn của bé', 'route' => 'admin.stages.index', 'can' => 'catalog.manage'],
                 ['label' => 'Danh mục & Thuộc tính', 'route' => 'admin.categories.index', 'can' => 'catalog.manage'],
                 ['label' => 'Sản phẩm', 'route' => 'admin.products.index', 'can' => 'products.manage'],
+                ['label' => 'Quản lý Kho', 'route' => 'admin.inventory.index', 'can' => 'products.manage'],
                 ['label' => 'Đánh giá sản phẩm', 'route' => 'admin.reviews.index', 'can' => 'products.manage'],
             ],
         ],

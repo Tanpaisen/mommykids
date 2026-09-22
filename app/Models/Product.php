@@ -30,6 +30,8 @@ class Product extends Model
         'name',
         'slug',
         'description',
+        'sku',
+        'code',
 
         // Nội dung chi tiết sản phẩm
         'origin',
@@ -46,7 +48,9 @@ class Product extends Model
         'price',
         'old_price',
         'discount_percent',
+        'cost_price',
         'stock',
+        'low_stock_alert',
 
         // Thông tin đóng gói dùng để tính phí vận chuyển GHN
         'weight_grams',
@@ -73,7 +77,9 @@ class Product extends Model
         'price' => 'integer',
         'old_price' => 'integer',
         'discount_percent' => 'integer',
+        'cost_price' => 'integer',
         'stock' => 'integer',
+        'low_stock_alert' => 'integer',
 
         // Thông tin đóng gói
         'weight_grams' => 'integer',
@@ -173,5 +179,13 @@ class Product extends Model
             'discount' => $this->discount_percent,
             'url' => route('product.show', $this->slug),
         ];
+    }
+
+    /**
+     * Lịch sử biến động kho (Inventory Logs)
+     */
+    public function stockMovements()
+    {
+        return $this->hasMany(\App\Models\StockMovement::class);
     }
 }
