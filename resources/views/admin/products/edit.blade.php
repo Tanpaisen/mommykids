@@ -316,6 +316,16 @@
                         @error('price')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
                     <div>
+                        <label class="block mb-2 text-sm font-semibold">Giá vốn / Giá nhập</label>
+                        <div class="relative">
+                            <input type="number" name="cost_price" min="0" value="{{ old('cost_price', $product->cost_price ?? 0) }}"
+                                   class="w-full border border-admin-border rounded-xl px-4 py-3 pr-12 outline-none focus:border-coral">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-ink-soft">đ</span>
+                        </div>
+                        <p class="mt-1.5 text-xs text-ink-soft">Dùng để tính Lãi/Lỗ chính xác.</p>
+                        @error('cost_price')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
                         <label class="block mb-2 text-sm font-semibold">Giá cũ</label>
                         <div class="relative">
                             <input type="number" name="old_price" min="0" value="{{ old('old_price', $product->old_price) }}"
@@ -334,10 +344,26 @@
                         @error('discount_percent')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label class="block mb-2 text-sm font-semibold">Tồn kho <span class="text-coral">*</span></label>
-                        <input type="number" name="stock" required min="0" value="{{ old('stock', $product->stock) }}"
+                        <label class="block mb-2 text-sm font-semibold">Tồn kho hiện tại</label>
+                        <input type="number" readonly value="{{ $product->stock }}"
+                               class="w-full border border-admin-border rounded-xl px-4 py-3 bg-gray-100 text-gray-500 outline-none cursor-not-allowed">
+                        <p class="mt-1.5 text-xs text-coral font-medium">
+                            * Để thay đổi tồn kho, vui lòng vào "Quản lý Kho" -> Nhập hàng / Điều chỉnh.
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold">Cảnh báo sắp hết hàng <span class="text-coral">*</span></label>
+                        <input type="number" name="low_stock_alert" required min="0" value="{{ old('low_stock_alert', $product->low_stock_alert ?? 5) }}"
                                class="w-full border border-admin-border rounded-xl px-4 py-3 outline-none focus:border-coral">
-                        @error('stock')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                        <p class="mt-1.5 text-xs text-ink-soft">Báo đỏ trên Dashboard nếu kho dưới mức này.</p>
+                        @error('low_stock_alert')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold">Cảnh báo sắp hết hàng <span class="text-coral">*</span></label>
+                        <input type="number" name="low_stock_alert" required min="0" value="{{ old('low_stock_alert', $product->low_stock_alert ?? 5) }}"
+                               class="w-full border border-admin-border rounded-xl px-4 py-3 outline-none focus:border-coral">
+                        <p class="mt-1.5 text-xs text-ink-soft">Báo đỏ trên Dashboard nếu kho dưới mức này.</p>
+                        @error('low_stock_alert')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
                     <div class="md:col-span-2">
                         <label class="block mb-2 text-sm font-semibold">Khối lượng sản phẩm <span class="text-coral">*</span></label>

@@ -76,7 +76,7 @@
 
                     {{-- 1. Hotline --}}
                     <div>
-                        <h2 class="font-bold text-base text-ink mb-3">1. Liên hệ Hotline <span class="text-coral">1800 6886</span> (miễn phí)</h2>
+                        <h2 class="font-bold text-base text-ink mb-3">1. Liên hệ Hotline <span class="text-coral">{{ $globalSetting->hotline ?? '1800 6886' }}</span> (miễn phí)</h2>
                         <ul class="space-y-2 pl-4 text-ink-soft">
                             <li><strong class="text-ink">Nhánh 1:</strong> Đặt hàng, tư vấn sản phẩm, chương trình khuyến mãi từ Đà Nẵng đến các tỉnh phía Bắc</li>
                             <li><strong class="text-ink">Nhánh 2:</strong> Đặt hàng, tư vấn sản phẩm, chương trình khuyến mãi từ Quảng Nam đến các tỉnh phía Nam</li>

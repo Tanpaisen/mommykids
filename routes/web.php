@@ -14,14 +14,21 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;
+use App\Http\Controllers\Auth\SocialLoginController; // <-- Đã thêm Controller Social Login
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PageController;
+
+// --- CONTROLLERS ADMIN ---
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Payment\ZaloPayController;
 use App\Http\Controllers\Payment\StripeController;
 use App\Http\Controllers\Client\VoucherController;
 use App\Http\Controllers\Payment\PayPalController;
 use App\Http\Controllers\Client\OrderController as ClientOrderController;
 use App\Http\Controllers\Admin\HandbookCategoryController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\HandbookController;
+use App\Http\Controllers\Client\AddressController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,6 +51,17 @@ Route::get('/danh-muc/{category:slug}', [CategoryController::class, 'show'])
 
 Route::get('/san-pham/{product:slug}', [ProductController::class, 'show'])
     ->name('product.show');
+
+/*
+|--------------------------------------------------------------------------
+| Facebook Social Login Routes
+|--------------------------------------------------------------------------
+*/
+Route::get('/auth/facebook', [SocialLoginController::class, 'redirectToFacebook'])
+    ->name('auth.facebook');
+
+Route::get('/auth/facebook/callback', [SocialLoginController::class, 'handleFacebookCallback'])
+    ->name('auth.facebook.callback');
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +111,14 @@ Route::get('/gio-hang', [CartController::class, 'index'])
 // ROUTE CẨM NANG PHÍA CLIENT
 Route::get('/cam-nang/{slug?}', [HandbookController::class, 'index'])->name('handbook.show');
 
+// ROUTE CÁC TRANG THÔNG TIN & CHÍNH SÁCH FOOTER
+Route::get('/gioi-thieu', [PageController::class, 'about'])->name('pages.about');
+Route::get('/he-thong-cua-hang', [PageController::class, 'stores'])->name('pages.stores');
+Route::get('/tuyen-dung', [PageController::class, 'recruitment'])->name('pages.recruitment');
+Route::get('/chinh-sach-doi-tra', [PageController::class, 'returnPolicy'])->name('pages.return');
+Route::get('/chinh-sach-van-chuyen', [PageController::class, 'shippingPolicy'])->name('pages.shipping');
+Route::get('/chinh-sach-bao-mat', [PageController::class, 'privacyPolicy'])->name('pages.privacy');
+
 Route::get('/thong-bao', [NotificationController::class, 'index'])
     ->middleware('auth')
     ->name('notifications.index');
@@ -108,6 +134,7 @@ Route::get('/khuyen-mai', [VoucherController::class, 'index'])
 */
 
 Route::middleware('auth')->group(function () {
+    
 
     Route::get('/ho-so', [ProfileController::class, 'edit'])
         ->name('profile.edit');
@@ -135,13 +162,37 @@ Route::middleware('auth')->group(function () {
         '/ho-so/don-hang/{order}/yeu-cau-huy',
         [ClientOrderController::class, 'requestCancellation']
     )->name('profile.orders.cancel-request');
+
+    Route::get(
+    '/ho-so/dia-chi',
+    [AddressController::class, 'index']
+)->name('profile.addresses.index');
+
+Route::post(
+    '/ho-so/dia-chi',
+    [AddressController::class, 'store']
+)->name('profile.addresses.store');
+
+Route::put(
+    '/ho-so/dia-chi/{address}',
+    [AddressController::class, 'update']
+)->name('profile.addresses.update');
+
+Route::delete(
+    '/ho-so/dia-chi/{address}',
+    [AddressController::class, 'destroy']
+)->name('profile.addresses.destroy');
+
+Route::patch(
+    '/ho-so/dia-chi/{address}/mac-dinh',
+    [AddressController::class, 'setDefault']
+)->name('profile.addresses.default');
 });
 
 /*
 |--------------------------------------------------------------------------
 | Checkout Routes
 |--------------------------------------------------------------------------
-| Tạm thời không yêu cầu đăng nhập để test thanh toán.
 */
 Route::get('/thanh-toan', [CheckoutController::class, 'index'])
     ->name('checkout.index');
@@ -265,6 +316,22 @@ Route::get('/payments/paypal/cancel', [PayPalController::class, 'cancel'])
 
 /*
 |--------------------------------------------------------------------------
+| Admin Customer Management & Menu Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    // Quản lý khách hàng
+    Route::get('/khach-hang', [CustomerController::class, 'index'])->name('customers.index');
+    Route::get('/khach-hang/{id}', [CustomerController::class, 'show'])->name('customers.show');
+    Route::post('/khach-hang/{id}/toggle-status', [CustomerController::class, 'toggleStatus'])->name('customers.toggleStatus');
+
+    // Quản lý Menu Admin (Gộp chung xử lý về SettingController)
+    Route::post('/menus/update-all', [SettingController::class, 'updateMenus'])->name('menus.updateAll');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Authentication Routes Includes
 |--------------------------------------------------------------------------
 */
@@ -276,5 +343,9 @@ require __DIR__ . '/auth/admin.php';
 | Admin Module Routes Include
 |--------------------------------------------------------------------------
 */
+
+require __DIR__ . '/chat.php';
+
+require __DIR__ . '/customer-care.php';
 
 require __DIR__ . '/admin.php';

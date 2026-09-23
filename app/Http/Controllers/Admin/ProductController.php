@@ -13,6 +13,8 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Illuminate\Support\Facades;
+use App\Services;
 
 class ProductController extends Controller
 {
@@ -170,9 +172,13 @@ class ProductController extends Controller
          * Phân trang.
          */
         $products = $query
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->select('products.*')
+            ->orderBy('categories.sort_order', 'asc')
+            ->orderBy('categories.name', 'asc')
+            ->orderBy('products.name', 'asc')
             ->paginate(10)
             ->withQueryString();
-
         /*
          * Danh mục cho filter.
          */
@@ -317,6 +323,12 @@ class ProductController extends Controller
 
         $validated['images'] = $gallery;
 
+        $validated['sku'] =$request->sku ?: strtoupper(\Str::random(8));
+
+        
+        $initialStock = (int) ($validated['stock'] ?? 0);
+        $validated['stock'] = 0;
+
         /*
          * Không đưa các field phụ vào Product::create().
          */
@@ -327,32 +339,43 @@ class ProductController extends Controller
             $validated['remove_gallery']
         );
 
-        /*
-         * Tạo sản phẩm.
-         */
-        $product = Product::create(
-            $validated
-        );
+        DB::transaction(function () use ($validated, $request, $initialStock) {
+            /*
+            * Tạo sản phẩm.
+            */
+            $product = Product::create(
+                $validated
+            );
 
-        /*
-         * Đồng bộ stage.
-         */
-        $product->stages()->sync(
-            $request->input(
-                'stage_ids',
-                []
-            )
-        );
+            /*
+            * Đồng bộ stage.
+            */
+            $product->stages()->sync(
+                $request->input(
+                    'stage_ids',
+                    []
+                )
+            );
 
-        /*
-         * Đồng bộ tag.
-         */
-        $product->tags()->sync(
-            $request->input(
-                'tag_ids',
-                []
-            )
-        );
+            /*
+            * Đồng bộ tag.
+            */
+            $product->tags()->sync(
+                $request->input(
+                    'tag_ids',
+                    []
+                )
+            );
+
+            if ($initialStock > 0) {
+                app(InventoryService::class)->import(
+                    $product, 
+                    $initialStock, 
+                    null, 
+                    'Nhập kho ban đầu khi tạo sản phẩm'
+                );
+            }
+        });
 
         return redirect()
             ->route('admin.products.index')
@@ -409,7 +432,7 @@ class ProductController extends Controller
         Request $request,
         Product $product
     ) {
-        $rules = $this->rules();
+        $rules = $this->rules($product->id);
 
         /*
          * Slug update sẽ tự kiểm tra riêng
@@ -601,6 +624,8 @@ class ProductController extends Controller
         $validated['images'] =
             $gallery;
 
+        $validated['sku'] =$request->sku ?: strtoupper(\Str::random(8));
+
         /*
          * Xóa field không thuộc products.
          */
@@ -608,7 +633,8 @@ class ProductController extends Controller
             $validated['stage_ids'],
             $validated['tag_ids'],
             $validated['remove_image'],
-            $validated['remove_gallery']
+            $validated['remove_gallery'],
+            $validated['stock']
         );
 
         /*
@@ -929,6 +955,31 @@ class ProductController extends Controller
             ],
 
             /*
+             * Các trường định danh và kho
+             */
+            'sku' => [
+                'nullable',
+                'string',
+                'max:50',
+                $productId ? 'unique:products,sku,' . $productId : 'unique:products,sku',
+            ],
+            'code' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+            'cost_price' => [
+                'nullable',
+                'integer',
+                'min:0',
+            ],
+            'low_stock_alert' => [
+                'required',
+                'integer',
+                'min:0',
+            ],
+
+            /*
              * Điểm nổi bật sản phẩm.
              * Lưu dưới dạng JSON trong products.highlights.
              */
@@ -1168,6 +1219,30 @@ class ProductController extends Controller
 
             'discount_percent.max' =>
                 'Phần trăm giảm không được lớn hơn 100.',
+
+            'sku.unique' => 
+                'Mã SKU này đã được sử dụng cho một sản phẩm khác.',
+            
+            'sku.max' => 
+                'Mã SKU không được vượt quá 50 ký tự.',
+            
+            'code.max' => 
+                'Mã Barcode không được vượt quá 50 ký tự.',
+        
+            'cost_price.integer' => 
+                'Giá vốn phải là số.',
+           
+            'cost_price.min' => 
+                'Giá vốn không được nhỏ hơn 0.',
+           
+            'low_stock_alert.required' => 
+                'Vui lòng nhập mức cảnh báo sắp hết hàng.',
+            
+            'low_stock_alert.integer' => 
+                'Mức cảnh báo sắp hết hàng phải là số nguyên.',
+            
+            'low_stock_alert.min' => 
+                'Mức cảnh báo sắp hết hàng không được nhỏ hơn 0.',
 
             'stock.required' =>
                 'Vui lòng nhập tồn kho.',
@@ -1548,5 +1623,95 @@ class ProductController extends Controller
             ->get();
 
         return response()->json($products);
+    }
+
+    /**
+     * Hiển thị form upload CSV
+     */
+    public function importForm()
+    {
+        return view('admin.products.import');
+    }
+
+    /**
+     * Xử lý file CSV upload lên
+     */
+    public function importStore(\Illuminate\Http\Request $request, \App\Services\InventoryService $inventory)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $path = $request->file('file')->getRealPath();
+        $handle = fopen($path, 'r');
+        
+        // Bỏ qua BOM của file Excel CSV UTF-8
+        $bom = "\xef\xbb\xbf";
+        if (fgets($handle, 4) !== $bom) {
+            rewind($handle);
+        }
+        
+        $header = fgetcsv($handle);
+        $success = 0;
+        $errors = [];
+        $rowNumber = 1;
+
+        // Tối ưu: Lấy sẵn danh sách Category ID hợp lệ
+        $validCategories = \App\Models\Category::pluck('id')->toArray();
+
+        while (($row = fgetcsv($handle)) !== false) {
+            $rowNumber++;
+            
+            // 9 cột: name, category_id, sku, code, price, cost_price, stock, weight_grams, low_stock_alert
+            [$name, $categoryId, $sku, $code, $price, $costPrice, $stock, $weight, $lowStock] = $row + array_fill(0, 9, null);
+
+            // Validate
+            if (empty($name) || empty($categoryId) || empty($price) || empty($sku)) {
+                $errors[] = "Dòng $rowNumber: Thiếu tên/danh mục/giá hoặc SKU.";
+                continue;
+            }
+            if (!in_array((int)$categoryId, $validCategories)) {
+                $errors[] = "Dòng $rowNumber: Danh mục ID $categoryId không tồn tại.";
+                continue;
+            }
+
+            try {
+                \Illuminate\Support\Facades\DB::beginTransaction();
+
+                // Tạo mới hoặc cập nhật sản phẩm
+                $product = \App\Models\Product::updateOrCreate(
+                    ['sku' => $sku], 
+                    [
+                        'name'            => $name,
+                        'slug'            => \App\Models\Product::where('sku', $sku)->value('slug') ?? \Str::slug($name) . '-' . time(),
+                        'category_id'     => $categoryId,
+                        'code'            => $code ?: null,
+                        'price'           => $price,
+                        'cost_price'      => $costPrice ?: 0,
+                        'weight_grams'    => $weight ?: 0,
+                        'low_stock_alert' => $lowStock ?: 5,
+                        'is_active'       => true,
+                    ]
+                );
+
+                // Nếu là sản phẩm mới và có số lượng tồn kho > 0 -> Sinh log nhập kho
+                if ($product->wasRecentlyCreated && (int)$stock > 0) {
+                    $inventory->import($product, (int)$stock, null, "Import hàng loạt CSV (Dòng $rowNumber)");
+                }
+
+                DB::commit();
+                $success++;
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $errors[] = "Dòng $rowNumber: Lỗi hệ thống - " . $e->getMessage();
+            }
+        }
+        fclose($handle);
+
+        return back()->with([
+            'success' => "Xử lý thành công $success sản phẩm.",
+            'errors'  => $errors,
+        ]);
     }
 }

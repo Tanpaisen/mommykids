@@ -33,6 +33,11 @@ class User extends Authenticatable
         'total_spent',
         'role',
         'status',
+        'is_active',
+        'last_seen_at',
+        'provider',      // <-- Thêm để lưu social network (facebook)
+        'provider_id',   // <-- Thêm để lưu Facebook User ID
+        'avatar',        // <-- Thêm để lưu link ảnh đại diện Facebook
     ];
 
     /**
@@ -52,6 +57,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_seen_at'      => 'datetime',
         'points'            => 'integer',
         'total_spent'       => 'decimal:2',
     ];
@@ -69,9 +75,54 @@ class User extends Authenticatable
         });
     }
 
+    public function addresses(): HasMany
+{
+    return $this->hasMany(UserAddress::class)
+        ->orderByDesc('is_default')
+        ->latest();
+}
+    /**
+     * Mối quan hệ với Đơn hàng
+     */
+    public function orders()
+    {
+        if (class_exists(\App\Models\Order::class)) {
+            return $this->hasMany(\App\Models\Order::class, 'user_id');
+        }
+        return $this->hasMany(self::class, 'id')->whereRaw('1 = 0');
+    }
+
+    /**
+     * Mối quan hệ với Giỏ hàng (Kiểm tra an toàn nếu chưa có Model)
+     */
+    public function cartItems()
+    {
+        if (class_exists(\App\Models\CartItem::class)) {
+            return $this->hasMany(\App\Models\CartItem::class, 'user_id');
+        }
+        return $this->hasMany(self::class, 'id')->whereRaw('1 = 0');
+    }
+
+    /**
+     * Mối quan hệ với Danh sách yêu thích (Kiểm tra an toàn nếu chưa có Model)
+     */
+    public function wishlist()
+    {
+        if (class_exists(\App\Models\Wishlist::class)) {
+            return $this->hasMany(\App\Models\Wishlist::class, 'user_id');
+        }
+        return $this->hasMany(self::class, 'id')->whereRaw('1 = 0');
+    }
+
+    /**
+     * Lịch sử tích điểm
+     */
     public function pointLogs()
     {
-        return $this->hasMany(PointLog::class)->latest();
+        if (class_exists(\App\Models\PointLog::class)) {
+            return $this->hasMany(\App\Models\PointLog::class, 'user_id')->latest();
+        }
+        return $this->hasMany(self::class, 'id')->whereRaw('1 = 0');
     }
 
     public function productReviews(): HasMany
@@ -130,8 +181,8 @@ class User extends Authenticatable
             // 3. Lưu toàn bộ thay đổi của User trong 1 query duy nhất
             $this->save();
 
-            // 4. Ghi log tích điểm
-            if ($pointsEarned > 0) {
+            // 4. Ghi log tích điểm (nếu bảng PointLog tồn tại)
+            if ($pointsEarned > 0 && class_exists(\App\Models\PointLog::class)) {
                 $this->pointLogs()->create([
                     'order_id'    => $orderId,
                     'points'      => $pointsEarned,

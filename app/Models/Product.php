@@ -42,6 +42,8 @@ class Product extends Model
         'name',
         'slug',
         'description',
+        'sku',
+        'code',
 
         // Nội dung chi tiết sản phẩm
         'origin',
@@ -60,7 +62,9 @@ class Product extends Model
         'price',
         'old_price',
         'discount_percent',
+        'cost_price',
         'stock',
+        'low_stock_alert',
 
         /*
          * Không đưa sold_count vào fillable.
@@ -98,8 +102,10 @@ class Product extends Model
         'price' => 'integer',
         'old_price' => 'integer',
         'discount_percent' => 'integer',
+        'cost_price' => 'integer',
         'stock' => 'integer',
         'sold_count' => 'integer',
+        'low_stock_alert' => 'integer',
 
         'weight_grams' => 'integer',
         'length_cm' => 'integer',
@@ -275,5 +281,13 @@ class Product extends Model
                 $this->slug
             ),
         ];
+    }
+
+    /**
+     * Lịch sử biến động kho (Inventory Logs)
+     */
+    public function stockMovements()
+    {
+        return $this->hasMany(\App\Models\StockMovement::class);
     }
 }

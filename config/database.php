@@ -62,8 +62,10 @@ return [
             'options' => extension_loaded('pdo_mysql')
                 ? array_filter([
                     PDO::MYSQL_ATTR_SSL_CA => base_path('cacert.pem'),
+                    PDO::ATTR_TIMEOUT => 15,
                 ])
                 : [],
+                PDO::ATTR_TIMEOUT => 15,
         ],
 
         'pgsql' => [
