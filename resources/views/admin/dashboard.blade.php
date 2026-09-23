@@ -8,15 +8,82 @@
 
     {{-- ============ STAT CARDS ============ --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {{-- ========== THẺ DOANH THU HÔM NAY ========== --}}
         <div class="card p-5">
-            <p class="text-xs text-ink-soft uppercase tracking-wide">Doanh thu hôm nay</p>
-            <p class="font-display font-bold text-2xl text-ink mt-1">{{ number_format($revenue['today']) }}đ</p>
-            <p class="text-xs text-ink-soft mt-1">QR: {{ number_format($revenue['today_qr']) }}đ · VNPay: {{ number_format($revenue['today_vnpay']) }}đ</p>
+            <p class="text-xs text-ink-soft uppercase tracking-wide">Doanh thu thực tế (Hôm nay)</p>
+            <p class="font-display font-bold text-2xl text-ink mt-1">
+                {{ number_format($revenue['today']) }}đ
+            </p>
+
+            <div class="mt-3 pt-3 border-t border-admin-border space-y-1">
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Tiền hàng (trước giảm):</span>
+                    <span class="font-medium text-ink">{{ number_format($revenue['today_subtotal']) }}đ</span>
+                </div>
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Đã khuyến mãi:</span>
+                    <span class="font-medium text-red-500">-{{ number_format($revenue['today_discount']) }}đ</span>
+                </div>
+                <div class="flex justify-between text-xs text-ink-soft mt-1 pt-1 border-t border-dashed">
+                    <span>Thực nhận:</span>
+                    <span class="font-bold text-green-600">{{ number_format($revenue['today']) }}đ</span>
+                </div>
+            </div>
         </div>
+
+        {{-- ========== THẺ DOANH THU TUẦN NÀY ========== --}}
         <div class="card p-5">
-            <p class="text-xs text-ink-soft uppercase tracking-wide">Doanh thu tuần này</p>
-            <p class="font-display font-bold text-2xl text-ink mt-1">{{ number_format($revenue['week']) }}đ</p>
-            <p class="text-xs text-ink-soft mt-1">QR: {{ number_format($revenue['week_qr']) }}đ · VNPay: {{ number_format($revenue['week_vnpay']) }}đ</p>
+            <p class="text-xs text-ink-soft uppercase tracking-wide">Doanh thu thực tế (Tuần này)</p>
+            <p class="font-display font-bold text-2xl text-ink mt-1">
+                {{ number_format($revenue['week']) }}đ
+            </p>
+
+            <div class="mt-3 pt-3 border-t border-admin-border space-y-1">
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Tiền hàng (trước giảm):</span>
+                    <span class="font-medium text-ink">{{ number_format($revenue['week_subtotal']) }}đ</span>
+                </div>
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Đã khuyến mãi:</span>
+                    <span class="font-medium text-red-500">-{{ number_format($revenue['week_discount']) }}đ</span>
+                </div>
+                <div class="flex justify-between text-xs text-ink-soft mt-1 pt-1 border-t border-dashed">
+                    <span>Thực nhận:</span>
+                    <span class="font-bold text-green-600">{{ number_format($revenue['week']) }}đ</span>
+                </div>
+            </div>
+        </div>
+        {{-- Card Doanh thu tháng này --}}
+        <div class="card p-5">
+            <p class="text-xs text-ink-soft uppercase tracking-wide">Doanh thu tháng này</p>
+            <p class="font-display font-bold text-2xl text-ink mt-1">{{ number_format($revenue['month']) }}đ</p>
+            
+            <div class="mt-3 pt-3 border-t border-admin-border space-y-1">
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Tiền hàng:</span>
+                    <span class="font-medium text-ink">{{ number_format($revenue['month_subtotal']) }}đ</span>
+                </div>
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Khuyến mãi:</span>
+                    <span class="font-medium text-coral">-{{ number_format($revenue['month_discount']) }}đ</span>
+                </div>
+            </div>
+        </div>
+        {{-- Card Tổng doanh thu toàn hệ thống --}}
+        <div class="card p-5 bg-gradient-to-br from-admin-bg to-white">
+            <p class="text-xs text-ink-soft uppercase tracking-wide">Tổng doanh thu (All-time)</p>
+            <p class="font-display font-bold text-2xl text-ink mt-1">{{ number_format($revenue['all_time']) }}đ</p>
+            
+            <div class="mt-3 pt-3 border-t border-admin-border space-y-1">
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Tiền hàng:</span>
+                    <span class="font-medium text-ink">{{ number_format($revenue['all_time_subtotal']) }}đ</span>
+                </div>
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Khuyến mãi:</span>
+                    <span class="font-medium text-coral">-{{ number_format($revenue['all_time_discount']) }}đ</span>
+                </div>
+            </div>
         </div>
         <div class="card p-5">
             <p class="text-xs text-ink-soft uppercase tracking-wide">Đơn hàng hôm nay</p>
@@ -35,19 +102,39 @@
     {{-- ============ REVENUE BY PAYMENT METHOD ============ --}}
     <div class="card p-5 lg:p-6">
         <h2 class="font-display font-bold text-ink mb-4">Doanh thu theo hình thức thanh toán (hôm nay)</h2>
-        @php
-            $qrPercent = $revenue['today'] > 0 ? round($revenue['today_qr'] / $revenue['today'] * 100) : 0;
-            $vnpayPercent = 100 - $qrPercent;
-        @endphp
-        <div class="space-y-3">
-            <div>
-                <div class="flex justify-between text-sm mb-1"><span class="font-medium text-ink">QR Chuyển khoản</span><span class="text-ink-soft">{{ number_format($revenue['today_qr']) }}đ ({{ $qrPercent }}%)</span></div>
-                <div class="h-2.5 rounded-pill bg-admin-bg overflow-hidden"><div class="h-full bg-coral rounded-pill" style="width: {{ $qrPercent }}%"></div></div>
-            </div>
-            <div>
-                <div class="flex justify-between text-sm mb-1"><span class="font-medium text-ink">VNPay</span><span class="text-ink-soft">{{ number_format($revenue['today_vnpay']) }}đ ({{ $vnpayPercent }}%)</span></div>
-                <div class="h-2.5 rounded-pill bg-admin-bg overflow-hidden"><div class="h-full bg-mint rounded-pill" style="width: {{ $vnpayPercent }}%"></div></div>
-            </div>
+        <div class="space-y-4">
+            @php
+                $methods = [
+                    ['name' => 'COD (Tiền mặt)', 'key' => 'today_cod', 'color' => 'bg-gray-500'],
+                    ['name' => 'QR Chuyển khoản', 'key' => 'today_qr', 'color' => 'bg-blue-500'],
+                    ['name' => 'VNPay', 'key' => 'today_vnpay', 'color' => 'bg-mint'],
+                    ['name' => 'ZaloPay', 'key' => 'today_zalopay', 'color' => 'bg-blue-400'],
+                    ['name' => 'Chuyển khoản (Bank)', 'key' => 'today_bank', 'color' => 'bg-indigo-500'],
+                    ['name' => 'PayPal', 'key' => 'today_paypal', 'color' => 'bg-yellow-500'],
+                    ['name' => 'Stripe', 'key' => 'today_stripe', 'color' => 'bg-purple-500'],
+                ];
+            @endphp
+
+            @foreach ($methods as $method)
+                @if (($revenue[$method['key']] ?? 0) > 0)
+                    @php
+                        $percent = $revenue['today'] > 0 ? round(($revenue[$method['key']] / $revenue['today']) * 100) : 0;
+                    @endphp
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="font-medium text-ink">{{ $method['name'] }}</span>
+                            <span class="text-ink-soft">{{ number_format($revenue[$method['key']]) }}đ ({{ $percent }}%)</span>
+                        </div>
+                        <div class="h-2.5 rounded-pill bg-admin-bg overflow-hidden">
+                            <div class="h-full {{ $method['color'] }} rounded-pill" style="width: {{ $percent }}%"></div>
+                        </div>
+                    </div>
+                @endif
+            @endforeach
+
+            @if ($revenue['today'] == 0)
+                <p class="text-sm text-ink-soft text-center py-4 italic">Chưa có doanh thu trong hôm nay.</p>
+            @endif
         </div>
     </div>
 
@@ -60,13 +147,18 @@
                 <span class="text-coral">⚠️</span> Sản phẩm sắp hết hàng
             </h2>
             @if ($lowStockProducts->isEmpty())
-                <p class="text-sm text-ink-soft py-6 text-center">Không có sản phẩm nào sắp hết hàng.</p>
+                <p class="text-sm text-ink-soft py-6 text-center">Tồn kho ổn định. Không có sản phẩm nào chạm mức cảnh báo.</p>
             @else
                 <ul class="divide-y divide-admin-border text-sm">
                     @foreach ($lowStockProducts as $p)
                         <li class="py-2.5 flex items-center justify-between">
-                            <span class="text-ink">{{ $p->name }}</span>
-                            <span class="text-coral font-semibold bg-coral-light px-2.5 py-0.5 rounded-pill text-xs">Còn {{ $p->stock }}</span>
+                            <span class="text-ink truncate pr-4">{{ $p->name }}</span>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <span class="text-ink-soft text-xs">Cảnh báo: {{ $p->low_stock_alert }}</span>
+                                <span class="text-coral font-semibold bg-coral-light px-2.5 py-0.5 rounded-pill text-xs">
+                                    Còn {{ $p->stock }}
+                                </span>
+                            </div>
                         </li>
                     @endforeach
                 </ul>
