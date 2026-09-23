@@ -30,7 +30,7 @@
 
     /*
      * Template chi tiết riêng theo từng nhóm sản phẩm.
-     * Sữa / Bỉm tã / Bình sữa / Ăn dặm / Vitamin / Đồ dùng mẹ & bé dùng partial riêng theo category.
+     * Sữa / Bỉm tã / Bình sữa / Ăn dặm / Vitamin / Đồ dùng mẹ & bé / Đồ sơ sinh dùng partial riêng theo category.
      */
     $isMilkProduct =
         ($product->category?->slug === 'sua-cho-be') ||
@@ -51,6 +51,9 @@
 
     $isMotherBabyProduct =
         $product->category?->slug === 'do-dung-me-be';
+
+    $isNewbornProduct =
+        $product->category?->slug === 'do-so-sinh';
 
     /*
      * Demo giao diện Aptamil theo đúng ảnh mẫu hiện tại.
@@ -296,21 +299,130 @@
                 {{ $product->name }}
             </h1>
 
+            @if (
+                ($reviewCount ?? 0) > 0 ||
+                (int) ($product->sold_count ?? 0) > 0
+            )
+                <div
+                    class="mt-2 mb-3
+                           flex flex-wrap
+                           items-center
+                           gap-x-2 gap-y-1
+                           text-sm
+                           text-ink-soft"
+                >
+                    {{-- RATING --}}
+                    @if (($reviewCount ?? 0) > 0)
+                        <span
+                            class="inline-flex
+                                   items-center
+                                   gap-1
+                                   font-semibold
+                                   text-coral"
+                        >
+                            <span aria-hidden="true">★</span>
+
+                            {{ number_format(
+                                $averageRating ?? 0,
+                                1,
+                                ',',
+                                '.'
+                            ) }}
+                        </span>
+
+                        <span aria-hidden="true">·</span>
+
+                        <a
+                            href="#product-reviews"
+                            class="hover:text-coral transition-colors"
+                        >
+                            {{ number_format(
+                                $reviewCount,
+                                0,
+                                ',',
+                                '.'
+                            ) }}
+                            đánh giá
+                        </a>
+                    @endif
+
+                    {{-- SOLD COUNT --}}
+                    @if ((int) ($product->sold_count ?? 0) > 0)
+                        @if (($reviewCount ?? 0) > 0)
+                            <span aria-hidden="true">·</span>
+                        @endif
+
+                        <span>
+                            Đã bán
+                            <strong class="text-ink">
+                                {{ number_format(
+                                    $product->sold_count,
+                                    0,
+                                    ',',
+                                    '.'
+                                ) }}
+                            </strong>
+                        </span>
+                    @endif
+                </div>
+            @endif
+
             <div class="product-prices">
-                <strong class="product-price">
-                    {{ number_format($product->price, 0, ',', '.') }}đ
-                </strong>
+                @if (
+                    $campaign
+                    && $campaignPrice < $campaignBasePrice
+                )
+                    <strong class="product-price">
+                        {{ number_format(
+                            $campaignPrice,
+                            0,
+                            ',',
+                            '.'
+                        ) }}đ
+                    </strong>
 
-                @if ($product->old_price && $product->old_price > $product->price)
                     <span class="product-old-price">
-                        {{ number_format($product->old_price, 0, ',', '.') }}đ
+                        {{ number_format(
+                            $campaignBasePrice,
+                            0,
+                            ',',
+                            '.'
+                        ) }}đ
                     </span>
-                @endif
 
-                @if ($product->discount_percent)
                     <span class="product-price-discount">
-                        -{{ $product->discount_percent }}%
+                        Khuyến mãi
+                        -{{ $campaignDiscountPercent }}%
                     </span>
+                @else
+                    <strong class="product-price">
+                        {{ number_format(
+                            $product->price,
+                            0,
+                            ',',
+                            '.'
+                        ) }}đ
+                    </strong>
+
+                    @if (
+                        $product->old_price
+                        && $product->old_price > $product->price
+                    )
+                        <span class="product-old-price">
+                            {{ number_format(
+                                $product->old_price,
+                                0,
+                                ',',
+                                '.'
+                            ) }}đ
+                        </span>
+                    @endif
+
+                    @if ($product->discount_percent)
+                        <span class="product-price-discount">
+                            -{{ $product->discount_percent }}%
+                        </span>
+                    @endif
                 @endif
             </div>
             <div class="product-info-row product-stock-row">
@@ -513,6 +625,24 @@
                                             {{ number_format($item['old_price'], 0, ',', '.') }}đ
                                         </span>
                                     @endif
+
+                                    @if ((int) ($item['sold_count'] ?? 0) > 0)
+                                        <small
+                                            class="block
+                                                   mt-1
+                                                   text-[11px]
+                                                   font-medium
+                                                   text-ink-soft"
+                                        >
+                                            Đã bán
+                                            {{ number_format(
+                                                $item['sold_count'],
+                                                0,
+                                                ',',
+                                                '.'
+                                            ) }}
+                                        </small>
+                                    @endif
                                 </div>
 
                                 <button
@@ -542,7 +672,7 @@
 
     {{-- =========================================================
         LONG CONTENT
-        Sữa / Bỉm tã / Bình sữa / Ăn dặm / Vitamin / Đồ dùng mẹ & bé dùng partial riêng.
+        Sữa / Bỉm tã / Bình sữa / Ăn dặm / Vitamin / Đồ dùng mẹ & bé / Đồ sơ sinh dùng partial riêng.
         Các danh mục khác tạm giữ giao diện chung, sẽ tách tiếp sau.
     ========================================================== --}}
     @if ($isMilkProduct)
@@ -596,6 +726,16 @@
 
 @elseif ($isMotherBabyProduct)
     @include('client.product-details.mother-baby', [
+        'brandTag' => $brandTag,
+        'attributeTags' => $attributeTags,
+        'usageSteps' => $usageSteps,
+        'storageItems' => $storageItems,
+        'warningItems' => $warningItems,
+        'ageText' => $ageText,
+    ])
+
+@elseif ($isNewbornProduct)
+    @include('client.product-details.newborn', [
         'brandTag' => $brandTag,
         'attributeTags' => $attributeTags,
         'usageSteps' => $usageSteps,
@@ -800,6 +940,24 @@
                                         <span>
                                             {{ number_format($item['old_price'], 0, ',', '.') }}đ
                                         </span>
+                                    @endif
+
+                                    @if ((int) ($item['sold_count'] ?? 0) > 0)
+                                        <small
+                                            class="block
+                                                   mt-1
+                                                   text-[11px]
+                                                   font-medium
+                                                   text-ink-soft"
+                                        >
+                                            Đã bán
+                                            {{ number_format(
+                                                $item['sold_count'],
+                                                0,
+                                                ',',
+                                                '.'
+                                            ) }}
+                                        </small>
                                     @endif
                                 </div>
 

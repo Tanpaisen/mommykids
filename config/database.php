@@ -58,10 +58,14 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => base_path('cacert.pem'),
+
+            'options' => extension_loaded('pdo_mysql')
+                ? array_filter([
+                    PDO::MYSQL_ATTR_SSL_CA => base_path('cacert.pem'),
+                    PDO::ATTR_TIMEOUT => 15,
+                ])
+                : [],
                 PDO::ATTR_TIMEOUT => 15,
-            ]) : [],
         ],
 
         'pgsql' => [
@@ -115,8 +119,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | Redis is an open source, fast, and advanced key-value store that also
-    | provides a richer body of commands than a typical key-value system
-    | such as APC or Memcached. Laravel makes it easy to dig right in.
+    | provides a richer body of commands than such as APC or Memcached.
+    | Laravel makes it easy to dig right in.
     |
     */
 
@@ -126,7 +130,10 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env(
+                'REDIS_PREFIX',
+                Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'
+            ),
         ],
 
         'default' => [

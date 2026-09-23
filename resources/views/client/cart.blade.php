@@ -101,6 +101,28 @@
                     $imageUrl = $product
                         ? $resolveImage($product->image)
                         : null;
+
+                    /*
+                     * Tính phần trăm giảm của Campaign từ giá gốc
+                     * và giá hiệu lực hiện tại trong CartItem.
+                     */
+                    $campaignPercent = 0;
+
+                    if (
+                        isset($item->base_price) &&
+                        (int) $item->base_price > 0 &&
+                        (int) $item->price < (int) $item->base_price
+                    ) {
+                        $campaignPercent = (int) round(
+                            (
+                                (
+                                    (int) $item->base_price
+                                    - (int) $item->price
+                                )
+                                / (int) $item->base_price
+                            ) * 100
+                        );
+                    }
                 @endphp
 
 
@@ -185,18 +207,44 @@
                                 {{ $product->name }}
                             </a>
 
-                            <p
-                                class="price-tag
-                                       text-sm
-                                       mt-1"
-                            >
-                                {{ number_format(
-                                    $product->price,
-                                    0,
-                                    ',',
-                                    '.'
-                                ) }}đ
-                            </p>
+                            <div class="mt-1">
+                                <p class="price-tag text-sm">
+                                    {{ number_format(
+                                        (int) $item->price,
+                                        0,
+                                        ',',
+                                        '.'
+                                    ) }}đ
+                                </p>
+
+                                @if (
+                                    isset($item->base_price)
+                                    && (int) $item->base_price > (int) $item->price
+                                )
+                                    <div class="mt-0.5 flex items-center gap-2 text-xs">
+                                        <span class="text-ink-soft line-through">
+                                            {{ number_format(
+                                                (int) $item->base_price,
+                                                0,
+                                                ',',
+                                                '.'
+                                            ) }}đ
+                                        </span>
+
+                                        <span
+                                            class="inline-flex items-center
+                                                   rounded-full
+                                                   bg-coral-light
+                                                   px-2 py-0.5
+                                                   text-[11px]
+                                                   font-semibold
+                                                   text-coral"
+                                        >
+                                            Khuyến mãi -{{ $campaignPercent }}%
+                                        </span>
+                                    </div>
+                                @endif
+                            </div>
 
                         </div>
 
@@ -308,16 +356,40 @@
         </div>
 
 
-        {{-- CHECKOUT - TẠM THỜI KHÔNG YÊU CẦU ĐĂNG NHẬP --}}
-<a
-    href="{{ route('checkout.index') }}"
-    class="btn-primary
-           w-full
-           mt-4
-           text-center"
->
-    Tiến hành thanh toán
-</a>
+        {{-- CHECKOUT --}}
+        @auth
+
+            <a
+                href="{{ route('checkout.index') }}"
+                class="btn-primary
+                       w-full
+                       mt-4
+                       text-center"
+            >
+                Tiến hành thanh toán
+            </a>
+
+        @else
+
+            <button
+                type="button"
+                onclick="
+                    if (typeof window.mkOpenLoginModal === 'function') {
+                        window.mkOpenLoginModal();
+                    } else if (typeof window.openLoginModal === 'function') {
+                        window.openLoginModal();
+                    } else {
+                        window.location.href='{{ route('login') }}';
+                    }
+                "
+                class="btn-primary
+                       w-full
+                       mt-4"
+            >
+                Đăng nhập để thanh toán
+            </button>
+
+        @endauth
 
     @endif
 
