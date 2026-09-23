@@ -56,5 +56,6 @@
     @include('components.auth-modal')
 
     @stack('scripts')
+    @include('client.partials.chat-widget')
 </body>
 </html>

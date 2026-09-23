@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
+
 class OrderItem extends Model
 {
     use HasUlids;
@@ -17,6 +18,17 @@ class OrderItem extends Model
         'price',
         'quantity',
         'subtotal',
+
+        'campaign_id',
+        'campaign_type',
+        'campaign_discount_amount',
+    ];
+
+    protected $casts = [
+        'price' => 'integer',
+        'quantity' => 'integer',
+        'subtotal' => 'integer',
+        'campaign_discount_amount' => 'integer',
     ];
 
     public function order(): BelongsTo
@@ -27,5 +39,10 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function campaign(): BelongsTo
+    {
+        return $this->belongsTo(Campaign::class);
     }
 }

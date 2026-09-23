@@ -28,6 +28,7 @@ use App\Http\Controllers\Client\OrderController as ClientOrderController;
 use App\Http\Controllers\Admin\HandbookCategoryController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\HandbookController;
+use App\Http\Controllers\Client\AddressController;
 
 /*
 |--------------------------------------------------------------------------
@@ -133,6 +134,7 @@ Route::get('/khuyen-mai', [VoucherController::class, 'index'])
 */
 
 Route::middleware('auth')->group(function () {
+    
 
     Route::get('/ho-so', [ProfileController::class, 'edit'])
         ->name('profile.edit');
@@ -160,6 +162,31 @@ Route::middleware('auth')->group(function () {
         '/ho-so/don-hang/{order}/yeu-cau-huy',
         [ClientOrderController::class, 'requestCancellation']
     )->name('profile.orders.cancel-request');
+
+    Route::get(
+    '/ho-so/dia-chi',
+    [AddressController::class, 'index']
+)->name('profile.addresses.index');
+
+Route::post(
+    '/ho-so/dia-chi',
+    [AddressController::class, 'store']
+)->name('profile.addresses.store');
+
+Route::put(
+    '/ho-so/dia-chi/{address}',
+    [AddressController::class, 'update']
+)->name('profile.addresses.update');
+
+Route::delete(
+    '/ho-so/dia-chi/{address}',
+    [AddressController::class, 'destroy']
+)->name('profile.addresses.destroy');
+
+Route::patch(
+    '/ho-so/dia-chi/{address}/mac-dinh',
+    [AddressController::class, 'setDefault']
+)->name('profile.addresses.default');
 });
 
 /*
@@ -316,5 +343,9 @@ require __DIR__ . '/auth/admin.php';
 | Admin Module Routes Include
 |--------------------------------------------------------------------------
 */
+
+require __DIR__ . '/chat.php';
+
+require __DIR__ . '/customer-care.php';
 
 require __DIR__ . '/admin.php';

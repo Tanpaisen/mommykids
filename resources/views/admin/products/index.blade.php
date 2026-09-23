@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('page_title', 'Sản phẩm')
-@section('page_subtitle', 'Quản lý sản phẩm, hình ảnh, giá và tồn kho')
+@section('page_subtitle', 'Quản lý sản phẩm, giá, tồn kho, lượt bán và đánh giá')
 
 
 @section('content')
@@ -86,6 +86,15 @@
                     Thêm sản phẩm
                 </span>
             </a>
+
+            {{-- IMPORT SẢN PHẨM --}}
+            <a href="{{ route('admin.products.import.form') }}" 
+                class="px-4 py-2.5 rounded-xl border border-admin-border bg-white text-sm text-ink hover:bg-admin-bg transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Import CSV
+                </a>
         @endcan
     </div>
 
@@ -103,7 +112,7 @@
         action="{{ route('admin.products.index') }}"
         class="grid grid-cols-1
                md:grid-cols-2
-               xl:grid-cols-[2fr_1fr_1fr_auto_auto]
+               xl:grid-cols-[2fr_1fr_1fr_1fr_auto_auto]
                gap-3"
     >
 
@@ -191,6 +200,61 @@
         </select>
 
 
+        {{-- SORT --}}
+        <select
+            name="sort"
+            class="border border-admin-border
+                   rounded-xl px-4 py-3
+                   bg-white
+                   outline-none
+                   focus:border-coral
+                   focus:ring-2
+                   focus:ring-coral/10"
+        >
+            <option
+                value=""
+                @selected(!request()->filled('sort'))
+            >
+                Sắp xếp mặc định
+            </option>
+
+            <option
+                value="newest"
+                @selected(request('sort') === 'newest')
+            >
+                Mới nhất
+            </option>
+
+            <option
+                value="best_selling"
+                @selected(request('sort') === 'best_selling')
+            >
+                Bán chạy nhất
+            </option>
+
+            <option
+                value="rating_desc"
+                @selected(request('sort') === 'rating_desc')
+            >
+                Đánh giá cao nhất
+            </option>
+
+            <option
+                value="price_asc"
+                @selected(request('sort') === 'price_asc')
+            >
+                Giá tăng dần
+            </option>
+
+            <option
+                value="price_desc"
+                @selected(request('sort') === 'price_desc')
+            >
+                Giá giảm dần
+            </option>
+        </select>
+
+
         {{-- LOW STOCK --}}
         <label
             class="flex items-center justify-center gap-2
@@ -236,6 +300,7 @@
         request()->filled('search')
         || request()->filled('category_id')
         || request()->filled('status')
+        || request()->filled('sort')
         || request()->boolean('low_stock')
     )
 
@@ -266,7 +331,7 @@
 
     <div class="overflow-x-auto">
 
-        <table class="w-full min-w-[1100px] text-sm">
+        <table class="w-full min-w-[1420px] text-sm">
 
             <thead
                 class="bg-admin-bg
@@ -293,6 +358,14 @@
 
                     <th class="text-center px-5 py-4">
                         Tồn kho
+                    </th>
+
+                    <th class="text-center px-5 py-4">
+                        Đã bán
+                    </th>
+
+                    <th class="text-left px-5 py-4 min-w-[180px]">
+                        Đánh giá
                     </th>
 
                     <th class="text-left px-5 py-4">
@@ -482,6 +555,139 @@
                         </td>
 
 
+                        {{-- SOLD COUNT --}}
+                        <td class="px-5 py-4 text-center">
+
+                            <span
+                                class="inline-flex
+                                       min-w-12 h-9
+                                       items-center justify-center
+                                       gap-1
+                                       rounded-xl px-2.5
+                                       bg-coral/10
+                                       text-coral
+                                       font-semibold"
+                                title="Lượt bán từ các đơn đã giao thành công"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    class="w-3.5 h-3.5"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M3 6h2l2 9h10l2-6H6"
+                                    />
+                                    <circle cx="9" cy="19" r="1" />
+                                    <circle cx="17" cy="19" r="1" />
+                                </svg>
+
+                                {{ number_format(
+                                    (int) ($product->sold_count ?? 0),
+                                    0,
+                                    ',',
+                                    '.'
+                                ) }}
+                            </span>
+
+                        </td>
+
+
+                        {{-- REVIEW STATS --}}
+                        <td class="px-5 py-4">
+
+                            @php
+                                $adminReviewCount =
+                                    (int) ($product->reviews_count ?? 0);
+
+                                $adminRating = round(
+                                    (float) (
+                                        $product->reviews_avg_rating ?? 0
+                                    ),
+                                    1
+                                );
+
+                                $adminFilledStars =
+                                    (int) round($adminRating);
+                            @endphp
+
+                            @if ($adminReviewCount > 0)
+
+                                <div
+                                    class="flex items-center gap-1.5"
+                                    title="{{ number_format(
+                                        $adminRating,
+                                        1,
+                                        ',',
+                                        '.'
+                                    ) }}/5 từ {{ $adminReviewCount }} đánh giá"
+                                >
+
+                                    <span
+                                        class="inline-flex
+                                               items-center
+                                               gap-[1px]
+                                               whitespace-nowrap"
+                                    >
+                                        @for ($star = 1; $star <= 5; $star++)
+
+                                            <span
+                                                class="text-xs leading-none
+                                                       {{
+                                                           $star <= $adminFilledStars
+                                                               ? 'text-amber-400'
+                                                               : 'text-gray-300'
+                                                       }}"
+                                            >
+                                                ★
+                                            </span>
+
+                                        @endfor
+                                    </span>
+
+                                    <span
+                                        class="text-xs
+                                               font-semibold
+                                               text-ink"
+                                    >
+                                        {{ number_format(
+                                            $adminRating,
+                                            1,
+                                            ',',
+                                            '.'
+                                        ) }}
+                                    </span>
+
+                                    <span class="text-xs text-ink-soft">
+                                        ({{ $adminReviewCount }})
+                                    </span>
+
+                                </div>
+
+                            @else
+
+                                <span
+                                    class="inline-flex
+                                           items-center
+                                           rounded-full
+                                           bg-gray-50
+                                           px-2.5 py-1
+                                           text-xs
+                                           text-ink-soft"
+                                >
+                                    Chưa có đánh giá
+                                </span>
+
+                            @endif
+
+                        </td>
+
+
                         {{-- STATUS --}}
                         <td class="px-5 py-4">
 
@@ -615,7 +821,7 @@
                     <tr>
 
                         <td
-                            colspan="7"
+                            colspan="9"
                             class="py-20 text-center"
                         >
 
