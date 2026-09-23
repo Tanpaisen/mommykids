@@ -60,22 +60,113 @@ class GHNService
      * @param int $weight gram
      * @param int $insuranceValue giá trị bảo hiểm (đồng)
      */
-    public function calculateFee(
-        int    $toDistrictId,
-        string $toWardCode,
-        int    $weight = 500,
-        int    $insuranceValue = 0
-    ): array {
-        return $this->post('/shiip/public-api/v2/shipping-order/fee', [
-            'service_type_id' => 2, // 2 = GHN standard (Giao hàng nhanh)
-            'from_district_id'=> (int) config('ghn.from_district_id'),
-            'to_district_id'  => $toDistrictId,
-            'to_ward_code'    => $toWardCode,
-            'weight'          => $weight,
-            'insurance_value' => $insuranceValue,
-        ]);
+    public function getAvailableServices(int $toDistrictId): array
+{
+    return $this->post(
+        '/shiip/public-api/v2/shipping-order/available-services',
+        [
+            'shop_id' => $this->shopId,
+
+            'from_district' =>
+                (int) config('ghn.from_district_id'),
+
+            'to_district' =>
+                $toDistrictId,
+        ]
+    );
+}
+
+private function resolveServiceTypeId(
+    int $toDistrictId,
+    int $weight
+): int {
+    $services = $this->getAvailableServices(
+        $toDistrictId
+    );
+
+    if (empty($services)) {
+        throw new \RuntimeException(
+            'GHN không có dịch vụ phù hợp cho tuyến giao hàng này.'
+        );
     }
 
+    // Hàng nhẹ / hàng nặng
+    $preferredType =
+        $weight >= 20000 ? 5 : 2;
+
+    foreach ($services as $service) {
+        if (
+            (int) ($service['service_type_id'] ?? 0)
+            === $preferredType
+        ) {
+            return $preferredType;
+        }
+    }
+
+    // Nếu loại ưu tiên không có,
+    // dùng service_type đầu tiên GHN trả về.
+    foreach ($services as $service) {
+        $serviceTypeId =
+            (int) ($service['service_type_id'] ?? 0);
+
+        if ($serviceTypeId > 0) {
+            return $serviceTypeId;
+        }
+    }
+
+    throw new \RuntimeException(
+        'Không xác định được dịch vụ GHN.'
+    );
+}
+
+public function calculateFee(
+    int $toDistrictId,
+    string $toWardCode,
+    int $weight,
+    int $insuranceValue = 0
+): array {
+    if ($weight <= 0) {
+        throw new \InvalidArgumentException(
+            'Khối lượng đơn hàng phải lớn hơn 0 gram.'
+        );
+    }
+
+    $serviceTypeId =
+        $this->resolveServiceTypeId(
+            $toDistrictId,
+            $weight
+        );
+
+    return $this->post(
+        '/shiip/public-api/v2/shipping-order/fee',
+        [
+            'service_type_id' =>
+                $serviceTypeId,
+
+            'from_district_id' =>
+                (int) config(
+                    'ghn.from_district_id'
+                ),
+
+            'from_ward_code' =>
+                (string) config(
+                    'ghn.from_ward_code'
+                ),
+
+            'to_district_id' =>
+                $toDistrictId,
+
+            'to_ward_code' =>
+                $toWardCode,
+
+            'weight' =>
+                $weight,
+
+            'insurance_value' =>
+                max(0, $insuranceValue),
+        ]
+    );
+}
     // ─── Tạo vận đơn ─────────────────────────────────────────────────────────
 
     /**
@@ -84,20 +175,59 @@ class GHNService
      * @param array $payload theo cấu trúc GHN API
      */
     public function createOrder(array $payload): array
-    {
-        $default = [
-            'service_type_id'   => 2,
-            'from_district_id'  => (int) config('ghn.from_district_id'),
-            'from_ward_code'    => (string) config('ghn.from_ward_code'), // <-- BỔ SUNG DÒNG NÀY
-            'payment_type_id'   => 2,   // 1=người gửi trả, 2=người nhận trả (COD)
-            'required_note'     => 'KHONGCHOXEMHANG',
-        ];
+{
+    $toDistrictId =
+        (int) ($payload['to_district_id'] ?? 0);
 
-        return $this->post(
-            '/shiip/public-api/v2/shipping-order/create',
-            array_merge($default, $payload)
+    $weight =
+        (int) ($payload['weight'] ?? 0);
+
+    if ($toDistrictId <= 0) {
+        throw new \InvalidArgumentException(
+            'Thiếu quận/huyện nhận hàng.'
         );
     }
+
+    if ($weight <= 0) {
+        throw new \InvalidArgumentException(
+            'Thiếu khối lượng đơn hàng.'
+        );
+    }
+
+    $serviceTypeId =
+        $this->resolveServiceTypeId(
+            $toDistrictId,
+            $weight
+        );
+
+    $default = [
+        'service_type_id' =>
+            $serviceTypeId,
+
+        'from_district_id' =>
+            (int) config(
+                'ghn.from_district_id'
+            ),
+
+        'from_ward_code' =>
+            (string) config(
+                'ghn.from_ward_code'
+            ),
+
+        'payment_type_id' => 2,
+
+        'required_note' =>
+            'KHONGCHOXEMHANG',
+    ];
+
+    return $this->post(
+        '/shiip/public-api/v2/shipping-order/create',
+        array_merge(
+            $default,
+            $payload
+        )
+    );
+}
 
     // ─── Tra cứu trạng thái ──────────────────────────────────────────────────
 
