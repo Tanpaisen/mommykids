@@ -1,6 +1,7 @@
 @php
     use Illuminate\Support\Facades\Schema;
     use Illuminate\Support\Facades\Route;
+    use Illuminate\Support\Facades\Cache;
 
     // ==============================================================
     // 1. MẢNG MENU TĨNH (CỐT LÕI - GỘP ĐỦ 100% TẤT CẢ CÁC TÍNH NĂNG)
@@ -121,35 +122,39 @@
     ];
 
     // ==============================================================
-    // 2. LẤY MENU ĐỘNG TỪ DATABASE (CÓ FALLBACK CHỐNG LỖI)
+    // 2. LẤY MENU ĐỘNG TỪ DATABASE (ĐÃ CACHE TỐI ƯU HIỆU NĂNG)
     // ==============================================================
     $dynamicMenu = [];
     try {
-        if (Schema::hasTable('admin_menus')) {
-            $dbMenus = \App\Models\AdminMenu::where('is_active', true)->orderBy('order')->get()->groupBy('group_name');
-            
-            foreach ($dbMenus as $groupName => $items) {
-                $groupPermissions = $items->pluck('permission')->filter()->unique()->toArray();
+        $dynamicMenu = Cache::rememberForever('sidebar_dynamic_menus', function () {
+            $menus = [];
+            if (Schema::hasTable('admin_menus')) {
+                $dbMenus = \App\Models\AdminMenu::where('is_active', true)->orderBy('order')->get()->groupBy('group_name');
                 
-                $dynamicItems = [];
-                foreach ($items as $item) {
-                    $dynamicItems[] = [
-                        'label' => $item->title,
-                        'route' => $item->route_name,
-                        'can'   => $item->permission, 
+                foreach ($dbMenus as $groupName => $items) {
+                    $groupPermissions = $items->pluck('permission')->filter()->unique()->toArray();
+                    
+                    $dynamicItems = [];
+                    foreach ($items as $item) {
+                        $dynamicItems[] = [
+                            'label' => $item->title,
+                            'route' => $item->route_name,
+                            'can'   => $item->permission, 
+                        ];
+                    }
+
+                    $menus[] = [
+                        'label' => $groupName,
+                        'icon'  => $items->first()->icon ?? '📁',
+                        'can'   => empty($groupPermissions) ? null : $groupPermissions,
+                        'items' => $dynamicItems,
                     ];
                 }
-
-                $dynamicMenu[] = [
-                    'label' => $groupName,
-                    'icon'  => $items->first()->icon ?? '📁',
-                    'can'   => empty($groupPermissions) ? null : $groupPermissions,
-                    'items' => $dynamicItems,
-                ];
             }
-        }
+            return $menus;
+        });
     } catch (\Exception $e) {
-        // Fallback im lặng nếu sập Database hoặc chưa có bảng
+        // Fallback im lặng nếu sập Database
     }
 
     // ==============================================================
@@ -199,23 +204,15 @@
             @if(empty($group['can']) || auth()->user()->hasAnyPermission((array) $group['can']) || auth()->user()->hasRole('Super Admin'))
             
             @php
+                // Đã gộp logic check active gọn gàng, ưu tiên biến 'active' trước, nếu không có mới dùng 'route'
                 $isGroupActive = collect($group['items'])->contains(function($item) {
                     if ($item['route'] === 'admin.dashboard') {
                         return request()->routeIs('admin.dashboard') || request()->path() === 'admin';
                     }
-                    return Route::has($item['route']) && request()->routeIs($item['route'] . '*');
+                    $activePattern = $item['active'] ?? $item['route'] . '*';
+                    return request()->routeIs($activePattern);
                 });
             @endphp
-
-                @php
-                    $isGroupActive = collect($group['items'])
-                        ->contains(function ($item) {
-                            $activePattern = $item['active']
-                                ?? $item['route'];
-
-                            return request()->routeIs($activePattern);
-                        });
-                @endphp
 
                 <div
                     class="px-3 py-1"
@@ -253,7 +250,8 @@
                                 if ($item['route'] === 'admin.dashboard') {
                                     $isActive = request()->routeIs('admin.dashboard') || request()->path() === 'admin';
                                 } else {
-                                    $isActive = Route::has($item['route']) && request()->routeIs($item['route'] . '*');
+                                    $activePattern = $item['active'] ?? $item['route'] . '*';
+                                    $isActive = request()->routeIs($activePattern);
                                 }
                             @endphp
                             <li>
