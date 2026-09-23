@@ -62,6 +62,17 @@
                 $pointsDiscount = (int) ($order->points_discount ?? 0);
                 $voucherDiscount = max(0, (int) $order->discount - $pointsDiscount);
 
+                /*
+                 * campaign_discount_amount đã là tổng mức giảm Campaign
+                 * của từng OrderItem (đã nhân số lượng).
+                 *
+                 * Đây chỉ là thông tin hiển thị vì $order->subtotal
+                 * đã là subtotal SAU Campaign. Không trừ thêm lần nữa.
+                 */
+                $campaignDiscount = (int) $order->items->sum(
+                    fn ($item) => (int) ($item->campaign_discount_amount ?? 0)
+                );
+
                 $paymentLabels = [
                     'cod' => 'COD',
                     'qr' => 'Chuyển khoản',
@@ -77,6 +88,22 @@
                 <span class="text-gray-500">Sản phẩm</span>
                 <span>{{ number_format($order->subtotal, 0, ',', '.') }}đ</span>
             </div>
+
+            @if($campaignDiscount > 0)
+                <div class="rounded-lg border border-pink-100 bg-pink-50 px-3 py-2">
+                    <div class="flex justify-between gap-3 text-sm">
+                        <span class="text-pink-700 font-medium">
+                            🏷 Tiết kiệm từ Campaign
+                        </span>
+                        <span class="text-pink-700 font-bold">
+                            {{ number_format($campaignDiscount, 0, ',', '.') }}đ
+                        </span>
+                    </div>
+                    <div class="text-[11px] text-pink-500 mt-1">
+                        Khoản giảm này đã được tính trực tiếp vào đơn giá sản phẩm.
+                    </div>
+                </div>
+            @endif
 
             <div class="flex justify-between text-sm">
                 <span class="text-gray-500">Phí ship</span>
@@ -290,16 +317,124 @@
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     @forelse($order->items as $item)
+                        @php
+                            $itemQuantity = max(1, (int) $item->quantity);
+                            $campaignLineDiscount = max(
+                                0,
+                                (int) ($item->campaign_discount_amount ?? 0)
+                            );
+                            $hasCampaign = !empty($item->campaign_id)
+                                && $campaignLineDiscount > 0;
+
+                            $unitCampaignDiscount = $hasCampaign
+                                ? (int) round(
+                                    $campaignLineDiscount / $itemQuantity
+                                )
+                                : 0;
+
+                            $baseUnitPrice = (int) $item->price
+                                + $unitCampaignDiscount;
+
+                            $campaignPercent = (
+                                $hasCampaign
+                                && $baseUnitPrice > 0
+                            )
+                                ? (int) round(
+                                    $unitCampaignDiscount
+                                    * 100
+                                    / $baseUnitPrice
+                                )
+                                : 0;
+                        @endphp
+
                         <tr>
                             <td class="py-3">
-                                <div class="font-medium">{{ $item->product_name }}</div>
+                                <div class="font-medium">
+                                    {{ $item->product_name }}
+                                </div>
+
                                 @if($item->product_sku)
-                                    <div class="text-gray-400 text-xs">SKU: {{ $item->product_sku }}</div>
+                                    <div class="text-gray-400 text-xs">
+                                        SKU: {{ $item->product_sku }}
+                                    </div>
+                                @endif
+
+                                @if($hasCampaign)
+                                    <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full bg-pink-50 text-pink-700 text-[11px] font-semibold border border-pink-100">
+                                            🏷 Campaign #{{ $item->campaign_id }}
+                                            @if($campaignPercent > 0)
+                                                · -{{ $campaignPercent }}%
+                                            @endif
+                                        </span>
+
+                                        @if($item->campaign_type)
+                                            <span class="text-[11px] text-gray-400">
+                                                {{ $item->campaign_type }}
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    <div class="text-[11px] text-green-600 mt-1">
+                                        Tiết kiệm:
+                                        {{ number_format(
+                                            $campaignLineDiscount,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}đ
+                                    </div>
                                 @endif
                             </td>
-                            <td class="py-3 text-right">{{ number_format($item->price) }}đ</td>
-                            <td class="py-3 text-right">{{ $item->quantity }}</td>
-                            <td class="py-3 text-right font-semibold">{{ number_format($item->subtotal) }}đ</td>
+
+                            <td class="py-3 text-right">
+                                <div class="font-medium">
+                                    {{ number_format(
+                                        $item->price,
+                                        0,
+                                        ',',
+                                        '.'
+                                    ) }}đ
+                                </div>
+
+                                @if($hasCampaign)
+                                    <div class="text-xs text-gray-400 line-through mt-1">
+                                        {{ number_format(
+                                            $baseUnitPrice,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}đ
+                                    </div>
+                                @endif
+                            </td>
+
+                            <td class="py-3 text-right">
+                                {{ $item->quantity }}
+                            </td>
+
+                            <td class="py-3 text-right font-semibold">
+                                <div>
+                                    {{ number_format(
+                                        $item->subtotal,
+                                        0,
+                                        ',',
+                                        '.'
+                                    ) }}đ
+                                </div>
+
+                                @if($hasCampaign)
+                                    <div class="text-xs text-gray-400 line-through font-normal mt-1">
+                                        {{ number_format(
+                                            (int) $item->subtotal
+                                                + $campaignLineDiscount,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}đ
+                                    </div>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>

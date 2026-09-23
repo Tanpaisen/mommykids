@@ -14,6 +14,12 @@ class Product extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cache
+    |--------------------------------------------------------------------------
+    */
+
     protected static function booted(): void
     {
         $clearCache = function (Product $product) {
@@ -25,11 +31,19 @@ class Product extends Model
         static::deleted($clearCache);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Fillable
+    |--------------------------------------------------------------------------
+    */
+
     protected $fillable = [
         'category_id',
         'name',
         'slug',
         'description',
+        'sku',
+        'code',
 
         // Nội dung chi tiết sản phẩm
         'origin',
@@ -40,15 +54,26 @@ class Product extends Model
         'warning',
         'highlights',
 
+        // Hình ảnh
         'image',
         'images',
 
+        // Giá / tồn kho
         'price',
         'old_price',
         'discount_percent',
+        'cost_price',
         'stock',
+        'low_stock_alert',
 
-        // Thông tin đóng gói dùng để tính phí vận chuyển GHN
+        /*
+         * Không đưa sold_count vào fillable.
+         *
+         * Lượt bán được hệ thống tự cập nhật khi
+         * đơn hàng được giao thành công.
+         */
+
+        // Thông tin đóng gói dùng cho GHN
         'weight_grams',
         'length_cm',
         'width_cm',
@@ -64,28 +89,32 @@ class Product extends Model
         'restored_at',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | Casts
+    |--------------------------------------------------------------------------
+    */
+
     protected $casts = [
-        // Trạng thái
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
 
-        // Giá / tồn kho
         'price' => 'integer',
         'old_price' => 'integer',
         'discount_percent' => 'integer',
+        'cost_price' => 'integer',
         'stock' => 'integer',
+        'sold_count' => 'integer',
+        'low_stock_alert' => 'integer',
 
-        // Thông tin đóng gói
         'weight_grams' => 'integer',
         'length_cm' => 'integer',
         'width_cm' => 'integer',
         'height_cm' => 'integer',
 
-        // JSON
         'images' => 'array',
         'highlights' => 'array',
 
-        // Datetime
         'deleted_at' => 'datetime',
         'restored_at' => 'datetime',
     ];
@@ -98,7 +127,9 @@ class Product extends Model
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(
+            Category::class
+        );
     }
 
     public function stages(): BelongsToMany
@@ -120,8 +151,24 @@ class Product extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(
-            \App\Models\ProductReview::class
+            ProductReview::class
         );
+    }
+
+    public function campaigns(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Campaign::class,
+            'campaign_products'
+        )
+            ->withPivot([
+                'sale_price',
+                'discount_percent',
+                'stock_limit',
+                'sold_quantity',
+                'max_per_user',
+            ])
+            ->withTimestamps();
     }
 
     /*
@@ -132,17 +179,46 @@ class Product extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where(
+            'is_active',
+            true
+        );
     }
 
     public function scopeFeatured($query)
     {
-        return $query->where('is_featured', true);
+        return $query->where(
+            'is_featured',
+            true
+        );
     }
 
-    public function scopeLowStock($query, int $threshold = 10)
+    public function scopeLowStock(
+        $query,
+        int $threshold = 10
+    ) {
+        return $query->where(
+            'stock',
+            '<=',
+            $threshold
+        );
+    }
+
+    public function scopeBestSelling($query)
     {
-        return $query->where('stock', '<=', $threshold);
+        return $query
+            ->orderByDesc('sold_count')
+            ->orderByDesc('id');
+    }
+
+    public function scopeWithReviewStats($query)
+    {
+        return $query
+            ->withCount('reviews')
+            ->withAvg(
+                'reviews',
+                'rating'
+            );
     }
 
     /*
@@ -164,14 +240,54 @@ class Product extends Model
 
     public function toCardArray(): array
     {
+        $rating = round(
+            (float) (
+                $this->reviews_avg_rating ?? 0
+            ),
+            1
+        );
+
+        $reviewCount = (int) (
+            $this->reviews_count ?? 0
+        );
+
+        $soldCount = max(
+            0,
+            (int) (
+                $this->sold_count ?? 0
+            )
+        );
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'image' => $this->image,
-            'price' => $this->price,
-            'old_price' => $this->old_price,
-            'discount' => $this->discount_percent,
-            'url' => route('product.show', $this->slug),
+            'price' => (int) $this->price,
+
+            'old_price' => $this->old_price
+                ? (int) $this->old_price
+                : null,
+
+            'discount' => $this->discount_percent
+                ? (int) $this->discount_percent
+                : null,
+
+            'rating' => $rating,
+            'review_count' => $reviewCount,
+            'sold_count' => $soldCount,
+
+            'url' => route(
+                'product.show',
+                $this->slug
+            ),
         ];
+    }
+
+    /**
+     * Lịch sử biến động kho (Inventory Logs)
+     */
+    public function stockMovements()
+    {
+        return $this->hasMany(\App\Models\StockMovement::class);
     }
 }

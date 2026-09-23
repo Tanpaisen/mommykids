@@ -57,4 +57,7 @@ Route::middleware('permission:products.manage')->group(function () {
         ->except(['show']);
 
     Route::get('/san-pham/search', [ProductController::class, 'search'])->name('products.search');
+
+    Route::get('/san-pham/import', [ProductController::class, 'importForm'])->name('products.import.form');
+    Route::post('/san-pham/import', [ProductController::class, 'importStore'])->name('products.import.store');
 });

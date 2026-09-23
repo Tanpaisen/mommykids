@@ -9,27 +9,74 @@ Route::middleware('permission:orders.view')
     ->prefix('don-hang')
     ->name('orders.')
     ->group(function () {
-        Route::get('/', [OrderController::class, 'index'])->name('index');
-        Route::get('/{order:code}', [OrderController::class, 'show'])->name('show');
-        Route::post('/tinh-phi-ship', [OrderController::class, 'calcFee'])->name('calc-fee');
 
-        Route::middleware('permission:orders.manage')->group(function () {
-            Route::patch('/{order:code}/status', [OrderController::class, 'updateStatus'])->name('status');
-            Route::post('/{order:code}/tao-van-don', [OrderController::class, 'createShipment'])->name('shipment.create');
-            Route::post('/{order:code}/tra-cuu', [OrderController::class, 'trackShipment'])->name('shipment.track');
-            Route::get('/{order:code}/in-van-don', [OrderController::class, 'printLabel'])->name('shipment.print');
-            Route::delete('/{order:code}/huy-van-don', [OrderController::class, 'cancelShipment'])->name('shipment.cancel');
-        });
+        Route::get(
+            '/',
+            [OrderController::class, 'index']
+        )->name('index');
+
+        Route::post(
+            '/tinh-phi-ship',
+            [OrderController::class, 'calcFee']
+        )->name('calc-fee');
+
+        Route::get(
+            '/{order:code}',
+            [OrderController::class, 'show']
+        )->name('show');
+
+        Route::middleware('permission:orders.manage')
+            ->group(function () {
+
+                Route::patch(
+                    '/{order:code}/status',
+                    [OrderController::class, 'updateStatus']
+                )->name('status');
+
+                Route::post(
+                    '/{order:code}/tao-van-don',
+                    [OrderController::class, 'createShipment']
+                )->name('shipment.create');
+
+                Route::post(
+                    '/{order:code}/tra-cuu',
+                    [OrderController::class, 'trackShipment']
+                )->name('shipment.track');
+
+                Route::get(
+                    '/{order:code}/in-van-don',
+                    [OrderController::class, 'printShipment']
+                )->name('shipment.print');
+
+                Route::delete(
+                    '/{order:code}/huy-van-don',
+                    [OrderController::class, 'cancelShipment']
+                )->name('shipment.cancel');
+            });
     });
 
-    Route::middleware('permission:orders.view')
+
+Route::middleware('permission:orders.view')
     ->prefix('van-chuyen')
     ->name('shipments.')
     ->group(function () {
-        Route::get('/', [ShipmentController::class, 'index'])->name('index');
-        Route::get('/api', [ShipmentController::class, 'apiIndex'])->name('api');
+
+        Route::get(
+            '/',
+            [ShipmentController::class, 'index']
+        )->name('index');
+
+        Route::get(
+            '/api',
+            [ShipmentController::class, 'apiIndex']
+        )->name('api');
     });
 
-    Route::middleware('permission:refunds.manage')
-    ->get('/doi-tra', fn () => (new PlaceholderController)->index('Đổi trả & Hoàn tiền'))
+
+Route::middleware('permission:refunds.manage')
+    ->get(
+        '/doi-tra',
+        fn () => (new PlaceholderController)
+            ->index('Đổi trả & Hoàn tiền')
+    )
     ->name('refunds.index');

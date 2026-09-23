@@ -125,7 +125,7 @@
     </div>
 
     {{-- Thống kê phụ --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
         <div class="bg-indigo-50 rounded-xl px-4 py-3 flex items-center justify-between">
             <span class="text-sm font-medium text-indigo-700">Đang xử lý</span>
             <strong class="text-indigo-700">{{ number_format($stats['processing'] ?? 0) }}</strong>
@@ -137,6 +137,10 @@
         <div class="bg-blue-50 rounded-xl px-4 py-3 flex items-center justify-between">
             <span class="text-sm font-medium text-blue-700">Đã thanh toán</span>
             <strong class="text-blue-700">{{ number_format($stats['paid'] ?? 0) }}</strong>
+        </div>
+        <div class="bg-pink-50 rounded-xl px-4 py-3 flex items-center justify-between">
+            <span class="text-sm font-medium text-pink-700">Đơn có Campaign</span>
+            <strong class="text-pink-700">{{ number_format($stats['campaign_orders'] ?? 0) }}</strong>
         </div>
     </div>
 
@@ -184,6 +188,16 @@
                         @foreach($paymentMethods as $value => $label)
                             <option value="{{ $value }}" @selected(request('payment_method') === $value)>{{ $label }}</option>
                         @endforeach
+                    </select>
+                </div>
+
+                {{-- Campaign --}}
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-2">Campaign</label>
+                    <select name="campaign" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-100">
+                        <option value="">Tất cả đơn</option>
+                        <option value="yes" @selected(request('campaign') === 'yes')>Có Campaign</option>
+                        <option value="no" @selected(request('campaign') === 'no')>Không Campaign</option>
                     </select>
                 </div>
 
@@ -275,6 +289,14 @@
                                 <span class="inline-flex min-w-8 h-8 px-2 items-center justify-center rounded-lg bg-gray-100 font-semibold text-gray-700">
                                     {{ $order->items_count ?? 0 }}
                                 </span>
+
+                                @if((int) ($order->campaign_items_count ?? 0) > 0)
+                                    <div class="mt-1.5">
+                                        <span class="inline-flex items-center rounded-full bg-pink-50 text-pink-700 border border-pink-100 px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap">
+                                            🏷 {{ $order->campaign_items_count }} Campaign
+                                        </span>
+                                    </div>
+                                @endif
                             </td>
 
                             {{-- Total --}}
@@ -282,8 +304,22 @@
                                 <strong class="text-gray-900 whitespace-nowrap">
                                     {{ number_format($order->total, 0, ',', '.') }}đ
                                 </strong>
+
+                                @if((int) ($order->campaign_discount_total ?? 0) > 0)
+                                    <div class="text-[11px] text-pink-600 mt-1 whitespace-nowrap">
+                                        Campaign tiết kiệm
+                                        {{ number_format(
+                                            $order->campaign_discount_total,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}đ
+                                    </div>
+                                @endif
+
                                 @if((int) $order->discount > 0)
                                     <div class="text-xs text-green-600 mt-1">
+                                        Voucher/điểm
                                         -{{ number_format($order->discount, 0, ',', '.') }}đ
                                     </div>
                                 @endif

@@ -32,64 +32,76 @@ return [
     ],
 
     'vietqr' => [
-    'bank_id' => env('VIETQR_BANK_ID', '970422'),
-    'account_no' => env('VIETQR_ACCOUNT_NO'),
-    'account_name' => env('VIETQR_ACCOUNT_NAME', 'LE MINH TAN'),
-],
-'momo' => [
-    'enabled' => env('MOMO_ENABLED', false),
+        'bank_id' => env('VIETQR_BANK_ID', '970422'),
+        'account_no' => env('VIETQR_ACCOUNT_NO'),
+        'account_name' => env('VIETQR_ACCOUNT_NAME', 'LE MINH TAN'),
+    ],
 
-    'partner_code' => env('MOMO_PARTNER_CODE'),
-    'access_key' => env('MOMO_ACCESS_KEY'),
-    'secret_key' => env('MOMO_SECRET_KEY'),
+    'momo' => [
+        'enabled' => env('MOMO_ENABLED', false),
 
-    'endpoint' => env(
-        'MOMO_ENDPOINT',
-        'https://test-payment.momo.vn/v2/gateway/api/create'
-    ),
+        'partner_code' => env('MOMO_PARTNER_CODE'),
+        'access_key' => env('MOMO_ACCESS_KEY'),
+        'secret_key' => env('MOMO_SECRET_KEY'),
 
-    'redirect_url' => env('MOMO_REDIRECT_URL'),
-    'ipn_url' => env('MOMO_IPN_URL'),
-],
+        'endpoint' => env(
+            'MOMO_ENDPOINT',
+            'https://test-payment.momo.vn/v2/gateway/api/create'
+        ),
 
-'zalopay' => [
-    'enabled' => env('ZALOPAY_ENABLED', false),
+        'redirect_url' => env('MOMO_REDIRECT_URL'),
+        'ipn_url' => env('MOMO_IPN_URL'),
+    ],
 
-    'app_id' => env('ZALOPAY_APP_ID'),
-    'key1' => env('ZALOPAY_KEY1'),
-    'key2' => env('ZALOPAY_KEY2'),
+    'zalopay' => [
+        'enabled' => env('ZALOPAY_ENABLED', false),
 
-    'create_endpoint' => env(
-        'ZALOPAY_CREATE_ENDPOINT',
-        'https://sb-openapi.zalopay.vn/v2/create'
-    ),
+        'app_id' => env('ZALOPAY_APP_ID'),
+        'key1' => env('ZALOPAY_KEY1'),
+        'key2' => env('ZALOPAY_KEY2'),
 
-    'query_endpoint' => env(
-        'ZALOPAY_QUERY_ENDPOINT',
-        'https://sb-openapi.zalopay.vn/v2/query'
-    ),
+        'create_endpoint' => env(
+            'ZALOPAY_CREATE_ENDPOINT',
+            'https://sb-openapi.zalopay.vn/v2/create'
+        ),
 
-    'callback_url' => env('ZALOPAY_CALLBACK_URL'),
-    'redirect_url' => env('ZALOPAY_REDIRECT_URL'),
-],
-'stripe' => [
-    'enabled' => env('STRIPE_ENABLED', false),
-    'secret' => env('STRIPE_SECRET'),
-    'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
-    'success_url' => env('STRIPE_SUCCESS_URL'),
-    'cancel_url' => env('STRIPE_CANCEL_URL'),
-],
+        'query_endpoint' => env(
+            'ZALOPAY_QUERY_ENDPOINT',
+            'https://sb-openapi.zalopay.vn/v2/query'
+        ),
 
-'paypal' => [
-    'enabled' => env('PAYPAL_ENABLED', true),
-    'mode' => env('PAYPAL_MODE', 'sandbox'),
-    'client_id' => env('PAYPAL_CLIENT_ID'),
-    'client_secret' => env('PAYPAL_CLIENT_SECRET'),
-    'base_url' => env(
-        'PAYPAL_BASE_URL',
-        'https://api-m.sandbox.paypal.com'
-    ),
-    'currency' => env('PAYPAL_CURRENCY', 'USD'),
-'vnd_per_usd' => (float) env('PAYPAL_VND_PER_USD', 25000),
-],
+        'callback_url' => env('ZALOPAY_CALLBACK_URL'),
+        'redirect_url' => env('ZALOPAY_REDIRECT_URL'),
+    ],
+
+    'stripe' => [
+        'enabled' => env('STRIPE_ENABLED', false),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'success_url' => env('STRIPE_SUCCESS_URL'),
+        'cancel_url' => env('STRIPE_CANCEL_URL'),
+    ],
+
+    'paypal' => [
+        'enabled' => env('PAYPAL_ENABLED', true),
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+        'base_url' => env(
+            'PAYPAL_BASE_URL',
+            'https://api-m.sandbox.paypal.com'
+        ),
+        'currency' => env('PAYPAL_CURRENCY', 'USD'),
+        'vnd_per_usd' => (float) env('PAYPAL_VND_PER_USD', 25000),
+    ],
+
+    // ==========================================
+    // CẤU HÌNH ĐĂNG NHẬP FACEBOOK
+    // ==========================================
+    'facebook' => [
+        'client_id' => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect' => env('FACEBOOK_REDIRECT_URI'),
+    ],
+
 ];

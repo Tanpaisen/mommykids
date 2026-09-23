@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Campaign;
 use App\Models\Order;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use App\Services\CalculateDiscountService;
+use App\Services\CampaignService;
 use App\Services\CartService;
 use App\Services\GHNService;
 use App\Services\VoucherValidationService;
@@ -24,6 +26,7 @@ class CheckoutController extends Controller
         protected GHNService $ghn,
         protected VoucherValidationService $voucherValidation,
         protected CalculateDiscountService $discountCalculator,
+        protected CampaignService $campaigns,
     ) {}
 
     public function index()
@@ -617,7 +620,6 @@ if ($weight <= 0) {
         try {
             $checkoutResult = DB::transaction(function () use (
                 $data,
-                $items,
                 $subtotal,
                 $shippingFee,
                 $requestedPointsDiscount,
@@ -626,11 +628,88 @@ if ($weight <= 0) {
                 $wardName,
                 $user
             ) {
-                // Re-validate voucher ngay trước khi tạo đơn và khóa row voucher
-                // để hạn chế race condition về lượt dùng/ngân sách.
+                /*
+                 * Đọc lại giỏ ngay trong transaction để giá campaign,
+                 * thời gian campaign và kho campaign được kiểm tra lại
+                 * tại đúng thời điểm tạo đơn.
+                 */
+                $checkoutItems = $this->cart->items();
+
+                if ($checkoutItems->isEmpty()) {
+                    throw new \RuntimeException(
+                        'Giỏ hàng của bạn vừa thay đổi. Vui lòng thử lại.'
+                    );
+                }
+
+                $checkoutSubtotal = (int) $checkoutItems->sum(
+                    fn ($item) =>
+                        (int) $item->quantity
+                        * (int) (
+                            $item->getAttribute('effective_price')
+                            ?? $item->price
+                            ?? 0
+                        )
+                );
+
+                /*
+                 * Nếu campaign vừa bắt đầu/kết thúc giữa lúc khách đang
+                 * ở trang checkout thì không âm thầm dùng tổng tiền cũ.
+                 */
+                if ($checkoutSubtotal !== $subtotal) {
+                    throw new \RuntimeException(
+                        'Giá sản phẩm hoặc chương trình khuyến mãi vừa thay đổi. '
+                        . 'Vui lòng tải lại trang thanh toán và kiểm tra tổng tiền.'
+                    );
+                }
+
+                /*
+                 * Giữ kho campaign. Mọi update nằm trong chính transaction
+                 * tạo order nên nếu bước sau lỗi thì DB tự rollback.
+                 */
+                foreach ($checkoutItems as $item) {
+                    $product = $item->product;
+
+                    if (!$product) {
+                        continue;
+                    }
+
+                    $campaignId = $item->getAttribute('campaign_id');
+
+                    if (!$campaignId) {
+                        continue;
+                    }
+
+                    $campaign = Campaign::query()
+                        ->active()
+                        ->whereKey($campaignId)
+                        ->first();
+
+                    if (!$campaign) {
+                        throw new \RuntimeException(
+                            "Chương trình khuyến mãi của {$product->name} vừa kết thúc."
+                        );
+                    }
+
+                    $reserved = $this->campaigns
+                        ->reserveCampaignStock(
+                            $campaign,
+                            (int) $product->id,
+                            (int) $item->quantity,
+                            $user?->id
+                        );
+
+                    if (!$reserved) {
+                        throw new \RuntimeException(
+                            "Sản phẩm {$product->name} đã hết suất khuyến mãi "
+                            . 'hoặc vượt giới hạn mua của chương trình.'
+                        );
+                    }
+                }
+
+                // Re-validate voucher ngay trước khi tạo đơn và khóa row voucher.
                 $voucherBreakdown = $this->calculateVoucherBreakdown(
-                    $items,
-                    $subtotal,
+                    $checkoutItems,
+                    $checkoutSubtotal,
                     $shippingFee,
                     $user,
                     true,
@@ -639,16 +718,27 @@ if ($weight <= 0) {
 
                 $pointsDiscount = min(
                     $requestedPointsDiscount,
-                    max(0, $subtotal - $voucherBreakdown['order_discount'])
+                    max(
+                        0,
+                        $checkoutSubtotal
+                        - $voucherBreakdown['order_discount']
+                    )
                 );
 
                 // 1 điểm = 1.000đ, vì vậy không tiêu một phần điểm.
-                $pointsDiscount = intdiv(max(0, $pointsDiscount), 1000) * 1000;
-                $effectiveUsedPoints = intdiv($pointsDiscount, 1000);
+                $pointsDiscount = intdiv(
+                    max(0, $pointsDiscount),
+                    1000
+                ) * 1000;
+
+                $effectiveUsedPoints = intdiv(
+                    $pointsDiscount,
+                    1000
+                );
 
                 $total = max(
                     0,
-                    $subtotal
+                    $checkoutSubtotal
                     - $voucherBreakdown['order_discount']
                     + $shippingFee
                     - $voucherBreakdown['shipping_discount']
@@ -674,7 +764,7 @@ if ($weight <= 0) {
                     'ghn_province_id' => (int) $data['province_id'],
                     'ghn_district_id' => (int) $data['to_district_id'],
                     'ghn_ward_code' => $data['to_ward_code'],
-                    'subtotal' => $subtotal,
+                    'subtotal' => $checkoutSubtotal,
                     'shipping_fee' => $shippingFee,
                     'discount' => $aggregateDiscount,
                     'total' => $total,
@@ -687,15 +777,28 @@ if ($weight <= 0) {
                     'note' => $data['note'] ?? null,
                 ]);
 
-                foreach ($items as $item) {
+                foreach ($checkoutItems as $item) {
                     $product = $item->product;
 
                     if (!$product) {
                         continue;
                     }
 
-                    $price = (int) $product->price;
                     $quantity = (int) $item->quantity;
+                    $price = (int) (
+                        $item->getAttribute('effective_price')
+                        ?? $item->price
+                        ?? $product->price
+                    );
+
+                    $unitCampaignDiscount = max(
+                        0,
+                        (int) (
+                            $item->getAttribute(
+                                'campaign_discount_amount'
+                            ) ?? 0
+                        )
+                    );
 
                     $order->items()->create([
                         'product_id' => $product->id,
@@ -704,6 +807,16 @@ if ($weight <= 0) {
                         'price' => $price,
                         'quantity' => $quantity,
                         'subtotal' => $price * $quantity,
+
+                        // Snapshot campaign tại thời điểm tạo order.
+                        'campaign_id' => $item->getAttribute(
+                            'campaign_id'
+                        ),
+                        'campaign_type' => $item->getAttribute(
+                            'campaign_type'
+                        ),
+                        'campaign_discount_amount' =>
+                            $unitCampaignDiscount * $quantity,
                     ]);
                 }
 
@@ -718,8 +831,6 @@ if ($weight <= 0) {
                         }
 
                         // Khi khách bấm Đặt hàng, chỉ GIỮ CHỖ voucher.
-                        // Chưa tăng used_count cho tới khi đơn COD được xác nhận
-                        // hoặc thanh toán online đã thực sự thành công.
                         $voucher->usages()->create([
                             'user_id' => $user->id,
                             'order_id' => $order->id,
@@ -727,7 +838,7 @@ if ($weight <= 0) {
                             'voucher_name' => $voucher->name,
                             'discount_type' => $voucher->discount_type,
                             'discount_value' => (int) $voucher->discount_value,
-                            'order_subtotal' => $subtotal,
+                            'order_subtotal' => $checkoutSubtotal,
                             'shipping_fee' => $shippingFee,
                             'discount_amount' => $discount,
                             'final_total' => $total,
@@ -739,6 +850,7 @@ if ($weight <= 0) {
 
                 return [
                     'order' => $order,
+                    'subtotal' => $checkoutSubtotal,
                     'voucher_breakdown' => $voucherBreakdown,
                     'points_discount' => $pointsDiscount,
                     'used_points' => $effectiveUsedPoints,
@@ -752,6 +864,7 @@ if ($weight <= 0) {
 
         /** @var Order $dbOrder */
         $dbOrder = $checkoutResult['order'];
+        $subtotal = (int) $checkoutResult['subtotal'];
         $voucherBreakdown = $checkoutResult['voucher_breakdown'];
         $pointsDiscount = (int) $checkoutResult['points_discount'];
         $usedPoints = (int) $checkoutResult['used_points'];
@@ -810,8 +923,9 @@ if ($weight <= 0) {
         if ($data['payment_method'] === 'stripe') {
             return redirect()->route('stripe.create');
         }
+
         if ($data['payment_method'] === 'paypal') {
-        return redirect()->route('paypal.create');
+            return redirect()->route('paypal.create');
         }
 
         Cache::put(
@@ -1049,6 +1163,15 @@ if ($weight <= 0) {
             return collect();
         }
 
+        // Campaign và Voucher luôn độc lập.
+        // CartService đã gắn giá campaign hiện hành vào CartItem,
+        // nên Voucher được kiểm tra trên toàn bộ giỏ sau Campaign.
+        $voucherItems = $items->values();
+
+        if ($voucherItems->isEmpty()) {
+            return collect();
+        }
+
         $now = now();
         $savedIds = $user->savedVouchers()
             ->where('vouchers.type', $type)
@@ -1082,12 +1205,12 @@ if ($weight <= 0) {
 
         // Lọc tiếp theo điều kiện áp dụng thực tế
         return $vouchers
-            ->filter(function (Voucher $voucher) use ($user, $items) {
+            ->filter(function (Voucher $voucher) use ($user, $voucherItems) {
                 try {
                     $this->voucherValidation->validate(
                         $voucher,
                         $user,
-                        $items
+                        $voucherItems
                     );
                     return true;
                 } catch (Throwable $e) {
@@ -1118,6 +1241,7 @@ if ($weight <= 0) {
             ->values();
     }
 
+
     /**
      * Tính lại cả hai slot voucher từ session. Không tin số discount lưu ở frontend/session.
      * Khi $strict=true, voucher invalid sẽ throw để chặn tạo Order.
@@ -1131,6 +1255,9 @@ if ($weight <= 0) {
         bool $strict,
         bool $lock
     ): array {
+        // Voucher được áp dụng sau giá Campaign trên toàn bộ item.
+        $voucherItems = $items->values();
+
         $result = [
             'order_discount' => 0,
             'shipping_discount' => 0,
@@ -1174,7 +1301,7 @@ if ($weight <= 0) {
                 $validation = $this->voucherValidation->validate(
                     $voucher,
                     $user,
-                    $items
+                    $voucherItems
                 );
 
                 $discount = $this->discountCalculator->calculate(

@@ -70,6 +70,21 @@
                     @error('slug')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 lg:col-span-2">
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold text-ink">SKU (Mã nội bộ)</label>
+                        <input type="text" name="sku" value="{{ old('sku', $product->sku ?? '') }}" placeholder="Để trống để tự tạo"
+                               class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none focus:border-coral focus:ring-2 focus:ring-coral/10">
+                        @error('sku')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold text-ink">Barcode (Mã nhà cung cấp)</label>
+                        <input type="text" name="code" value="{{ old('code', $product->code ?? '') }}" placeholder="Ví dụ: 8935217400156"
+                               class="w-full border border-admin-border rounded-xl px-4 py-3 bg-white text-ink outline-none focus:border-coral focus:ring-2 focus:ring-coral/10">
+                        @error('code')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                    </div>
+                </div>
+
                 <div class="lg:col-span-2">
                     <label class="block mb-2 text-sm font-semibold text-ink">Mô tả</label>
                     <textarea name="description" rows="5" placeholder="Nhập mô tả sản phẩm..."
@@ -300,6 +315,18 @@
                         </div>
                         @error('price')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold">Giá vốn / Giá nhập</label>
+                        <div class="relative">
+                            <input type="number" name="cost_price" min="0" value="{{ old('cost_price', $product->cost_price ?? 0) }}"
+                                   class="w-full border border-admin-border rounded-xl px-4 py-3 pr-12 outline-none focus:border-coral">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-ink-soft">đ</span>
+                        </div>
+                        <p class="mt-1.5 text-xs text-ink-soft">Dùng để tính Lãi/Lỗ chính xác.</p>
+                        @error('cost_price')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                    </div>
+
                     <div>
                         <label class="block mb-2 text-sm font-semibold">Giá cũ</label>
                         <div class="relative">
@@ -324,6 +351,15 @@
                                class="w-full border border-admin-border rounded-xl px-4 py-3 outline-none focus:border-coral">
                         @error('stock')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold">Cảnh báo sắp hết hàng <span class="text-coral">*</span></label>
+                        <input type="number" name="low_stock_alert" required min="0" value="{{ old('low_stock_alert', $product->low_stock_alert ?? 5) }}"
+                               class="w-full border border-admin-border rounded-xl px-4 py-3 outline-none focus:border-coral">
+                        <p class="mt-1.5 text-xs text-ink-soft">Báo đỏ trên Dashboard nếu kho dưới mức này.</p>
+                        @error('low_stock_alert')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                    </div>
+                    
                     <div class="md:col-span-2">
                         <label class="block mb-2 text-sm font-semibold">Khối lượng sản phẩm <span class="text-coral">*</span></label>
                         <div class="relative">
