@@ -97,6 +97,9 @@ class InventoryService
             // Cập nhật tồn kho mới
             $product->update(['stock' => $stockAfter]);
 
+            // Lấy ra Object (Model) của người đang đăng nhập (Admin hoặc User)
+            $causer = Auth::guard('admin')->user() ?? Auth::user();
+
             // Ghi log biến động
             StockMovement::create([
                 'product_id'     => $product->id,
@@ -106,7 +109,8 @@ class InventoryService
                 'stock_after'    => $stockAfter,
                 'reference_type' => $reference ? get_class($reference) : null,
                 'reference_id'   => $reference?->id,
-                'user_id'        => Auth::id(),
+                'causer_type'    => $causer ? get_class($causer) : null,
+                'causer_id'      => $causer?->id,
                 'note'           => $note,
             ]);
 
