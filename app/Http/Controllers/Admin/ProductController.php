@@ -171,14 +171,11 @@ class ProductController extends Controller
         /*
          * Phân trang.
          */
-        $products = $query
-            ->join('categories', 'products.category_id', '=', 'categories.id')
+       $products = $query
             ->select('products.*')
-            ->orderBy('categories.sort_order', 'asc')
-            ->orderBy('categories.name', 'asc')
-            ->orderBy('products.name', 'asc')
             ->paginate(10)
             ->withQueryString();
+
         /*
          * Danh mục cho filter.
          */

@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('page_title', 'Sản phẩm')
-@section('page_subtitle', 'Quản lý sản phẩm, giá, tồn kho, lượt bán và đánh giá')
+@section('page_subtitle', 'Quản lý sản phẩm, giá bán, giá vốn, tồn kho, lượt bán và đánh giá')
 
 
 @section('content')
@@ -329,9 +329,9 @@
 ====================================================== --}}
 <div class="card overflow-hidden">
 
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto xl:overflow-x-visible">
 
-        <table class="w-full min-w-[1420px] text-sm">
+        <table class="w-full table-fixed text-[13px]">
 
             <thead
                 class="bg-admin-bg
@@ -340,39 +340,43 @@
             >
                 <tr>
 
-                    <th class="text-left px-5 py-4">
+                    <th class="w-[3%] text-left px-1.5 py-3">
                         STT
                     </th>
 
-                    <th class="text-left px-5 py-4 min-w-[340px]">
+                    <th class="w-[25%] text-left px-2.5 py-3">
                         Sản phẩm
                     </th>
 
-                    <th class="text-left px-5 py-4">
+                    <th class="w-[9%] text-left px-2.5 py-3">
                         Danh mục
                     </th>
 
-                    <th class="text-left px-5 py-4">
+                    <th class="w-[10%] text-left px-2.5 py-3">
                         Giá
                     </th>
 
-                    <th class="text-center px-5 py-4">
+                    <th class="w-[9%] text-left px-2.5 py-3">
+                        Giá vốn
+                    </th>
+
+                    <th class="w-[6%] text-center px-2 py-3">
                         Tồn kho
                     </th>
 
-                    <th class="text-center px-5 py-4">
+                    <th class="w-[6%] text-center px-2 py-3">
                         Đã bán
                     </th>
 
-                    <th class="text-left px-5 py-4 min-w-[180px]">
+                    <th class="w-[11%] text-left px-2.5 py-3">
                         Đánh giá
                     </th>
 
-                    <th class="text-left px-5 py-4">
+                    <th class="w-[11%] text-left px-2.5 py-3">
                         Trạng thái
                     </th>
 
-                    <th class="text-right px-5 py-4">
+                    <th class="w-[10%] text-right px-2.5 py-3">
                         Thao tác
                     </th>
 
@@ -387,19 +391,19 @@
                     <tr class="hover:bg-admin-bg/40 transition">
 
                         {{-- STT --}}
-                        <td class="px-5 py-4 text-ink-soft">
+                        <td class="px-1.5 py-3 text-ink-soft">
                             {{ $products->firstItem() + $loop->index }}
                         </td>
 
 
                         {{-- PRODUCT --}}
-                        <td class="px-5 py-4">
+                        <td class="px-2.5 py-3">
 
-                            <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-3 min-w-0">
 
                                 {{-- IMAGE --}}
                                 <div
-                                    class="w-16 h-16
+                                    class="w-14 h-14
                                            shrink-0
                                            rounded-xl
                                            border border-admin-border
@@ -445,21 +449,21 @@
                                 {{-- INFO --}}
                                 <div class="min-w-0">
 
-                                    <p class="font-semibold text-ink">
+                                    <p class="font-semibold text-ink leading-5 break-words">
                                         {{ $product->name }}
                                     </p>
 
                                     <p
-                                        class="text-xs text-ink-soft
+                                        class="text-[11px] text-ink-soft
                                                truncate
-                                               max-w-[280px]
-                                               mt-1"
+                                               max-w-full
+                                               mt-0.5"
                                         title="{{ $product->slug }}"
                                     >
                                         {{ $product->slug }}
                                     </p>
 
-                                    <p class="text-xs text-ink-soft mt-1">
+                                    <p class="text-[11px] text-ink-soft mt-0.5">
                                         ID #{{ $product->id }}
                                     </p>
 
@@ -471,14 +475,14 @@
 
 
                         {{-- CATEGORY --}}
-                        <td class="px-5 py-4">
+                        <td class="px-2.5 py-3 align-middle">
 
                             <span
-                                class="inline-flex
+                                class="inline-flex max-w-full
                                        bg-admin-bg
                                        rounded-lg
-                                       px-2.5 py-1
-                                       text-xs"
+                                       px-2 py-1
+                                       text-[11px] leading-4 text-center whitespace-normal"
                             >
                                 {{ $product->category?->name ?? 'Chưa phân loại' }}
                             </span>
@@ -487,9 +491,9 @@
 
 
                         {{-- PRICE --}}
-                        <td class="px-5 py-4">
+                        <td class="px-2.5 py-3 align-middle">
 
-                            <p class="font-semibold text-coral">
+                            <p class="font-semibold text-coral whitespace-nowrap">
                                 {{ number_format(
                                     $product->price,
                                     0,
@@ -502,9 +506,9 @@
                             @if ($product->old_price)
 
                                 <p
-                                    class="text-xs text-ink-soft
+                                    class="text-[11px] text-ink-soft
                                            line-through
-                                           mt-1"
+                                           mt-0.5 whitespace-nowrap"
                                 >
                                     {{ number_format(
                                         $product->old_price,
@@ -536,14 +540,31 @@
                         </td>
 
 
+                        {{-- COST PRICE --}}
+                        <td class="px-2.5 py-3 align-middle">
+                            @if (!is_null($product->cost_price))
+                                <p class="font-semibold text-ink whitespace-nowrap">
+                                    {{ number_format(
+                                        $product->cost_price,
+                                        0,
+                                        ',',
+                                        '.'
+                                    ) }}đ
+                                </p>
+                            @else
+                                <span class="text-ink-soft">—</span>
+                            @endif
+                        </td>
+
+
                         {{-- STOCK --}}
-                        <td class="px-5 py-4 text-center">
+                        <td class="px-2 py-3 text-center align-middle">
 
                             <span
                                 class="inline-flex
-                                       min-w-10 h-9
+                                       min-w-9 h-8
                                        items-center justify-center
-                                       rounded-xl px-2
+                                       rounded-lg px-2
                                        {{ $product->stock <= 10
                                             ? 'bg-red-50 text-red-500'
                                             : 'bg-admin-bg text-ink' }}
@@ -556,14 +577,14 @@
 
 
                         {{-- SOLD COUNT --}}
-                        <td class="px-5 py-4 text-center">
+                        <td class="px-2 py-3 text-center align-middle">
 
                             <span
                                 class="inline-flex
-                                       min-w-12 h-9
+                                       min-w-10 h-8
                                        items-center justify-center
                                        gap-1
-                                       rounded-xl px-2.5
+                                       rounded-lg px-2.5
                                        bg-coral/10
                                        text-coral
                                        font-semibold"
@@ -599,7 +620,7 @@
 
 
                         {{-- REVIEW STATS --}}
-                        <td class="px-5 py-4">
+                        <td class="px-2.5 py-3 align-middle">
 
                             @php
                                 $adminReviewCount =
@@ -619,7 +640,7 @@
                             @if ($adminReviewCount > 0)
 
                                 <div
-                                    class="flex items-center gap-1.5"
+                                    class="flex items-center gap-1 flex-wrap"
                                     title="{{ number_format(
                                         $adminRating,
                                         1,
@@ -637,7 +658,7 @@
                                         @for ($star = 1; $star <= 5; $star++)
 
                                             <span
-                                                class="text-xs leading-none
+                                                class="text-[11px] leading-none
                                                        {{
                                                            $star <= $adminFilledStars
                                                                ? 'text-amber-400'
@@ -651,7 +672,7 @@
                                     </span>
 
                                     <span
-                                        class="text-xs
+                                        class="text-[11px]
                                                font-semibold
                                                text-ink"
                                     >
@@ -663,7 +684,7 @@
                                         ) }}
                                     </span>
 
-                                    <span class="text-xs text-ink-soft">
+                                    <span class="text-[11px] text-ink-soft">
                                         ({{ $adminReviewCount }})
                                     </span>
 
@@ -676,8 +697,8 @@
                                            items-center
                                            rounded-full
                                            bg-gray-50
-                                           px-2.5 py-1
-                                           text-xs
+                                           px-2 py-1
+                                           text-[11px]
                                            text-ink-soft"
                                 >
                                     Chưa có đánh giá
@@ -689,9 +710,9 @@
 
 
                         {{-- STATUS --}}
-                        <td class="px-5 py-4">
+                        <td class="px-2.5 py-3 align-middle">
 
-                            <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-1">
 
                                 @if ($product->is_active)
 
@@ -701,8 +722,8 @@
                                                rounded-full
                                                bg-green-50
                                                text-green-600
-                                               px-3 py-1.5
-                                               text-xs
+                                               px-2 py-1
+                                               text-[11px]
                                                font-semibold"
                                     >
 
@@ -724,8 +745,8 @@
                                                rounded-full
                                                bg-gray-100
                                                text-gray-500
-                                               px-3 py-1.5
-                                               text-xs
+                                               px-2 py-1
+                                               text-[11px]
                                                font-semibold"
                                     >
 
@@ -750,8 +771,8 @@
                                                rounded-full
                                                bg-amber-50
                                                text-amber-600
-                                               px-3 py-1.5
-                                               text-xs
+                                               px-2 py-1
+                                               text-[11px]
                                                font-semibold"
                                     >
                                         ⭐ Nổi bật
@@ -765,9 +786,9 @@
 
 
                         {{-- ACTION --}}
-                        <td class="px-5 py-4">
+                        <td class="px-2.5 py-3 align-middle">
 
-                            <div class="flex justify-end gap-2">
+                            <div class="flex flex-wrap justify-end gap-1.5">
                                 @can('products.manage')
                                     {{-- EDIT --}}
                                     <a
@@ -775,13 +796,13 @@
                                             'admin.products.edit',
                                             $product
                                         ) }}"
-                                        class="px-4 py-2
+                                        class="px-2.5 py-1.5
                                             border border-admin-border
                                             rounded-lg
                                             text-ink
                                             hover:border-coral
                                             hover:text-coral
-                                            transition"
+                                            transition text-xs font-semibold whitespace-nowrap"
                                     >
                                         Sửa
                                     </a>
@@ -796,12 +817,12 @@
                                         ) }}"
                                         data-name="{{ $product->name }}"
                                         onclick="openDeleteProductModal(this)"
-                                        class="px-4 py-2
+                                        class="px-2.5 py-1.5
                                             bg-red-50
                                             text-red-500
                                             rounded-lg
                                             hover:bg-red-100
-                                            transition"
+                                            transition text-xs font-semibold whitespace-nowrap"
                                     >
                                         Xóa
                                     </button>
@@ -821,7 +842,7 @@
                     <tr>
 
                         <td
-                            colspan="9"
+                            colspan="10"
                             class="py-20 text-center"
                         >
 

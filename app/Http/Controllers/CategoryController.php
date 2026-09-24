@@ -11,6 +11,37 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Tất cả danh mục
+    |--------------------------------------------------------------------------
+    */
+    public function index()
+    {
+        $categories = Category::query()
+            ->active()
+            ->withCount([
+                'products' => function ($query) {
+                    $query->active();
+                },
+            ])
+            ->orderBy('id')
+            ->get();
+
+        return view(
+            'client.categories.index',
+            [
+                'categories' => $categories,
+            ]
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chi tiết danh mục
+    |--------------------------------------------------------------------------
+    */
     public function show(
         Request $request,
         Category $category,
@@ -42,6 +73,7 @@ class CategoryController extends Controller
             ->values()
             ->all();
 
+
         /*
         |--------------------------------------------------------------------------
         | Khoảng giá cho slider
@@ -65,44 +97,68 @@ class CategoryController extends Controller
         $priceCeiling = max(
             100000,
             (int) (
-                ceil(max($highestProductPrice, 1) / 100000)
+                ceil(
+                    max(
+                        $highestProductPrice,
+                        1
+                    ) / 100000
+                )
                 * 100000
             )
         );
 
         $priceStep = 10000;
 
+
         $minPrice = (
             $request->filled('min_price')
-            && is_numeric($request->input('min_price'))
+            && is_numeric(
+                $request->input('min_price')
+            )
         )
             ? (int) $request->input('min_price')
             : $priceFloor;
 
+
         $maxPrice = (
             $request->filled('max_price')
-            && is_numeric($request->input('max_price'))
+            && is_numeric(
+                $request->input('max_price')
+            )
         )
             ? (int) $request->input('max_price')
             : $priceCeiling;
 
+
         $minPrice = max(
             $priceFloor,
-            min($minPrice, $priceCeiling)
+            min(
+                $minPrice,
+                $priceCeiling
+            )
         );
 
         $maxPrice = max(
             $priceFloor,
-            min($maxPrice, $priceCeiling)
+            min(
+                $maxPrice,
+                $priceCeiling
+            )
         );
 
+
         if ($minPrice > $maxPrice) {
-            [$minPrice, $maxPrice] = [$maxPrice, $minPrice];
+            [$minPrice, $maxPrice] = [
+                $maxPrice,
+                $minPrice,
+            ];
         }
+
 
         $hasPriceFilter =
             $minPrice > $priceFloor
             || $maxPrice < $priceCeiling;
+
 
         /*
          * Giữ nguyên logic hiện tại:
@@ -111,9 +167,11 @@ class CategoryController extends Controller
         $hideAttributeFilter =
             $category->slug === 'sua-cho-be';
 
+
         if ($hideAttributeFilter) {
             $selectedAttributes = [];
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -125,11 +183,18 @@ class CategoryController extends Controller
                 'tags',
                 function ($tagQuery) use ($selectedBrands) {
                     $tagQuery
-                        ->where('type', 'brand')
-                        ->whereIn('slug', $selectedBrands);
+                        ->where(
+                            'type',
+                            'brand'
+                        )
+                        ->whereIn(
+                            'slug',
+                            $selectedBrands
+                        );
                 }
             );
         }
+
 
         if (
             !$hideAttributeFilter
@@ -139,11 +204,18 @@ class CategoryController extends Controller
                 'tags',
                 function ($tagQuery) use ($selectedAttributes) {
                     $tagQuery
-                        ->where('type', 'attribute')
-                        ->whereIn('slug', $selectedAttributes);
+                        ->where(
+                            'type',
+                            'attribute'
+                        )
+                        ->whereIn(
+                            'slug',
+                            $selectedAttributes
+                        );
                 }
             );
         }
+
 
         if (!empty($selectedStageIds)) {
             $query->whereHas(
@@ -157,6 +229,7 @@ class CategoryController extends Controller
             );
         }
 
+
         if ($minPrice > $priceFloor) {
             $query->where(
                 'price',
@@ -164,6 +237,7 @@ class CategoryController extends Controller
                 $minPrice
             );
         }
+
 
         if ($maxPrice < $priceCeiling) {
             $query->where(
@@ -173,12 +247,17 @@ class CategoryController extends Controller
             );
         }
 
+
         /*
         |--------------------------------------------------------------------------
         | Sort
         |--------------------------------------------------------------------------
         */
-        $sort = $request->get('sort', 'default');
+        $sort = $request->get(
+            'sort',
+            'default'
+        );
+
 
         switch ($sort) {
             case 'newest':
@@ -186,18 +265,29 @@ class CategoryController extends Controller
                 break;
 
             case 'price_asc':
-                $query->orderBy('price', 'asc');
+                $query->orderBy(
+                    'price',
+                    'asc'
+                );
                 break;
 
             case 'price_desc':
-                $query->orderBy('price', 'desc');
+                $query->orderBy(
+                    'price',
+                    'desc'
+                );
                 break;
 
             default:
                 $sort = 'default';
-                $query->orderByDesc('created_at');
+
+                $query->orderByDesc(
+                    'created_at'
+                );
+
                 break;
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -218,6 +308,7 @@ class CategoryController extends Controller
                         $campaignService
                     )
             );
+
 
         /*
         |--------------------------------------------------------------------------
@@ -250,10 +341,12 @@ class CategoryController extends Controller
             ->get()
             ->groupBy('type');
 
+
         $brandTags = $filterTags->get(
             'brand',
             collect()
         );
+
 
         $attributeTags =
             $hideAttributeFilter
@@ -263,8 +356,12 @@ class CategoryController extends Controller
                     collect()
                 );
 
+
         $stages = Stage::query()
-            ->where('is_active', true)
+            ->where(
+                'is_active',
+                true
+            )
             ->whereHas(
                 'products',
                 function ($productQuery) use ($category) {
@@ -283,27 +380,58 @@ class CategoryController extends Controller
             ->orderBy('name')
             ->get();
 
+
         return view(
             'client.category',
             [
-                'category' => $category,
-                'products' => $products,
-                'sort' => $sort,
-                'selectedBrands' => $selectedBrands,
-                'selectedAttributes' => $selectedAttributes,
-                'selectedStageIds' => $selectedStageIds,
-                'brandTags' => $brandTags,
-                'attributeTags' => $attributeTags,
-                'stages' => $stages,
-                'priceFloor' => $priceFloor,
-                'priceCeiling' => $priceCeiling,
-                'priceStep' => $priceStep,
-                'minPrice' => $minPrice,
-                'maxPrice' => $maxPrice,
-                'hasPriceFilter' => $hasPriceFilter,
+                'category' =>
+                    $category,
+
+                'products' =>
+                    $products,
+
+                'sort' =>
+                    $sort,
+
+                'selectedBrands' =>
+                    $selectedBrands,
+
+                'selectedAttributes' =>
+                    $selectedAttributes,
+
+                'selectedStageIds' =>
+                    $selectedStageIds,
+
+                'brandTags' =>
+                    $brandTags,
+
+                'attributeTags' =>
+                    $attributeTags,
+
+                'stages' =>
+                    $stages,
+
+                'priceFloor' =>
+                    $priceFloor,
+
+                'priceCeiling' =>
+                    $priceCeiling,
+
+                'priceStep' =>
+                    $priceStep,
+
+                'minPrice' =>
+                    $minPrice,
+
+                'maxPrice' =>
+                    $maxPrice,
+
+                'hasPriceFilter' =>
+                    $hasPriceFilter,
             ]
         );
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -320,14 +448,20 @@ class CategoryController extends Controller
         $card['campaign_id'] = null;
         $card['campaign_type'] = null;
 
+
         $campaign = $campaignService
-            ->getBestCampaignForProduct($product);
+            ->getBestCampaignForProduct(
+                $product
+            );
+
 
         if (!$campaign) {
             return $card;
         }
 
+
         $basePrice = (int) $product->price;
+
 
         $campaignPrice = (int) (
             $campaignService
@@ -337,6 +471,7 @@ class CategoryController extends Controller
                 )
         );
 
+
         if (
             $basePrice <= 0
             || $campaignPrice >= $basePrice
@@ -344,8 +479,10 @@ class CategoryController extends Controller
             return $card;
         }
 
+
         $discountAmount =
             $basePrice - $campaignPrice;
+
 
         $discountPercent =
             (int) round(
@@ -355,18 +492,31 @@ class CategoryController extends Controller
                 ) * 100
             );
 
-        $card['price'] = $campaignPrice;
+
+        $card['price'] =
+            $campaignPrice;
+
 
         /*
          * Khi có Campaign, giá gạch ngang là
          * Product.price ngay trước Campaign.
          */
-        $card['old_price'] = $basePrice;
+        $card['old_price'] =
+            $basePrice;
 
-        $card['discount'] = $discountPercent;
-        $card['is_campaign'] = true;
-        $card['campaign_id'] = $campaign->id;
-        $card['campaign_type'] = $campaign->type;
+
+        $card['discount'] =
+            $discountPercent;
+
+        $card['is_campaign'] =
+            true;
+
+        $card['campaign_id'] =
+            $campaign->id;
+
+        $card['campaign_type'] =
+            $campaign->type;
+
 
         return $card;
     }
