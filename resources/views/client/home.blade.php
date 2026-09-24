@@ -1847,7 +1847,7 @@
         ABOUT STRIP
     ====================================================== --}}
     <section
-        id="mk-about"
+        id="gioi-thieu"
         class="mk-about-strip"
     >
 
