@@ -102,6 +102,45 @@ class AddressController extends Controller
             'Đã cập nhật địa chỉ.'
         );
     }
+    
+    public function create()
+    {
+        $provinceResponse = $this->ghn->getProvinces();
+        
+        $provinceData = $provinceResponse['data'] ?? [];
+        if (isset($provinceData['ProvinceID'], $provinceData['ProvinceName'])) {
+            $provinceData = [$provinceData];
+        }
+        
+        $provinces = collect($provinceData)
+            ->filter(fn ($p) => 
+                is_array($p) &&
+                isset($p['ProvinceID'], $p['ProvinceName'])
+            )
+            ->values();
+
+        return view('client.addresses.create', compact('provinces'));
+    }
+
+    public function edit(int $address)
+    {
+        $address = $this->findOwnAddress($address);
+        
+        $provinceResponse = $this->ghn->getProvinces();
+        $provinceData = $provinceResponse['data'] ?? [];
+        if (isset($provinceData['ProvinceID'], $provinceData['ProvinceName'])) {
+            $provinceData = [$provinceData];
+        }
+        
+        $provinces = collect($provinceData)
+            ->filter(fn ($p) => 
+                is_array($p) &&
+                isset($p['ProvinceID'], $p['ProvinceName'])
+            )
+            ->values();
+
+        return view('client.addresses.edit', compact('address', 'provinces'));
+    }
 
     public function destroy(string $address)
     {

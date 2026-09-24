@@ -76,7 +76,6 @@
             <a href="{{ route('cart.index') }}" class="tt-back" aria-label="Quay lại giỏ hàng">
                 <span aria-hidden="true">‹</span>
             </a>
-
             <div>
                 <h1>Thanh toán</h1>
                 <p>Kiểm tra thông tin đơn hàng trước khi đặt</p>
@@ -91,7 +90,7 @@
             <div class="tt-alert tt-alert-error">
                 <strong>Vui lòng kiểm tra lại thông tin:</strong>
                 <ul>
-                    @foreach($errors->all() as $error)
+                    @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
@@ -107,7 +106,6 @@
                     <section class="tt-card tt-address-card">
                         <button type="button" class="tt-address-summary" data-open-address>
                             <span class="tt-address-icon" aria-hidden="true">⌖</span>
-
                             <span class="tt-address-copy">
                                 <span class="tt-address-title-row">
                                     <strong id="address-summary-name">
@@ -117,7 +115,6 @@
                                         {{ $initialPhone }}
                                     </span>
                                 </span>
-
                                 <span class="tt-address-line" id="address-summary-line">
                                     @if($hasAddressValue)
                                         {{ $initialAddressLine }}
@@ -125,15 +122,12 @@
                                         Thêm địa chỉ nhận hàng
                                     @endif
                                 </span>
-
                                 <span class="tt-address-helper">
                                     Nhấn để {{ $hasAddressValue ? 'chỉnh sửa' : 'nhập' }} thông tin nhận hàng
                                 </span>
                             </span>
-
                             <span class="tt-chevron" aria-hidden="true">›</span>
                         </button>
-
                         <div class="tt-airmail" aria-hidden="true"></div>
                     </section>
 
@@ -150,14 +144,13 @@
                         </div>
 
                         <div class="tt-product-list">
-                            @foreach($items as $item)
+                            @foreach ($items as $item)
                                 @php
                                     $product = $item->product;
                                     $imageUrl = $product
                                         ? $resolveImage($product->image)
                                         : null;
                                 @endphp
-
                                 @if($product)
                                     <article class="tt-product">
                                         <div class="tt-product-image">
@@ -176,7 +169,6 @@
                                                 <div class="tt-image-fallback">🖼️</div>
                                             @endif
                                         </div>
-
                                         <div class="tt-product-info">
                                             <strong class="tt-product-name">{{ $product->name }}</strong>
                                             <span class="tt-product-meta">
@@ -192,7 +184,6 @@
                                                 ) }}đ
                                             </strong>
                                         </div>
-
                                         <span class="tt-product-qty">×{{ $item->quantity }}</span>
                                     </article>
                                 @endif
@@ -246,7 +237,6 @@
                                             <small>Mã giảm trực tiếp trên tiền hàng</small>
                                         </div>
                                     </div>
-
                                     <div class="tt-voucher-controls">
                                         <select
                                             id="voucher-order-id"
@@ -261,8 +251,7 @@
                                                         : '-- Chọn mã đơn hàng --' }}
                                                 @endguest
                                             </option>
-
-                                            @foreach($availableOrderVouchers as $voucher)
+                                            @foreach ($availableOrderVouchers as $voucher)
                                                 <option
                                                     value="{{ $voucher['id'] }}"
                                                     {{ ($checkoutVouchers['order']['id'] ?? null) === $voucher['id'] ? 'selected' : '' }}
@@ -271,16 +260,13 @@
                                                 </option>
                                             @endforeach
                                         </select>
-
                                         <button
-                                        type="button"
-                                        class="tt-voucher-remove"
-                                        data-voucher-remove="order"
-                                        {{ empty($checkoutVouchers['order']) ? 'hidden' : '' }}
+                                            type="button"
+                                            data-voucher-apply="order"
+                                            {{ auth()->guest() || $availableOrderVouchers->isEmpty() ? 'disabled' : '' }}
                                         >
-                                        Gỡ
+                                            Áp dụng
                                         </button>
-
                                         <button
                                             type="button"
                                             class="tt-voucher-remove"
@@ -290,7 +276,6 @@
                                             Gỡ
                                         </button>
                                     </div>
-
                                     <p class="tt-voucher-status" id="voucher-order-status">
                                         @if(!empty($checkoutVouchers['order']))
                                             Đang áp dụng: {{ $checkoutVouchers['order']['code'] }}
@@ -308,7 +293,6 @@
                                             <small>Mức giảm thực tế dựa trên phí GHN</small>
                                         </div>
                                     </div>
-
                                     <div class="tt-voucher-controls">
                                         <select
                                             id="voucher-shipping-id"
@@ -323,8 +307,7 @@
                                                         : '-- Chọn mã vận chuyển --' }}
                                                 @endguest
                                             </option>
-
-                                            @foreach($availableShippingVouchers as $voucher)
+                                            @foreach ($availableShippingVouchers as $voucher)
                                                 <option
                                                     value="{{ $voucher['id'] }}"
                                                     {{ ($checkoutVouchers['shipping']['id'] ?? null) === $voucher['id'] ? 'selected' : '' }}
@@ -333,9 +316,13 @@
                                                 </option>
                                             @endforeach
                                         </select>
-
-                                       
-
+                                        <button
+                                            type="button"
+                                            data-voucher-apply="shipping"
+                                            {{ auth()->guest() || $availableShippingVouchers->isEmpty() ? 'disabled' : '' }}
+                                        >
+                                            Áp dụng
+                                        </button>
                                         <button
                                             type="button"
                                             class="tt-voucher-remove"
@@ -345,7 +332,6 @@
                                             Gỡ
                                         </button>
                                     </div>
-
                                     <p class="tt-voucher-status" id="voucher-shipping-status">
                                         @if(!empty($checkoutVouchers['shipping']))
                                             Đang áp dụng: {{ $checkoutVouchers['shipping']['code'] }}
@@ -398,133 +384,60 @@
                                 </span>
                                 <span class="tt-radio-ui"></span>
                             </label>
+
+                            @if(config('services.zalopay.enabled'))
+                                <label class="tt-payment-option">
+                                    <input
+                                        type="radio"
+                                        name="payment_method"
+                                        value="zalopay"
+                                        {{ old('payment_method') === 'zalopay' ? 'checked' : '' }}
+                                    >
+                                    <span class="tt-payment-icon">💙</span>
+                                    <span class="tt-payment-copy">
+                                        <strong>ZaloPay</strong>
+                                        <small>Thanh toán an toàn qua ZaloPay Sandbox</small>
+                                    </span>
+                                    <span class="tt-radio-ui"></span>
+                                </label>
+                            @endif
+
+                            @if(config('services.stripe.enabled'))
+                                <label class="tt-payment-option">
+                                    <input
+                                        type="radio"
+                                        name="payment_method"
+                                        value="stripe"
+                                        {{ old('payment_method') === 'stripe' ? 'checked' : '' }}
+                                    >
+                                    <span class="tt-payment-icon">💳</span>
+                                    <span class="tt-payment-copy">
+                                        <strong>Stripe - Visa / Mastercard</strong>
+                                        <small>Thanh toán bằng thẻ quốc tế qua Stripe Sandbox</small>
+                                    </span>
+                                    <span class="tt-radio-ui"></span>
+                                </label>
+                            @endif
+
+                            @if(config('services.paypal.enabled'))
+                                <label class="tt-payment-option">
+                                    <input
+                                        type="radio"
+                                        name="payment_method"
+                                        value="paypal"
+                                        {{ old('payment_method') === 'paypal' ? 'checked' : '' }}
+                                    >
+                                    <span class="tt-payment-icon">🅿️</span>
+                                    <span class="tt-payment-copy">
+                                        <strong>PayPal</strong>
+                                        <small>Thanh toán qua PayPal Sandbox</small>
+                                    </span>
+                                    <span class="tt-radio-ui"></span>
+                                </label>
+                            @endif
                         </div>
                     </section>
                 </main>
-
-                <aside class="mk-card mk-summary">
-                    <h2>Đơn hàng của bạn</h2>
-
-                    @foreach($items as $item)
-                        @php
-                            $product = $item->product;
-
-                            $imageUrl = $product
-                                ? $resolveImage($product->image)
-                                : null;
-
-                            /*
-                             * CartService đã đồng bộ giá hiệu lực vào
-                             * $item->price:
-                             *
-                             * - Có Campaign  -> giá Campaign
-                             * - Không Campaign -> Product.price
-                             */
-                            $effectivePrice = (int) $item->price;
-
-                            /*
-                             * base_price là thuộc tính runtime do CartService
-                             * gắn vào CartItem khi đọc giỏ.
-                             *
-                             * Nếu vì lý do nào đó không có base_price thì
-                             * fallback về Product.price.
-                             */
-                            $basePrice = (int) (
-                                $item->base_price
-                                ?? $product?->price
-                                ?? $effectivePrice
-                            );
-
-                            $hasCampaignPrice =
-                                $basePrice > 0
-                                && $effectivePrice < $basePrice;
-
-                            $campaignPercent = $hasCampaignPrice
-                                ? (int) round(
-                                    (
-                                        ($basePrice - $effectivePrice)
-                                        / $basePrice
-                                    ) * 100
-                                )
-                                : 0;
-
-                            $lineTotal =
-                                $effectivePrice
-                                * (int) $item->quantity;
-                        @endphp
-
-                        @if($product)
-                            <div class="mk-product">
-                                <div class="mk-product-image">
-                                    @if($imageUrl)
-                                        <img
-                                            src="{{ $imageUrl }}"
-                                            alt="{{ $product->name }}"
-                                            loading="lazy"
-                                            onerror="
-                                                this.style.display='none';
-                                                this.nextElementSibling.style.display='flex';
-                                            "
-                                        >
-
-                                        <div
-                                            class="mk-image-fallback"
-                                            style="display:none;"
-                                        >
-                                            🖼️
-                                        </div>
-                                    @else
-                                        <div class="mk-image-fallback">
-                                            🖼️
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <div>
-                                    <strong>{{ $product->name }}</strong>
-
-                                    <small class="mk-product-price-line">
-                                        <span>
-                                            {{ number_format(
-                                                $effectivePrice,
-                                                0,
-                                                ',',
-                                                '.'
-                                            ) }}đ
-                                            × {{ $item->quantity }}
-                                        </span>
-
-                                        @if ($hasCampaignPrice)
-                                            <span class="mk-product-campaign-meta">
-                                                <span class="mk-product-old-price">
-                                                    {{ number_format(
-                                                        $basePrice,
-                                                        0,
-                                                        ',',
-                                                        '.'
-                                                    ) }}đ
-                                                </span>
-
-                                                <span class="mk-product-campaign-badge">
-                                                    Khuyến mãi -{{ $campaignPercent }}%
-                                                </span>
-                                            </span>
-                                        @endif
-                                    </small>
-                                </div>
-
-                                <b>
-                                    {{ number_format(
-                                        $lineTotal,
-                                        0,
-                                        ',',
-                                        '.'
-                                    ) }}đ
-                                </b>
-                            </div>
-                        @endif
-                    @endforeach
-                </aside> {{-- Đóng thẻ aside bị thiếu ở đây --}}
 
                 {{-- TÓM TẮT --}}
                 <aside class="tt-summary-card">
@@ -618,7 +531,6 @@
                                     </div>
                                     <a href="{{ url('/ho-so/dia-chi') }}">＋ Thêm địa chỉ</a>
                                 </div>
-
                                 @forelse($savedAddresses as $savedAddress)
                                     <label class="tt-saved-address-item">
                                         <input
@@ -634,24 +546,19 @@
                                             data-address-detail="{{ $savedAddress->address_detail }}"
                                             {{ $defaultAddress?->id === $savedAddress->id ? 'checked' : '' }}
                                         >
-
                                         <span class="tt-saved-radio-ui"></span>
-
                                         <span class="tt-saved-address-copy">
                                             <span class="tt-saved-name-row">
                                                 <strong>{{ $savedAddress->recipient_name }}</strong>
                                                 <span>{{ $savedAddress->phone }}</span>
                                             </span>
-
                                             <span class="tt-saved-address-line">
                                                 {{ $savedAddress->full_address }}
                                             </span>
-
                                             <span class="tt-saved-tags">
                                                 @if($savedAddress->is_default)
                                                     <em>Mặc định</em>
                                                 @endif
-
                                                 @if($savedAddress->label)
                                                     <em>{{ $savedAddress->label }}</em>
                                                 @endif
@@ -675,101 +582,90 @@
                                     </button>
                                 @endif
                             </div>
+                            <div class="tt-address-divider">
+                                <span>hoặc nhập địa chỉ khác</span>
+                            </div>
                         @endauth
 
-                        {{-- Form nhập tay chỉ hiện khi tài khoản chưa có địa chỉ đã lưu --}}
-                        <div
-                            id="manual-address-fields"
-                            style="{{ $savedAddresses->isNotEmpty() ? 'display:none;' : '' }}"
-                        >
-                            <div class="tt-address-divider">
-                                <span>Nhập địa chỉ nhận hàng</span>
-                            </div>
-
-                            <div class="tt-address-form-title">
-                                <span>＋</span>
-                                <strong>Thông tin nhận hàng</strong>
-                            </div>
-
-                            <div class="tt-form-grid">
-                                <label class="tt-field tt-full">
-                                    <span>Họ và tên <b>*</b></span>
-                                    <input
-                                        id="full_name"
-                                        name="full_name"
-                                        value="{{ $initialFullName }}"
-                                        placeholder="Nguyễn Văn An"
-                                        required
-                                    >
-                                </label>
-
-                                <label class="tt-field">
-                                    <span>Số điện thoại <b>*</b></span>
-                                    <input
-                                        id="phone"
-                                        name="phone"
-                                        value="{{ $initialPhone }}"
-                                        placeholder="0901234567"
-                                        required
-                                    >
-                                </label>
-
-                                <label class="tt-field">
-                                    <span>Email</span>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        value="{{ $initialEmail }}"
-                                        placeholder="an@example.com"
-                                    >
-                                </label>
-
-                                <label class="tt-field">
-                                    <span>Tỉnh / Thành phố <b>*</b></span>
-                                    <select id="province" name="province_id" required>
-                                        <option value="">-- Chọn tỉnh/thành --</option>
-
-                                        @foreach($provinces as $province)
-                                            <option
-                                                value="{{ $province['ProvinceID'] }}"
-                                                {{ (string) $initialProvinceId === (string) $province['ProvinceID'] ? 'selected' : '' }}
-                                            >
-                                                {{ $province['ProvinceName'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </label>
-
-                                <label class="tt-field">
-                                    <span>Quận / Huyện <b>*</b></span>
-                                    <select id="district" name="to_district_id" required disabled>
-                                        <option value="">-- Chọn quận/huyện --</option>
-                                    </select>
-                                </label>
-
-                                <label class="tt-field tt-full">
-                                    <span>Phường / Xã <b>*</b></span>
-                                    <select id="ward" name="to_ward_code" required disabled>
-                                        <option value="">-- Chọn phường/xã --</option>
-                                    </select>
-                                </label>
-
-                                <label class="tt-field tt-full">
-                                    <span>Địa chỉ chi tiết <b>*</b></span>
-                                    <input
-                                        id="address"
-                                        name="address"
-                                        value="{{ $initialAddress }}"
-                                        placeholder="Số nhà, tên đường..."
-                                        required
-                                    >
-                                </label>
-                            </div>
+                        <div class="tt-address-form-title">
+                            <span>＋</span>
+                            <strong>Thông tin nhận hàng</strong>
                         </div>
 
-                        {{-- Ghi chú vẫn hiển thị dù chọn địa chỉ đã lưu --}}
-                        <div class="tt-form-grid" style="margin-top:14px;">
+                        <div class="tt-form-grid">
+                            <label class="tt-field tt-full">
+                                <span>Họ và tên <b>*</b></span>
+                                <input
+                                    id="full_name"
+                                    name="full_name"
+                                    value="{{ $initialFullName }}"
+                                    placeholder="Nguyễn Văn An"
+                                    required
+                                >
+                            </label>
+
+                            <label class="tt-field">
+                                <span>Số điện thoại <b>*</b></span>
+                                <input
+                                    id="phone"
+                                    name="phone"
+                                    value="{{ $initialPhone }}"
+                                    placeholder="0901234567"
+                                    required
+                                >
+                            </label>
+
+                            <label class="tt-field">
+                                <span>Email</span>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value="{{ $initialEmail }}"
+                                    placeholder="an@example.com"
+                                >
+                            </label>
+
+                            <label class="tt-field">
+                                <span>Tỉnh / Thành phố <b>*</b></span>
+                                <select id="province" name="province_id" required>
+                                    <option value="">-- Chọn tỉnh/thành --</option>
+                                    @foreach ($provinces as $province)
+                                        <option
+                                            value="{{ $province['ProvinceID'] }}"
+                                            {{ (string) $initialProvinceId === (string) $province['ProvinceID'] ? 'selected' : '' }}
+                                        >
+                                            {{ $province['ProvinceName'] }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </label>
+
+                            <label class="tt-field">
+                                <span>Quận / Huyện <b>*</b></span>
+                                <select id="district" name="to_district_id" required disabled>
+                                    <option value="">-- Chọn quận/huyện --</option>
+                                </select>
+                            </label>
+
+                            <label class="tt-field tt-full">
+                                <span>Phường / Xã <b>*</b></span>
+                                <select id="ward" name="to_ward_code" required disabled>
+                                    <option value="">-- Chọn phường/xã --</option>
+                                </select>
+                            </label>
+
+                            <label class="tt-field tt-full">
+                                <span>Địa chỉ chi tiết <b>*</b></span>
+                                <input
+                                    id="address"
+                                    name="address"
+                                    value="{{ $initialAddress }}"
+                                    placeholder="Số nhà, tên đường..."
+                                    required
+                                >
+                            </label>
+
                             <label class="tt-field tt-full">
                                 <span>Ghi chú</span>
                                 <textarea
@@ -782,10 +678,7 @@
                         </div>
                     </div>
 
-                    <div
-                        class="tt-address-sheet-footer"
-                        style="{{ $savedAddresses->isNotEmpty() ? 'display:none;' : '' }}"
-                    >
+                    <div class="tt-address-sheet-footer">
                         <button type="button" class="tt-address-save" id="save-address">
                             Xác nhận địa chỉ
                         </button>
@@ -797,9 +690,6 @@
 </div>
 
 <style>
-/* =========================================
-   CSS TỪ NHÁNH MASTER (Giao diện tt-)
-   ========================================= */
 :root{
     --tt-pink:#ff2f55;
     --tt-pink-dark:#ed1745;
@@ -1007,42 +897,6 @@
     .tt-form-grid{grid-template-columns:1fr}
     .tt-full{grid-column:auto}
 }
-
-/* =========================================
-   CSS TỪ NHÁNH FEATURE (Giao diện mk-)
-   ========================================= */
-.mk-checkout-page{background:#fff8f7;min-height:100vh;padding:32px 16px 60px}
-.mk-checkout-wrap{max-width:1180px;margin:auto}.mk-back{color:#ff5f76;text-decoration:none}
-.mk-checkout-wrap h1{font-size:34px;margin:18px 0 4px;color:#211d22}.mk-subtitle{color:#81777d;margin-bottom:24px}
-.mk-checkout-grid{display:grid;grid-template-columns:minmax(0, 1.5fr) minmax(320px, 0.8fr);gap:24px;align-items:start;width:100%;}
-.mk-left{display:flex;flex-direction:column;gap:20px}.mk-card{background:#fff;border:1px solid #f6e4e8;border-radius:18px;padding:24px;box-shadow:0 8px 28px rgba(70,40,45,.05)}
-.mk-card h2{font-size:20px;margin:0 0 20px}.mk-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.mk-field{display:flex;flex-direction:column;gap:8px;min-width:0;}.mk-field span{font-weight:600}.mk-field b{color:#ff5f76}.mk-full{grid-column:1/-1}
-.mk-field input,.mk-field textarea,.mk-field select{width:100%;max-width:100%; min-width:0;box-sizing:border-box;border:1px solid #eadfe2;border-radius:10px;padding:13px 14px;outline:0;font:inherit;background:#fff;}
-.mk-field input:focus,.mk-field textarea:focus,.mk-field select:focus{border-color:#ff6b80;box-shadow:0 0 0 3px rgba(255,107,128,.1)}
-.mk-field select:disabled{background:#f7f3f4;color:#9b9397;cursor:not-allowed}
-.mk-payment-option{display:flex;align-items:center;gap:14px;border:1px solid #eadfe2;border-radius:14px;padding:15px;margin-top:12px;cursor:pointer}
-.mk-payment-option:has(input:checked){border-color:#ff6b80;background:#fff6f8}.mk-payment-option input{accent-color:#ff5f76}
-.mk-payment-icon{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#ffecef}
-.mk-payment-option strong{display:block}.mk-payment-option small{display:block;color:#81777d;margin-top:3px}
-.mk-summary{position:sticky;top:100px}.mk-product{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:8px 0 18px}
-.mk-product-image{position:relative;width:64px;height:64px;border-radius:12px;overflow:hidden;background:#fff0f2;flex-shrink:0}
-.mk-product-image img{width:100%;height:100%;object-fit:contain;background:#fff;padding:3px;box-sizing:border-box}
-.mk-image-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#fff0f2;font-size:22px}.mk-product small{display:block;color:#8b8287;margin-top:4px}.mk-product>b{color:#ff5f76;white-space:nowrap}
-.mk-product-price-line>span:first-child{display:block}
-.mk-product-campaign-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}
-.mk-product-old-price{text-decoration:line-through;color:#8b8287}
-.mk-product-campaign-badge{display:inline-flex;align-items:center;border-radius:999px;background:#ffe8ed;color:#ff536e;font-size:11px;font-weight:700;padding:2px 7px}
-.mk-card hr{border:0;border-top:1px solid #f0e4e6;margin:18px 0}.mk-row{display:flex;justify-content:space-between;margin:12px 0}.mk-total{font-size:18px}.mk-total strong{color:#ff5f76;font-size:24px}
-.mk-primary{width:100%;border:0;border-radius:28px;background:#ff536e;color:#fff;font-weight:700;padding:15px;margin-top:18px;cursor:pointer}
-.mk-alert{padding:14px 16px;border-radius:12px;margin:0 0 18px}.mk-alert-error{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}.mk-alert ul{margin:8px 0 0 18px}
-.mk-voucher-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.mk-voucher-heading h2{margin-bottom:8px}.mk-voucher-note{margin:0 0 16px;color:#81777d;font-size:14px}.mk-voucher-wallet-link{flex:0 0 auto;color:#ff536e;font-weight:700;font-size:13px;text-decoration:none;background:#fff3f5;border:1px solid #ffd6dd;border-radius:999px;padding:8px 12px}.mk-voucher-wallet-link:hover{text-decoration:underline}.mk-voucher-login-note{padding:11px 13px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;margin-bottom:14px}
-.mk-voucher-grid{display:grid;gap:14px}.mk-voucher-slot{border:1px solid #eadfe2;border-radius:14px;padding:15px;background:#fff}.mk-voucher-title{display:flex;gap:10px;align-items:flex-start}.mk-voucher-title>span{font-size:22px}.mk-voucher-title strong{display:block}.mk-voucher-title small{display:block;color:#81777d;margin-top:3px}
-.mk-voucher-controls{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;margin-top:12px}.mk-voucher-controls select{min-width:0;width:100%;border:1px solid #eadfe2;border-radius:10px;padding:11px 38px 11px 12px;font:inherit;background:#fff;outline:0;color:#2f2930}.mk-voucher-controls select:focus{border-color:#ff6b80;box-shadow:0 0 0 3px rgba(255,107,128,.1)}.mk-voucher-controls select:disabled{background:#f7f3f4;color:#9b9397;cursor:not-allowed}.mk-voucher-controls button{border:0;border-radius:10px;padding:0 14px;font-weight:700;cursor:pointer;background:#ff5f76;color:#fff}.mk-voucher-controls .mk-voucher-remove{background:#f3f4f6;color:#4b5563}.mk-voucher-controls button:disabled{opacity:.6;cursor:not-allowed}
-.mk-voucher-status{min-height:18px;margin:8px 0 0;font-size:13px;color:#15803d}.mk-voucher-status.is-error{color:#be123c}.mk-discount-row strong{color:#15803d}
-.mk-left{min-width:0;}.mk-summary{min-width:0;}
-@media(max-width:900px){.mk-checkout-grid{grid-template-columns:1fr}.mk-summary{position:static}}
-@media(max-width:600px){.mk-form-grid{grid-template-columns:1fr}.mk-full{grid-column:auto}.mk-product{grid-template-columns:54px 1fr}.mk-product>b{grid-column:2}.mk-checkout-page{padding:20px 10px 40px}.mk-voucher-heading{display:block}.mk-voucher-wallet-link{display:inline-block;margin:-4px 0 14px}.mk-voucher-controls{grid-template-columns:1fr 1fr}.mk-voucher-controls select{grid-column:1/-1}}
 </style>
 
 <script type="application/json" id="checkout-config">
@@ -1470,7 +1324,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function applyVoucher(type) {
         const select = document.getElementById(`voucher-${type}-id`);
         const status = document.getElementById(`voucher-${type}-status`);
-        
+        const button = document.querySelector(
+            `[data-voucher-apply="${type}"]`
+        );
         const removeButton = document.querySelector(
             `[data-voucher-remove="${type}"]`
         );
@@ -1484,7 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        select.disabled = true;
+        button.disabled = true;
         status.textContent = 'Đang kiểm tra mã...';
 
         try {
@@ -1517,7 +1373,7 @@ document.addEventListener('DOMContentLoaded', () => {
             status.textContent = error.message;
             status.classList.add('is-error');
         } finally {
-    select.disabled = false;
+            button.disabled = false;
         }
     }
 
@@ -1562,45 +1418,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const orderVoucherSelect =
-    document.getElementById('voucher-order-id');
-
-const shippingVoucherSelect =
-    document.getElementById('voucher-shipping-id');
-
-orderVoucherSelect?.addEventListener(
-    'change',
-    async () => {
-        if (orderVoucherSelect.value) {
-            await applyVoucher('order');
-        } else {
-            const removeButton = document.querySelector(
-                '[data-voucher-remove="order"]'
-            );
-
-            if (removeButton && !removeButton.hidden) {
-                await removeVoucher('order');
-            }
-        }
-    }
-);
-
-shippingVoucherSelect?.addEventListener(
-    'change',
-    async () => {
-        if (shippingVoucherSelect.value) {
-            await applyVoucher('shipping');
-        } else {
-            const removeButton = document.querySelector(
-                '[data-voucher-remove="shipping"]'
-            );
-
-            if (removeButton && !removeButton.hidden) {
-                await removeVoucher('shipping');
-            }
-        }
-    }
-);
+    document.querySelectorAll('[data-voucher-apply]').forEach(button => {
+        button.addEventListener('click', () => {
+            applyVoucher(button.dataset.voucherApply);
+        });
+    });
 
     document.querySelectorAll('[data-voucher-remove]').forEach(button => {
         button.addEventListener('click', () => {
