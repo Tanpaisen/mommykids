@@ -309,7 +309,7 @@
                     <div>
                         <label class="block mb-2 text-sm font-semibold">Giá bán <span class="text-coral">*</span></label>
                         <div class="relative">
-                            <input type="number" name="price" required min="0" value="{{ old('price') }}"
+                            <input type="number" id="price" name="price" required min="0" value="{{ old('price') }}"
                                    class="w-full border border-admin-border rounded-xl px-4 py-3 pr-12 outline-none focus:border-coral">
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-ink-soft">đ</span>
                         </div>
@@ -330,7 +330,7 @@
                     <div>
                         <label class="block mb-2 text-sm font-semibold">Giá cũ</label>
                         <div class="relative">
-                            <input type="number" name="old_price" min="0" value="{{ old('old_price') }}"
+                            <input type="number" id="old_price" name="old_price" min="0" value="{{ old('old_price') }}"
                                    class="w-full border border-admin-border rounded-xl px-4 py-3 pr-12 outline-none focus:border-coral">
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-ink-soft">đ</span>
                         </div>
@@ -339,10 +339,19 @@
                     <div>
                         <label class="block mb-2 text-sm font-semibold">Giảm giá</label>
                         <div class="relative">
-                            <input type="number" name="discount_percent" min="0" max="100" value="{{ old('discount_percent') }}"
-                                   class="w-full border border-admin-border rounded-xl px-4 py-3 pr-12 outline-none focus:border-coral">
+                            <input type="number"
+                                   id="discount_percent"
+                                   name="discount_percent"
+                                   min="0"
+                                   max="100"
+                                   readonly
+                                   value="{{ old('discount_percent', 0) }}"
+                                   class="w-full border border-admin-border rounded-xl px-4 py-3 pr-12 bg-gray-100 text-gray-600 outline-none cursor-not-allowed">
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-ink-soft">%</span>
                         </div>
+                        <p class="mt-1.5 text-xs text-ink-soft">
+                            Tự động tính từ Giá cũ và Giá bán.
+                        </p>
                         @error('discount_percent')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
                     <div>
@@ -449,3 +458,38 @@
     </div>
 </form>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const priceInput = document.getElementById('price');
+        const oldPriceInput = document.getElementById('old_price');
+        const discountInput = document.getElementById('discount_percent');
+
+        if (!priceInput || !oldPriceInput || !discountInput) {
+            return;
+        }
+
+        const calculateDiscount = () => {
+            const price = Number(priceInput.value || 0);
+            const oldPrice = Number(oldPriceInput.value || 0);
+
+            let discount = 0;
+
+            if (oldPrice > 0 && oldPrice > price && price >= 0) {
+                discount = Math.round(
+                    ((oldPrice - price) / oldPrice) * 100
+                );
+            }
+
+            discountInput.value = discount;
+        };
+
+        priceInput.addEventListener('input', calculateDiscount);
+        oldPriceInput.addEventListener('input', calculateDiscount);
+
+        calculateDiscount();
+    });
+</script>
+@endpush
+

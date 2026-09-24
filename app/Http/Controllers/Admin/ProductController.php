@@ -284,6 +284,18 @@ class ProductController extends Controller
             $request->boolean('is_featured');
 
         /*
+         * Tự động tính phần trăm giảm giá từ Giá cũ và Giá bán.
+         * discount_percent không được tin theo dữ liệu nhập từ form.
+         */
+        $validated['discount_percent'] =
+            $this->calculateDiscountPercent(
+                (int) $validated['price'],
+                isset($validated['old_price'])
+                    ? (int) $validated['old_price']
+                    : null
+            );
+
+        /*
         |--------------------------------------------------------------------------
         | Ảnh đại diện → Cloudinary
         |--------------------------------------------------------------------------
@@ -500,6 +512,17 @@ class ProductController extends Controller
 
         $validated['is_featured'] =
             $request->boolean('is_featured');
+
+        /*
+         * Tự động tính phần trăm giảm giá từ Giá cũ và Giá bán.
+         */
+        $validated['discount_percent'] =
+            $this->calculateDiscountPercent(
+                (int) $validated['price'],
+                isset($validated['old_price'])
+                    ? (int) $validated['old_price']
+                    : null
+            );
 
         /*
         |--------------------------------------------------------------------------
@@ -1042,6 +1065,7 @@ class ProductController extends Controller
                 'nullable',
                 'integer',
                 'min:0',
+                'gte:price',
             ],
 
             /*
@@ -1214,6 +1238,9 @@ class ProductController extends Controller
             'old_price.min' =>
                 'Giá cũ không được nhỏ hơn 0.',
 
+            'old_price.gte' =>
+                'Giá cũ phải lớn hơn hoặc bằng giá bán.',
+
             'discount_percent.integer' =>
                 'Phần trăm giảm phải là số nguyên.',
 
@@ -1332,6 +1359,27 @@ class ProductController extends Controller
                 'Mỗi ảnh chi tiết không được lớn hơn 4MB.',
         ];
     }
+
+    /**
+     * Tính % giảm giá dựa trên giá cũ và giá bán hiện tại.
+     *
+     * - Không có giá cũ -> 0%
+     * - Giá cũ <= giá bán -> 0%
+     * - Có giảm -> làm tròn về số nguyên gần nhất
+     */
+    private function calculateDiscountPercent(
+        int $price,
+        ?int $oldPrice
+    ): int {
+        if (!$oldPrice || $oldPrice <= 0 || $oldPrice <= $price) {
+            return 0;
+        }
+
+        return (int) round(
+            (($oldPrice - $price) / $oldPrice) * 100
+        );
+    }
+
 
     private function normalizeHighlights(?array $highlights): ?array
     {
