@@ -1,5 +1,9 @@
 @extends('client.layouts.app')
 
+@section('sidebar')
+    <div class="hidden"></div>
+@endsection
+
 @section('content')
 <div class="bg-slate-50 py-10 min-h-screen">
     <div class="max-w-5xl mx-auto px-4">

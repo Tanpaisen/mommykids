@@ -18,7 +18,7 @@
         $priceFloor = $priceFloor ?? 0;
         $priceCeiling = $priceCeiling ?? 100000;
         $priceStep = $priceStep ?? 10000;
-        $minPrice = $minPrice ?? $priceFloor;
+        $minPrice = $minPrice ?? $prifceFloor;
         $maxPrice = $maxPrice ?? $priceCeiling;
         $hasPriceFilter = $hasPriceFilter ?? false;
 
@@ -110,15 +110,15 @@
     @endphp
 
     <aside
-        id="mk-sidebar"
-        class="hidden lg:block
-               w-[250px] shrink-0
-               bg-white
-               rounded-2xl
-               border border-coral-light/70
-               overflow-hidden
-               sticky top-4"
-    >
+    id="mk-sidebar"
+    class="hidden lg:block
+           w-[270px] shrink-0
+           bg-white
+           rounded-2xl
+           border border-coral-light/70
+           overflow-hidden
+           sticky top-4"
+>
 
         <form
             id="category-filter-form"
@@ -1025,7 +1025,7 @@
         {{-- =================================================
              PRODUCT AREA
         ================================================== --}}
-        <div class="p-4 lg:p-5">
+        <div class="px-5 py-5 lg:px-7 xl:px-8">
 
             @if ($products->isEmpty())
 
@@ -1084,11 +1084,12 @@
 
                 <div
                     class="grid
-                           grid-cols-2
-                           sm:grid-cols-3
-                           lg:grid-cols-4
-                           xl:grid-cols-5
-                           gap-4"
+       grid-cols-2
+       sm:grid-cols-3
+       lg:grid-cols-4
+       xl:grid-cols-5
+       gap-x-5
+       gap-y-6"
                 >
 
                     @foreach ($products as $product)

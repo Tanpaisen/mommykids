@@ -13,8 +13,8 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
-use Illuminate\Support\Facades;
-use App\Services;
+use Illuminate\Support\Facades\DB;
+use App\Services\InventoryService;
 
 class ProductController extends Controller
 {
@@ -171,14 +171,11 @@ class ProductController extends Controller
         /*
          * Phân trang.
          */
-        $products = $query
-            ->join('categories', 'products.category_id', '=', 'categories.id')
+       $products = $query
             ->select('products.*')
-            ->orderBy('categories.sort_order', 'asc')
-            ->orderBy('categories.name', 'asc')
-            ->orderBy('products.name', 'asc')
             ->paginate(10)
             ->withQueryString();
+
         /*
          * Danh mục cho filter.
          */
@@ -433,6 +430,12 @@ class ProductController extends Controller
         Product $product
     ) {
         $rules = $this->rules($product->id);
+
+        /*
+         * Tồn kho được quản lý riêng ở module Kho.
+         * Form chỉnh sửa sản phẩm không gửi field stock.
+         */
+        unset($rules['stock']);
 
         /*
          * Slug update sẽ tự kiểm tra riêng
@@ -882,7 +885,7 @@ class ProductController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    private function rules(): array
+    private function rules(?int $productId = null): array
     {
         return [
             /*
