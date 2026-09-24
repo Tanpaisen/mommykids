@@ -358,13 +358,6 @@
                         <p class="mt-1.5 text-xs text-ink-soft">Báo đỏ trên Dashboard nếu kho dưới mức này.</p>
                         @error('low_stock_alert')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
-                    <div>
-                        <label class="block mb-2 text-sm font-semibold">Cảnh báo sắp hết hàng <span class="text-coral">*</span></label>
-                        <input type="number" name="low_stock_alert" required min="0" value="{{ old('low_stock_alert', $product->low_stock_alert ?? 5) }}"
-                               class="w-full border border-admin-border rounded-xl px-4 py-3 outline-none focus:border-coral">
-                        <p class="mt-1.5 text-xs text-ink-soft">Báo đỏ trên Dashboard nếu kho dưới mức này.</p>
-                        @error('low_stock_alert')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
-                    </div>
                     <div class="md:col-span-2">
                         <label class="block mb-2 text-sm font-semibold">Khối lượng sản phẩm <span class="text-coral">*</span></label>
                         <div class="relative">
