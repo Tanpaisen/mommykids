@@ -1,10 +1,11 @@
 <?php
 
+use App\Http\Controllers\DealHotController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
-
+use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
@@ -45,6 +46,19 @@ Route::get('/', [HomeController::class, 'index'])
  */
 Route::get('/san-pham-noi-bat', [ProductController::class, 'featured'])
     ->name('products.featured');
+
+/*
+ * Deal Hot:
+ * Hiển thị sản phẩm thuộc Campaign đang hoạt động.
+ */
+Route::get(
+    '/deal-hot',
+    [DealHotController::class, 'index']
+)
+    ->name('deals.index');
+
+Route::get('/danh-muc', [CategoryController::class, 'index'])
+    ->name('categories.index');
 
 Route::get('/danh-muc/{category:slug}', [CategoryController::class, 'show'])
     ->name('category.show');
@@ -109,7 +123,8 @@ Route::get('/gio-hang', [CartController::class, 'index'])
     ->name('cart.index');
 
 // ROUTE CẨM NANG PHÍA CLIENT
-Route::get('/cam-nang/{slug?}', [HandbookController::class, 'index'])->name('handbook.show');
+Route::get('/cam-nang/{slug?}', [HandbookController::class, 'index'])
+    ->name('handbook.show');
 
 // ROUTE CÁC TRANG THÔNG TIN & CHÍNH SÁCH FOOTER
 Route::get('/gioi-thieu', [PageController::class, 'about'])->name('pages.about');
@@ -314,6 +329,36 @@ Route::get('/payments/paypal/capture', [PayPalController::class, 'capture'])
 Route::get('/payments/paypal/cancel', [PayPalController::class, 'cancel'])
     ->name('paypal.cancel');
 
+
+/*
+|--------------------------------------------------------------------------
+| Wishlist Routes
+|--------------------------------------------------------------------------
+|
+| Dùng {product:id} vì route chi tiết sản phẩm đang bind Product theo slug.
+| Wishlist gửi product ID từ product-card.
+|
+*/
+
+Route::middleware('auth')->group(function () {
+
+    Route::get(
+        '/yeu-thich',
+        [WishlistController::class, 'index']
+    )->name('wishlist.index');
+
+    Route::post(
+        '/yeu-thich/{product:id}',
+        [WishlistController::class, 'store']
+    )->name('wishlist.store');
+
+    Route::delete(
+        '/yeu-thich/{product:id}',
+        [WishlistController::class, 'destroy']
+    )->name('wishlist.destroy');
+});
+
+
 /*
 |--------------------------------------------------------------------------
 | Admin Customer Management & Menu Routes
@@ -343,7 +388,6 @@ require __DIR__ . '/auth/admin.php';
 | Admin Module Routes Include
 |--------------------------------------------------------------------------
 */
-
 require __DIR__ . '/chat.php';
 
 require __DIR__ . '/customer-care.php';
