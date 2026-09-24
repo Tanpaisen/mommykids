@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('page_title', 'Sản phẩm')
-@section('page_subtitle', 'Quản lý sản phẩm, giá, tồn kho, lượt bán và đánh giá')
+@section('page_subtitle', 'Quản lý sản phẩm, giá bán, giá vốn, tồn kho, lượt bán và đánh giá')
 
 
 @section('content')
@@ -344,31 +344,35 @@
                         STT
                     </th>
 
-                    <th class="w-[30%] text-left px-2.5 py-3">
+                    <th class="w-[25%] text-left px-2.5 py-3">
                         Sản phẩm
                     </th>
 
-                    <th class="w-[10%] text-left px-2.5 py-3">
+                    <th class="w-[9%] text-left px-2.5 py-3">
                         Danh mục
                     </th>
 
-                    <th class="w-[11%] text-left px-2.5 py-3">
+                    <th class="w-[10%] text-left px-2.5 py-3">
                         Giá
                     </th>
 
-                    <th class="w-[7%] text-center px-2 py-3">
+                    <th class="w-[9%] text-left px-2.5 py-3">
+                        Giá vốn
+                    </th>
+
+                    <th class="w-[6%] text-center px-2 py-3">
                         Tồn kho
                     </th>
 
-                    <th class="w-[7%] text-center px-2 py-3">
+                    <th class="w-[6%] text-center px-2 py-3">
                         Đã bán
                     </th>
 
-                    <th class="w-[12%] text-left px-2.5 py-3">
+                    <th class="w-[11%] text-left px-2.5 py-3">
                         Đánh giá
                     </th>
 
-                    <th class="w-[10%] text-left px-2.5 py-3">
+                    <th class="w-[11%] text-left px-2.5 py-3">
                         Trạng thái
                     </th>
 
@@ -533,6 +537,23 @@
 
                             @endif
 
+                        </td>
+
+
+                        {{-- COST PRICE --}}
+                        <td class="px-2.5 py-3 align-middle">
+                            @if (!is_null($product->cost_price))
+                                <p class="font-semibold text-ink whitespace-nowrap">
+                                    {{ number_format(
+                                        $product->cost_price,
+                                        0,
+                                        ',',
+                                        '.'
+                                    ) }}đ
+                                </p>
+                            @else
+                                <span class="text-ink-soft">—</span>
+                            @endif
                         </td>
 
 
@@ -821,7 +842,7 @@
                     <tr>
 
                         <td
-                            colspan="9"
+                            colspan="10"
                             class="py-20 text-center"
                         >
 
