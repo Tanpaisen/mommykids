@@ -25,11 +25,6 @@
         </span>
     </div>
 
-    @if(session('success'))
-        <div class="rounded-xl bg-mint-light text-mint font-medium text-sm px-4 py-3 mb-4">
-            {{ session('success') }}
-        </div>
-    @endif
 
     <form action="{{ route('admin.permissions.update', $selectedRole->id) }}" method="POST">
         @csrf @method('PUT')
