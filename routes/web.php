@@ -163,6 +163,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/quy-dinh-chinh-sach', [ProfileController::class, 'policy'])
         ->name('profile.policy');
 
+    Route::name('profile.addresses.')->group(function () {
+        Route::get('/ho-so/dia-chi', [AddressController::class, 'index'])->name('index');
+        Route::get('/ho-so/dia-chi/tao', [AddressController::class, 'create'])->name('create');
+        Route::post('/ho-so/dia-chi', [AddressController::class, 'store'])->name('store');
+        Route::get('/ho-so/dia-chi/{address}/sua', [AddressController::class, 'edit'])->name('edit');
+        Route::put('/ho-so/dia-chi/{address}', [AddressController::class, 'update'])->name('update');
+        Route::delete('/ho-so/dia-chi/{address}', [AddressController::class, 'destroy'])->name('destroy');
+        Route::patch('/ho-so/dia-chi/{address}/mac-dinh', [AddressController::class, 'setDefault'])->name('default');
+    });
     Route::get(
         '/ho-so/don-hang',
         [ClientOrderController::class, 'index']
