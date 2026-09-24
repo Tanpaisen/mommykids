@@ -307,17 +307,11 @@
         ================================================== --}}
         <nav class="mk-header-nav">
 
-            <a
-                href="{{ route('home') }}#mk-about"
-                class="mk-header-link"
-            >
+            <a href="{{ route('pages.about') }}" class="mk-header-link">
                 Về chúng tôi
             </a>
 
-            <a
-                href="{{ url('/cam-nang') }}"
-                class="mk-header-link"
-            >
+            <a href="{{ route('handbook.show') }}" class="mk-header-link">
                 Cẩm nang
             </a>
 

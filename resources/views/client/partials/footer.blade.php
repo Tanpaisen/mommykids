@@ -364,13 +364,13 @@
                 <ul class="mk-footer-list">
 
                     <li>
-                        <a href="#mk-about">
+                        <a href="{{ route('pages.about') }}" class="mk-header-link">
                             Giới thiệu
                         </a>
                     </li>
 
                     <li>
-                        <a href="#mk-stores">
+                        <a href="{{ route('pages.stores') }}" class="mk-header-link">
                             Hệ thống cửa hàng
                         </a>
                     </li>
@@ -404,13 +404,13 @@
                 <ul class="mk-footer-list">
 
                     <li>
-                        <a href="#">
+                        <a href="{{ route('pages.return') }}" class="mk-header-link">
                             Đổi trả hàng
                         </a>
                     </li>
 
                     <li>
-                        <a href="#">
+                        <a href="{{ route('pages.shipping') }}" class="mk-header-link">
                             Vận chuyển
                         </a>
                     </li>
@@ -444,7 +444,7 @@
                 <ul class="mk-footer-list">
 
                     <li>
-                        <a href="{{ url('/cam-nang') }}">
+                        <a href="{{ route('handbook.show') }}" class="mk-header-link">
                             Mẹ mang thai
                         </a>
                     </li>
