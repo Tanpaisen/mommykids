@@ -623,14 +623,10 @@
 
                 </a>
 
-                <a href="#" class="menu-link-vibrant">
-
+                <a href="{{ route('profile.orders.index') }}" class="menu-link-vibrant">
                     <span class="icon-box-sm">🛍️</span>
-
                     Quản lý đơn hàng
-
                 </a>
-
                 <a href="{{ route('profile.support') }}" class="menu-link-vibrant">
 
                     <span class="icon-box-sm">🎧</span>

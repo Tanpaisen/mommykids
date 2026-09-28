@@ -73,7 +73,7 @@ class OtpController extends Controller
             ], 422);
         }
 
-        try {
+       try {
             $cachedOtp = Cache::get('otp_' . $request->email);
 
             if (!$cachedOtp || $cachedOtp != $request->otp) {
@@ -83,26 +83,25 @@ class OtpController extends Controller
                 ], 400);
             }
 
-            // Tìm hoặc tạo tài khoản mới
             $user = User::firstOrCreate(
                 ['email' => $request->email],
                 [
                     'name'     => explode('@', $request->email)[0],
                     'password' => bcrypt(Str::random(10)),
+                    // 'role_id' => 1, // Thêm các trường bắt buộc khác vào đây nếu có
                 ]
             );
 
-            // Đăng nhập hệ thống
             Auth::login($user);
 
-            // Gộp giỏ hàng khách vãng lai vào tài khoản user
+            // Gộp giỏ hàng
             try {
                 app(CartService::class)->mergeGuestCart($user->id);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) { // <-- SỬA THÀNH \Throwable
                 Log::error('Lỗi gộp giỏ hàng post-login: ' . $e->getMessage());
+                // Dù gộp giỏ hàng lỗi, hệ thống vẫn KHÔNG SẬP và cho phép đăng nhập tiếp
             }
 
-            // Xóa OTP khỏi Cache
             Cache::forget('otp_' . $request->email);
 
             return response()->json([
@@ -112,11 +111,11 @@ class OtpController extends Controller
                 'user'     => $user
             ]);
 
-        } catch (\Exception $e) {
-            // Bắt và hiển thị chính xác lý do gây ra lỗi 500
+        } catch (\Throwable $e) { // <-- SỬA THÀNH \Throwable
+            Log::error('Lỗi verify OTP: ' . $e->getMessage()); // Ghi lỗi thực sự vào file log
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi xử lý hệ thống: ' . $e->getMessage()
+                'message' => 'Lỗi xử lý hệ thống. Vui lòng thử lại.'
             ], 500);
         }
     }
