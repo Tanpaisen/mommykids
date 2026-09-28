@@ -52,7 +52,8 @@ class OrderStatusNotification extends Notification implements ShouldQueue
         $mail = (new MailMessage)
             ->subject('Đơn hàng ' . $this->order->code . ': ' . $label['text'])
             ->greeting('Xin chào ' . $this->order->recipient_name . ',')
-            ->line('Đơn hàng ' . $this->order->code . ' của bạn đã chuyển sang trạng thái: ' . $label['text'] . '.');
+            ->line('Đơn hàng ' . $this->order->code . ' của bạn đã chuyển sang trạng thái: ' . $label['text'] . '.')
+            ->salutation('Trân trọng, MommyKids');;
 
         // Trang chi tiết đơn yêu cầu đăng nhập nên chỉ gắn nút cho thành viên
         if ($notifiable instanceof \App\Models\User) {

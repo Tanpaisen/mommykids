@@ -34,4 +34,13 @@ class OrderCancellationRequest extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    protected static function booted(): void
+    {
+        static::updated(function (OrderCancellationRequest $r) {
+            if ($r->wasChanged('status') && in_array($r->status, ['approved', 'rejected'])) {
+                event(new \App\Events\CancellationRequestProcessed($r));
+            }
+        });
+    }
 }

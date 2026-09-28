@@ -310,6 +310,16 @@ class OrderController extends Controller
                 $lockedOrder->payment_status = 'paid';
             }
 
+            if ($newStatus === 'cancelled') {
+                $lockedOrder->cancellationRequests()
+                    ->where('status', 'pending')
+                    ->get()
+                    ->each(fn ($r) => $r->update([
+                        'status'       => 'approved',
+                        'processed_at' => now(),
+                    ]));
+            }
+
             $lockedOrder->save();
         });
 

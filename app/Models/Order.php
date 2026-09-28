@@ -60,9 +60,14 @@ class Order extends Model
     }
 
     public function voucherUsages(): HasMany
-{
-    return $this->hasMany(VoucherUsage::class);
-}
+    {
+        return $this->hasMany(VoucherUsage::class);
+    }
+
+    public function cancellationRequests(): HasMany
+    {
+        return $this->hasMany(OrderCancellationRequest::class);
+    }
 
     // Labels màu cho status
     public function statusLabel(): array

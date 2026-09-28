@@ -11,6 +11,8 @@ use App\Events\OrderStatusChanged;
 use App\Listeners\SendOrderStatusNotification;
 use Illuminate\Notifications\Events\NotificationSent;
 use App\Listeners\CreateDefaultNotificationPreferences;
+use App\Events\CancellationRequestProcessed;
+use App\Listeners\SendCancellationResultNotification;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -30,8 +32,11 @@ class EventServiceProvider extends ServiceProvider
         OrderStatusChanged::class => [
             SendOrderStatusNotification::class,
         ],
-            NotificationSent::class => [
+        NotificationSent::class => [
             \App\Listeners\LogNotificationSent::class,
+        ],
+        CancellationRequestProcessed::class => [
+            SendCancellationResultNotification::class,
         ],
     ];
 

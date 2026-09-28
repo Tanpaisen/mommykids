@@ -39,6 +39,11 @@ class SendOrderStatusNotification implements ShouldQueue
             return;
         }
 
+        if ($event->newStatus === 'cancelled'
+            && $order->cancellationRequests()->where('status', 'approved')->exists()) {
+            return; // đã có thông báo kết quả yêu cầu huỷ
+        }
+
         try {
             $notification = new OrderStatusNotification($order, $event->newStatus);
 
