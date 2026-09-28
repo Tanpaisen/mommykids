@@ -1,7 +1,7 @@
 # Sử dụng PHP 8.2 CLI chính thức
 FROM php:8.2-cli
 
-# Cài đặt Node.js phiên bản mới nhất (Node 20.x) từ trang chủ NodeSource
+# Cài đặt Node.js phiên bản mới nhất (Node 20.x) và Supervisor
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get update && apt-get install -y \
        git \
@@ -13,6 +13,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
        libpng-dev \
        libonig-dev \
        libxml2-dev \
+       supervisor \
     && docker-php-ext-install pdo pdo_mysql sockets
 
 # Cài đặt Composer chính thức
@@ -32,6 +33,11 @@ RUN npm install && npm run build
 # Phân quyền lưu trữ cho Laravel
 RUN chmod -R 777 storage bootstrap/cache
 
-# Render yêu cầu lắng nghe trên cổng động được truyền qua biến môi trường $PORT (mặc định là 10000)
-# Thay vì dùng php artisan serve, dùng lệnh php -S (Built-in server của PHP) sẽ ổn định hơn trên cloud
-CMD sh -c "php artisan config:cache && php artisan route:cache && php -S 0.0.0.0:${PORT:-10000} -t public"
+# Copy file cấu hình supervisor vào thư mục hệ thống
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Xóa cache config cũ để tránh nhận diện sai môi trường
+RUN php artisan config:clear
+
+# Khởi chạy ứng dụng thông qua Supervisor (quản lý cả Web và Reverb)
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
