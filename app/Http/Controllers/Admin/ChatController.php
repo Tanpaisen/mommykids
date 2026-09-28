@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use App\Events\ChatConversationUpdated;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ChatController extends Controller
 {
@@ -51,10 +53,10 @@ class ChatController extends Controller
             ),
         };
 
-        $conversations = $query
-            ->paginate(20)
-            ->withQueryString();
+        /** @var LengthAwarePaginator $conversations */
+        $conversations = $query->paginate(20);
 
+        $conversations->withQueryString();
         $counts = [
             'waiting' => ChatConversation::where(
                 'status',
@@ -443,11 +445,29 @@ class ChatController extends Controller
                     false,
             ]);
 
-        $conversation->forceFill([
+            $conversation->forceFill([
             'last_message_at' =>
-                now(),
-        ])->save();
+                 now(),
+            ] )->save();
 
-        return $chatMessage;
+$this->broadcastConversationUpdated($conversation);
+
+return $chatMessage;
     }
+    private function broadcastConversationUpdated(
+    ChatConversation $conversation
+): void {
+    $conversationId = (string) $conversation->id;
+
+    $dispatch = static function () use ($conversationId): void {
+        ChatConversationUpdated::dispatch($conversationId);
+    };
+
+    if (DB::transactionLevel() > 0) {
+        DB::afterCommit($dispatch);
+        return;
+    }
+
+    $dispatch();
+}
 }

@@ -290,6 +290,6 @@
 
 
     @stack('scripts')
-
+@include('client.partials.chat-widget')
 </body>
 </html>

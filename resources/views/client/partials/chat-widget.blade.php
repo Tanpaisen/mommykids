@@ -42,19 +42,140 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const apiBase = @json(url('/chat'));
-    const csrf = @json(csrf_token());
+    const apiBase = "{{ url('/chat') }}";
+    const csrf = "{{ csrf_token() }}";
     const launcher=document.getElementById('mk-chat-launcher'),panel=document.getElementById('mk-chat-panel'),closeBtn=document.getElementById('mk-chat-close'),statusText=document.getElementById('mk-chat-status'),staffBox=document.getElementById('mk-chat-staff'),messagesBox=document.getElementById('mk-chat-messages'),quickBox=document.getElementById('mk-chat-quick'),waitingBox=document.getElementById('mk-chat-waiting'),form=document.getElementById('mk-chat-form'),input=document.getElementById('mk-chat-input'),sendBtn=document.getElementById('mk-chat-send'),closedBox=document.getElementById('mk-chat-closed'),newBtn=document.getElementById('mk-chat-new-session'),staffBtn=document.getElementById('mk-chat-request-staff');
-    let conversation=null,timer=null,lastKey='';
+    let conversation = null,
+    realtimeChannel = null,
+    timer = null,
+    lastKey = '';
 
     async function req(url, options={}){const r=await fetch(url,{...options,headers:{'Accept':'application/json','Content-Type':'application/json','X-CSRF-TOKEN':csrf,...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||'Không thể thực hiện yêu cầu.');return d}
     const esc=v=>{const d=document.createElement('div');d.textContent=String(v??'');return d.innerHTML};
 
-    function render(data){conversation=data.conversation;const key=JSON.stringify([conversation.status,conversation.staff?.name||'',data.messages.map(m=>m.id)]);if(key!==lastKey){messagesBox.innerHTML=data.messages.map(m=>`<div class="mk-chat-row ${esc(m.sender_type)}"><div class="mk-chat-bubble"><span class="mk-chat-meta">${esc(m.sender_name)}</span><div>${esc(m.message).replace(/\n/g,'<br>')}</div><span class="mk-chat-time">${esc(m.time||'')}</span></div></div>`).join('');messagesBox.scrollTop=messagesBox.scrollHeight;lastKey=key}const s=conversation.status;quickBox.hidden=s!=='bot';waitingBox.hidden=s!=='waiting_staff';closedBox.hidden=s!=='closed';form.hidden=s==='closed';input.disabled=s==='closed';sendBtn.disabled=s==='closed';staffBox.hidden=true;if(s==='bot')statusText.textContent='Bot đang hỗ trợ';if(s==='waiting_staff')statusText.textContent='Đang chờ nhân viên';if(s==='staff_connected'){statusText.textContent='Đã kết nối nhân viên';staffBox.hidden=false;staffBox.textContent='👩‍💼 Chuyên viên: '+(conversation.staff?.name||'MommyKids')}if(s==='closed')statusText.textContent='Phiên đã kết thúc'}
-    async function openChat(){panel.hidden=false;launcher.setAttribute('aria-expanded','true');render(await req(`${apiBase}/session`,{method:'POST',body:'{}'}));start();input.focus()}
+    function render(data) {
+    conversation = data.conversation;
+
+    // Reverb realtime subscribe
+    if (
+        conversation.realtime_channel &&
+        window.Echo
+    ) {
+        if (realtimeChannel) {
+            window.Echo.leaveChannel(realtimeChannel);
+        }
+
+        realtimeChannel = conversation.realtime_channel;
+
+        window.Echo
+            .channel(realtimeChannel)
+            .listen('.chat.conversation.updated', () => {
+                poll();
+            });
+
+        console.log(
+            '[MommyKids Chat] Realtime subscribed:',
+            realtimeChannel
+        );
+    }
+
+
+    const key = JSON.stringify([
+        conversation.status,
+        conversation.staff?.name || '',
+        data.messages.map(m => m.id)
+    ]);
+
+
+    if (key !== lastKey) {
+
+        messagesBox.innerHTML = data.messages.map(m => `
+            <div class="mk-chat-row ${esc(m.sender_type)}">
+                <div class="mk-chat-bubble">
+                    <span class="mk-chat-meta">
+                        ${esc(m.sender_name)}
+                    </span>
+
+                    <div>
+                        ${esc(m.message).replace(/\n/g,'<br>')}
+                    </div>
+
+                    <span class="mk-chat-time">
+                        ${esc(m.time || '')}
+                    </span>
+                </div>
+            </div>
+        `).join('');
+
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+        lastKey = key;
+    }
+
+
+    const s = conversation.status;
+
+    quickBox.hidden = s !== 'bot';
+    waitingBox.hidden = s !== 'waiting_staff';
+    closedBox.hidden = s !== 'closed';
+
+    form.hidden = s === 'closed';
+    input.disabled = s === 'closed';
+    sendBtn.disabled = s === 'closed';
+
+
+    staffBox.hidden = true;
+
+
+    if (s === 'bot') {
+        statusText.textContent = 'Bot đang hỗ trợ';
+    }
+
+    if (s === 'waiting_staff') {
+        statusText.textContent = 'Đang chờ nhân viên';
+    }
+
+    if (s === 'staff_connected') {
+        statusText.textContent = 'Đã kết nối nhân viên';
+
+        staffBox.hidden = false;
+
+        staffBox.textContent =
+            '👩‍💼 Chuyên viên: '
+            + (conversation.staff?.name || 'MommyKids');
+    }
+
+    if (s === 'closed') {
+        statusText.textContent = 'Phiên đã kết thúc';
+    }
+}
+async function openChat(){
+    panel.hidden = false;
+
+    launcher.setAttribute(
+        'aria-expanded',
+        'true'
+    );
+
+    const data = await req(
+        `${apiBase}/session`,
+        {
+            method:'POST',
+            body:'{}'
+        }
+    );
+
+    render(data);
+
+    start();
+
+    input.focus();
+}
     function closeChat(){panel.hidden=true;launcher.setAttribute('aria-expanded','false');stop()}
     async function poll(){if(!conversation||panel.hidden)return;try{render(await req(`${apiBase}/${conversation.id}/messages`))}catch(e){console.error(e)}}
-    function start(){stop();timer=setInterval(poll,2000)}function stop(){if(timer){clearInterval(timer);timer=null}}
+   function start(){
+    stop();
+    timer=setInterval(poll,15000);
+}function stop(){if(timer){clearInterval(timer);timer=null}}
     async function send(message){const text=String(message||'').trim();if(!text||!conversation||conversation.status==='closed')return;input.disabled=true;sendBtn.disabled=true;try{const data=await req(`${apiBase}/${conversation.id}/messages`,{method:'POST',body:JSON.stringify({message:text})});input.value='';render(data)}finally{if(conversation?.status!=='closed'){input.disabled=false;sendBtn.disabled=false;input.focus()}}}
 
     launcher.addEventListener('click',async()=>{if(panel.hidden){try{await openChat()}catch(e){alert(e.message)}}else closeChat()});closeBtn.addEventListener('click',closeChat);

@@ -20,11 +20,12 @@
     };
 
     $savedAddresses = auth()->check()
-        ? auth()->user()->addresses()->get()
+        ? auth()->user()->addresses()->orderByDesc('is_default')->latest()->get()
         : collect();
 
     $defaultAddress = $savedAddresses->firstWhere('is_default', true)
         ?? $savedAddresses->first();
+    $selectedAddressId = old('checkout_saved_address', $defaultAddress?->id);
 
     $initialFullName = old(
         'full_name',
@@ -65,9 +66,7 @@
         ? $defaultAddress->full_address
         : $initialAddress;
 
-    $hasAddressValue = filled($initialFullName)
-        || filled($initialPhone)
-        || filled($initialAddress);
+    $hasAddressValue = $defaultAddress !== null;
 @endphp
 
 <div class="tt-checkout-page">
@@ -102,33 +101,50 @@
 
             <div class="tt-layout">
                 <main class="tt-main">
-                    {{-- ĐỊA CHỈ --}}
-                    <section class="tt-card tt-address-card">
-                        <button type="button" class="tt-address-summary" data-open-address>
-                            <span class="tt-address-icon" aria-hidden="true">⌖</span>
-                            <span class="tt-address-copy">
-                                <span class="tt-address-title-row">
-                                    <strong id="address-summary-name">
-                                        {{ $initialFullName ?: 'Địa chỉ giao hàng' }}
-                                    </strong>
-                                    <span id="address-summary-phone">
-                                        {{ $initialPhone }}
+                    {{-- ĐỊA CHỈ ĐÃ LƯU: không nhập lại thông tin tại Checkout --}}
+                    <section class="tt-card tt-address-card" id="checkout-address-section">
+                        @if($defaultAddress)
+                            <button type="button" class="tt-address-summary" data-open-address>
+                                <span class="tt-address-icon" aria-hidden="true">⌖</span>
+                                <span class="tt-address-copy">
+                                    <span class="tt-address-title-row">
+                                        <strong id="address-summary-name">{{ $defaultAddress->recipient_name }}</strong>
+                                        <span id="address-summary-phone">{{ $defaultAddress->phone }}</span>
                                     </span>
+                                    <span class="tt-address-line" id="address-summary-line">{{ $defaultAddress->full_address }}</span>
+                                    <span class="tt-address-helper">Nhấn để chọn địa chỉ đã lưu khác</span>
                                 </span>
-                                <span class="tt-address-line" id="address-summary-line">
-                                    @if($hasAddressValue)
-                                        {{ $initialAddressLine }}
-                                    @else
-                                        Thêm địa chỉ nhận hàng
-                                    @endif
-                                </span>
-                                <span class="tt-address-helper">
-                                    Nhấn để {{ $hasAddressValue ? 'chỉnh sửa' : 'nhập' }} thông tin nhận hàng
-                                </span>
-                            </span>
-                            <span class="tt-chevron" aria-hidden="true">›</span>
-                        </button>
+                                <span class="tt-chevron" aria-hidden="true">›</span>
+                            </button>
+                        @else
+                            <div class="tt-address-missing">
+                                <strong>Chưa có địa chỉ nhận hàng</strong>
+                                <p>Hãy thêm địa chỉ vào Sổ địa chỉ trước khi đặt hàng.</p>
+                                @auth
+                                    <a href="{{ route('profile.addresses.index') }}" class="tt-address-manage">+ Thêm địa chỉ</a>
+                                @else
+                                    <a href="{{ route('profile.addresses.index') }}?add=1"
+                                class="checkout-address-add-link">
+                                    + Thêm địa chỉ
+</a>
+                                @endauth
+                            </div>
+                        @endif
                         <div class="tt-airmail" aria-hidden="true"></div>
+                    </section>
+
+                    {{-- Các tên/ID vẫn phải được gửi tới CheckoutController::store() --}}
+                    <input type="hidden" id="full_name" name="full_name" value="{{ $initialFullName }}">
+                    <input type="hidden" id="phone" name="phone" value="{{ $initialPhone }}">
+                    <input type="hidden" id="email" name="email" value="{{ $initialEmail }}">
+                    <input type="hidden" id="province" name="province_id" value="{{ $initialProvinceId }}">
+                    <input type="hidden" id="district" name="to_district_id" value="{{ $initialDistrictId }}">
+                    <input type="hidden" id="ward" name="to_ward_code" value="{{ $initialWardCode }}">
+                    <input type="hidden" id="address" name="address" value="{{ $initialAddress }}">
+
+                    <section class="tt-card tt-checkout-note" id="checkout-note-section">
+                        <label for="note" class="tt-note-label">Ghi chú đơn hàng <span>(không bắt buộc)</span></label>
+                        <textarea id="note" name="note" rows="2" maxlength="1000" placeholder="Ví dụ: Giao trong giờ hành chính">{{ old('note') }}</textarea>
                     </section>
 
                     {{-- SẢN PHẨM --}}
@@ -138,9 +154,9 @@
                                 <span class="tt-star-shop">MommyKids</span>
                                 <strong>MommyKids Store</strong>
                             </div>
-                            <button type="button" class="tt-link-button" data-open-address>
+                            <a class="tt-link-button" href="#checkout-note-section">
                                 Ghi chú <span>›</span>
-                            </button>
+                            </a>
                         </div>
 
                         <div class="tt-product-list">
@@ -262,13 +278,6 @@
                                         </select>
                                         <button
                                             type="button"
-                                            data-voucher-apply="order"
-                                            {{ auth()->guest() || $availableOrderVouchers->isEmpty() ? 'disabled' : '' }}
-                                        >
-                                            Áp dụng
-                                        </button>
-                                        <button
-                                            type="button"
                                             class="tt-voucher-remove"
                                             data-voucher-remove="order"
                                             {{ empty($checkoutVouchers['order']) ? 'hidden' : '' }}
@@ -318,13 +327,6 @@
                                         </select>
                                         <button
                                             type="button"
-                                            data-voucher-apply="shipping"
-                                            {{ auth()->guest() || $availableShippingVouchers->isEmpty() ? 'disabled' : '' }}
-                                        >
-                                            Áp dụng
-                                        </button>
-                                        <button
-                                            type="button"
                                             class="tt-voucher-remove"
                                             data-voucher-remove="shipping"
                                             {{ empty($checkoutVouchers['shipping']) ? 'hidden' : '' }}
@@ -369,6 +371,58 @@
                                 </span>
                                 <span class="tt-radio-ui"></span>
                             </label>
+                            @if(config('services.zalopay.enabled'))
+    <label class="tt-payment-option">
+        <input
+            type="radio"
+            name="payment_method"
+            value="zalopay"
+            {{ old('payment_method') === 'zalopay' ? 'checked' : '' }}
+        >
+        <span class="tt-payment-icon">💙</span>
+        <span class="tt-payment-copy">
+            <strong>ZaloPay</strong>
+            <small>Thanh toán an toàn qua ZaloPay Sandbox</small>
+        </span>
+        <span class="tt-radio-ui"></span>
+    </label>
+@endif
+
+
+@if(config('services.stripe.enabled'))
+    <label class="tt-payment-option">
+        <input
+            type="radio"
+            name="payment_method"
+            value="stripe"
+            {{ old('payment_method') === 'stripe' ? 'checked' : '' }}
+        >
+        <span class="tt-payment-icon">💳</span>
+        <span class="tt-payment-copy">
+            <strong>Stripe - Visa / Mastercard</strong>
+            <small>Thanh toán bằng thẻ quốc tế qua Stripe Sandbox</small>
+        </span>
+        <span class="tt-radio-ui"></span>
+    </label>
+@endif
+
+
+@if(config('services.paypal.enabled'))
+    <label class="tt-payment-option">
+        <input
+            type="radio"
+            name="payment_method"
+            value="paypal"
+            {{ old('payment_method') === 'paypal' ? 'checked' : '' }}
+        >
+        <span class="tt-payment-icon">🅿️</span>
+        <span class="tt-payment-copy">
+            <strong>PayPal</strong>
+            <small>Thanh toán qua PayPal Sandbox</small>
+        </span>
+        <span class="tt-radio-ui"></span>
+    </label>
+@endif
 
                             <label class="tt-payment-option">
                                 <input
@@ -385,56 +439,6 @@
                                 <span class="tt-radio-ui"></span>
                             </label>
 
-                            @if(config('services.zalopay.enabled'))
-                                <label class="tt-payment-option">
-                                    <input
-                                        type="radio"
-                                        name="payment_method"
-                                        value="zalopay"
-                                        {{ old('payment_method') === 'zalopay' ? 'checked' : '' }}
-                                    >
-                                    <span class="tt-payment-icon">💙</span>
-                                    <span class="tt-payment-copy">
-                                        <strong>ZaloPay</strong>
-                                        <small>Thanh toán an toàn qua ZaloPay Sandbox</small>
-                                    </span>
-                                    <span class="tt-radio-ui"></span>
-                                </label>
-                            @endif
-
-                            @if(config('services.stripe.enabled'))
-                                <label class="tt-payment-option">
-                                    <input
-                                        type="radio"
-                                        name="payment_method"
-                                        value="stripe"
-                                        {{ old('payment_method') === 'stripe' ? 'checked' : '' }}
-                                    >
-                                    <span class="tt-payment-icon">💳</span>
-                                    <span class="tt-payment-copy">
-                                        <strong>Stripe - Visa / Mastercard</strong>
-                                        <small>Thanh toán bằng thẻ quốc tế qua Stripe Sandbox</small>
-                                    </span>
-                                    <span class="tt-radio-ui"></span>
-                                </label>
-                            @endif
-
-                            @if(config('services.paypal.enabled'))
-                                <label class="tt-payment-option">
-                                    <input
-                                        type="radio"
-                                        name="payment_method"
-                                        value="paypal"
-                                        {{ old('payment_method') === 'paypal' ? 'checked' : '' }}
-                                    >
-                                    <span class="tt-payment-icon">🅿️</span>
-                                    <span class="tt-payment-copy">
-                                        <strong>PayPal</strong>
-                                        <small>Thanh toán qua PayPal Sandbox</small>
-                                    </span>
-                                    <span class="tt-radio-ui"></span>
-                                </label>
-                            @endif
                         </div>
                     </section>
                 </main>
@@ -493,7 +497,7 @@
                         <strong id="checkout-total">{{ number_format($total, 0, ',', '.') }}đ</strong>
                     </div>
 
-                    <button class="tt-primary" type="submit">
+                    <button class="tt-primary" type="submit" {{ $defaultAddress ? '' : 'disabled' }}>
                         Đặt hàng
                     </button>
 
@@ -509,179 +513,68 @@
                     <small>Tổng</small>
                     <strong id="checkout-total-mobile">{{ number_format($total, 0, ',', '.') }}đ</strong>
                 </div>
-                <button type="submit">Đặt hàng</button>
+                <button type="submit" {{ $defaultAddress ? '' : 'disabled' }}>Đặt hàng</button>
             </div>
 
-            {{-- ADDRESS DRAWER / MODAL --}}
+            {{-- CHỈ CHỌN ĐỊA CHỈ ĐÃ LƯU; THÊM / SỬA Ở SỔ ĐỊA CHỈ --}}
             <div class="tt-address-overlay" id="address-editor" hidden>
-                <div class="tt-address-sheet" role="dialog" aria-modal="true" aria-labelledby="address-editor-title">
+                <div class="tt-address-sheet" role="dialog" aria-modal="true" aria-labelledby="address-editor-title" tabindex="-1">
                     <div class="tt-address-sheet-head">
-                        <button type="button" class="tt-sheet-back" data-close-address>‹</button>
-                        <h2 id="address-editor-title">Địa chỉ của bạn</h2>
+                        <button type="button" class="tt-sheet-back" data-close-address aria-label="Đóng">‹</button>
+                        <h2 id="address-editor-title">Chọn địa chỉ nhận hàng</h2>
                         <span></span>
                     </div>
-
                     <div class="tt-address-sheet-body">
-                        @auth
-                            <div class="tt-saved-addresses">
-                                <div class="tt-saved-addresses-head">
-                                    <div>
-                                        <strong>Địa chỉ đã lưu</strong>
-                                        <small>Chọn một địa chỉ để dùng ngay cho đơn hàng này</small>
-                                    </div>
-                                    <a href="{{ url('/ho-so/dia-chi') }}">＋ Thêm địa chỉ</a>
+                        <div class="tt-saved-addresses">
+                            <div class="tt-saved-addresses-head">
+                                <div>
+                                    <strong>Địa chỉ đã lưu</strong>
+                                    <small>Chọn một địa chỉ trong Sổ địa chỉ của bạn</small>
                                 </div>
-                                @forelse($savedAddresses as $savedAddress)
-                                    <label class="tt-saved-address-item">
-                                        <input
-                                            type="radio"
-                                            name="checkout_saved_address"
-                                            value="{{ $savedAddress->id }}"
-                                            data-saved-address
-                                            data-recipient-name="{{ $savedAddress->recipient_name }}"
-                                            data-phone="{{ $savedAddress->phone }}"
-                                            data-province-id="{{ $savedAddress->province_id }}"
-                                            data-district-id="{{ $savedAddress->district_id }}"
-                                            data-ward-code="{{ $savedAddress->ward_code }}"
-                                            data-address-detail="{{ $savedAddress->address_detail }}"
-                                            {{ $defaultAddress?->id === $savedAddress->id ? 'checked' : '' }}
-                                        >
-                                        <span class="tt-saved-radio-ui"></span>
-                                        <span class="tt-saved-address-copy">
-                                            <span class="tt-saved-name-row">
-                                                <strong>{{ $savedAddress->recipient_name }}</strong>
-                                                <span>{{ $savedAddress->phone }}</span>
-                                            </span>
-                                            <span class="tt-saved-address-line">
-                                                {{ $savedAddress->full_address }}
-                                            </span>
-                                            <span class="tt-saved-tags">
-                                                @if($savedAddress->is_default)
-                                                    <em>Mặc định</em>
-                                                @endif
-                                                @if($savedAddress->label)
-                                                    <em>{{ $savedAddress->label }}</em>
-                                                @endif
-                                            </span>
+                                <a href="{{ route('profile.addresses.index') }}">Quản lý địa chỉ ↗</a>
+                            </div>
+                            @forelse($savedAddresses as $savedAddress)
+                                <label class="tt-saved-address-item">
+                                    <input type="radio"
+                                           name="checkout_saved_address"
+                                           value="{{ $savedAddress->id }}"
+                                           data-saved-address
+                                           data-recipient-name="{{ $savedAddress->recipient_name }}"
+                                           data-phone="{{ $savedAddress->phone }}"
+                                           data-province-id="{{ $savedAddress->province_id }}"
+                                           data-province-name="{{ $savedAddress->province_name }}"
+                                           data-district-id="{{ $savedAddress->district_id }}"
+                                           data-district-name="{{ $savedAddress->district_name }}"
+                                           data-ward-code="{{ $savedAddress->ward_code }}"
+                                           data-ward-name="{{ $savedAddress->ward_name }}"
+                                           data-address-detail="{{ $savedAddress->address_detail }}"
+                                           data-full-address="{{ $savedAddress->full_address }}"
+                                           {{ (string) $selectedAddressId === (string) $savedAddress->id ? 'checked' : '' }}>
+                                    <span class="tt-saved-radio-ui"></span>
+                                    <span class="tt-saved-address-copy">
+                                        <span class="tt-saved-name-row">
+                                            <strong>{{ $savedAddress->recipient_name }}</strong>
+                                            <span>{{ $savedAddress->phone }}</span>
                                         </span>
-                                    </label>
-                                @empty
-                                    <div class="tt-saved-empty">
-                                        Bạn chưa có địa chỉ nào trong kho.
-                                        Hãy thêm địa chỉ để lần sau chỉ cần chọn.
-                                    </div>
-                                @endforelse
-
-                                @if($savedAddresses->isNotEmpty())
-                                    <button
-                                        type="button"
-                                        class="tt-use-saved-address"
-                                        id="use-saved-address"
-                                    >
-                                        Dùng địa chỉ đã chọn
-                                    </button>
-                                @endif
-                            </div>
-                            <div class="tt-address-divider">
-                                <span>hoặc nhập địa chỉ khác</span>
-                            </div>
-                        @endauth
-
-                        <div class="tt-address-form-title">
-                            <span>＋</span>
-                            <strong>Thông tin nhận hàng</strong>
+                                        <span class="tt-saved-address-line">{{ $savedAddress->full_address }}</span>
+                                        <span class="tt-saved-tags">
+                                            @if($savedAddress->is_default)<em>Mặc định</em>@endif
+                                            @if($savedAddress->label)<em>{{ $savedAddress->label }}</em>@endif
+                                        </span>
+                                    </span>
+                                </label>
+                            @empty
+                                <div class="tt-saved-empty">Bạn chưa lưu địa chỉ. Vào Sổ địa chỉ để thêm mới.</div>
+                            @endforelse
                         </div>
-
-                        <div class="tt-form-grid">
-                            <label class="tt-field tt-full">
-                                <span>Họ và tên <b>*</b></span>
-                                <input
-                                    id="full_name"
-                                    name="full_name"
-                                    value="{{ $initialFullName }}"
-                                    placeholder="Nguyễn Văn An"
-                                    required
-                                >
-                            </label>
-
-                            <label class="tt-field">
-                                <span>Số điện thoại <b>*</b></span>
-                                <input
-                                    id="phone"
-                                    name="phone"
-                                    value="{{ $initialPhone }}"
-                                    placeholder="0901234567"
-                                    required
-                                >
-                            </label>
-
-                            <label class="tt-field">
-                                <span>Email</span>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    value="{{ $initialEmail }}"
-                                    placeholder="an@example.com"
-                                >
-                            </label>
-
-                            <label class="tt-field">
-                                <span>Tỉnh / Thành phố <b>*</b></span>
-                                <select id="province" name="province_id" required>
-                                    <option value="">-- Chọn tỉnh/thành --</option>
-                                    @foreach ($provinces as $province)
-                                        <option
-                                            value="{{ $province['ProvinceID'] }}"
-                                            {{ (string) $initialProvinceId === (string) $province['ProvinceID'] ? 'selected' : '' }}
-                                        >
-                                            {{ $province['ProvinceName'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </label>
-
-                            <label class="tt-field">
-                                <span>Quận / Huyện <b>*</b></span>
-                                <select id="district" name="to_district_id" required disabled>
-                                    <option value="">-- Chọn quận/huyện --</option>
-                                </select>
-                            </label>
-
-                            <label class="tt-field tt-full">
-                                <span>Phường / Xã <b>*</b></span>
-                                <select id="ward" name="to_ward_code" required disabled>
-                                    <option value="">-- Chọn phường/xã --</option>
-                                </select>
-                            </label>
-
-                            <label class="tt-field tt-full">
-                                <span>Địa chỉ chi tiết <b>*</b></span>
-                                <input
-                                    id="address"
-                                    name="address"
-                                    value="{{ $initialAddress }}"
-                                    placeholder="Số nhà, tên đường..."
-                                    required
-                                >
-                            </label>
-
-                            <label class="tt-field tt-full">
-                                <span>Ghi chú</span>
-                                <textarea
-                                    id="note"
-                                    name="note"
-                                    rows="3"
-                                    placeholder="Giao hàng giờ hành chính"
-                                >{{ old('note') }}</textarea>
-                            </label>
-                        </div>
+                        <p class="tt-address-picker-error" id="ttAddressPickerError" role="alert" hidden></p>
                     </div>
-
                     <div class="tt-address-sheet-footer">
-                        <button type="button" class="tt-address-save" id="save-address">
-                            Xác nhận địa chỉ
-                        </button>
+                        @if($savedAddresses->isNotEmpty())
+                            <button type="button" class="tt-address-save" id="use-saved-address">Dùng địa chỉ đã chọn</button>
+                        @else
+                            <a class="tt-address-save tt-address-save-link" href="{{ route('profile.addresses.index') }}">Thêm địa chỉ mới</a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -722,6 +615,20 @@
 .tt-address-line{display:block;color:#333;font-size:15px;line-height:1.5;word-break:break-word}
 .tt-address-helper{font-size:12px;color:#9ca3af}
 .tt-chevron{font-size:30px;color:#9ca3af;line-height:1}
+
+.tt-address-missing{padding:22px;display:flex;flex-direction:column;gap:8px}
+.tt-address-missing p{margin:0;color:var(--tt-muted);font-size:14px}
+.tt-address-manage{align-self:flex-start;display:inline-flex;background:var(--tt-pink);color:white;text-decoration:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px}
+.tt-checkout-note{padding:16px 20px}
+.tt-note-label{display:block;font-weight:750;margin-bottom:9px}
+.tt-note-label span{font-size:12px;color:var(--tt-muted);font-weight:400}
+.tt-checkout-note textarea{display:block;width:100%;box-sizing:border-box;border:1px solid #e5e7eb;border-radius:10px;padding:12px;font:inherit;resize:vertical}
+.tt-checkout-note textarea:focus{outline:2px solid #ffc1cf;border-color:var(--tt-pink)}
+.tt-primary:disabled,.tt-mobile-bar button:disabled{opacity:.5;cursor:not-allowed}
+.tt-address-picker-error{color:#b42344;background:#fff1f3;padding:10px;border-radius:8px;font-size:13px}
+.tt-address-save:disabled{opacity:.5;cursor:wait}
+.tt-address-save-link{display:block;text-align:center;text-decoration:none}
+
 .tt-airmail{height:4px;background:repeating-linear-gradient(135deg,#ff4665 0 22px,#fff 22px 34px,#27c3d7 34px 56px,#fff 56px 68px)}
 
 .tt-shop-card{padding:0 0 14px;overflow:hidden}
@@ -764,7 +671,7 @@
 .tt-voucher-box-title>span{font-size:22px}
 .tt-voucher-box-title strong{display:block}
 .tt-voucher-box-title small{display:block;color:var(--tt-muted);margin-top:3px}
-.tt-voucher-controls{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;margin-top:12px}
+.tt-voucher-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px}
 .tt-voucher-controls select{min-width:0;width:100%;border:1px solid #ddd;border-radius:8px;padding:11px 36px 11px 11px;background:#fff;font:inherit;outline:none}
 .tt-voucher-controls button{border:0;border-radius:8px;background:var(--tt-pink);color:#fff;font-weight:700;padding:0 14px;cursor:pointer}
 .tt-voucher-controls button:disabled{opacity:.55;cursor:not-allowed}
@@ -814,19 +721,6 @@
 .tt-address-sheet-head h2{margin:0;text-align:center;font-size:20px}
 .tt-sheet-back{border:0;background:transparent;font-size:34px;cursor:pointer;line-height:1}
 .tt-address-sheet-body{overflow:auto;padding:20px}
-.tt-address-form-title{display:flex;gap:10px;align-items:center;font-size:17px;margin-bottom:18px}
-.tt-address-form-title>span{font-size:28px;color:#777}
-.tt-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.tt-field{display:flex;flex-direction:column;gap:7px;min-width:0}
-.tt-field>span{font-weight:700;font-size:14px}
-.tt-field b{color:var(--tt-pink)}
-.tt-full{grid-column:1/-1}
-.tt-field input,.tt-field textarea,.tt-field select{width:100%;min-width:0;box-sizing:border-box;border:1px solid #ddd;border-radius:10px;background:#fff;padding:13px 14px;font:inherit;outline:none}
-.tt-field input:focus,.tt-field textarea:focus,.tt-field select:focus{border-color:var(--tt-pink);box-shadow:0 0 0 3px rgba(255,47,85,.08)}
-.tt-field select:disabled{background:#f5f5f5;color:#a0a0a0}
-.tt-address-sheet-footer{border-top:1px solid #eee;padding:14px 20px;background:#fff}
-.tt-address-save{width:100%;border:0;border-radius:999px;background:var(--tt-pink);color:#fff;font-weight:800;font-size:16px;padding:14px;cursor:pointer}
-
 /* Kho địa chỉ */
 .tt-saved-addresses{border:1px solid #ececec;border-radius:12px;overflow:hidden;background:#fff;margin-bottom:18px}
 .tt-saved-addresses-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:15px 16px;border-bottom:1px solid #f0f0f0;background:#fafafa}
@@ -889,13 +783,41 @@
     .tt-section-trigger{padding:17px 16px;grid-template-columns:28px 1fr auto 16px}
     .tt-section-label{font-size:16px}
     .tt-expand-panel{padding:16px}
-    .tt-voucher-controls{grid-template-columns:1fr 1fr}
-    .tt-voucher-controls select{grid-column:1/-1}
+    .tt-voucher-controls{grid-template-columns:minmax(0,1fr) auto}
+    .tt-voucher-controls select{grid-column:auto}
     .tt-payment-card{padding:16px}
     .tt-summary-total{font-size:20px}
     .tt-summary-total strong{font-size:25px}
-    .tt-form-grid{grid-template-columns:1fr}
-    .tt-full{grid-column:auto}
+}
+/* Căn giữa nút Áp dụng */
+.tt-address-sheet-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 18px 24px;
+    background: #fff;
+    border-top: 1px solid #f0e1e6;
+}
+
+.tt-address-sheet-footer .tt-address-save {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 240px;
+    min-height: 50px;
+    margin: 0;
+    padding: 12px 24px;
+    background: #ff315d;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.tt-address-sheet-footer .tt-address-save:hover {
+    background: #e91e4d;
 }
 </style>
 
@@ -950,7 +872,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const addressSummaryName = document.getElementById('address-summary-name');
     const addressSummaryPhone = document.getElementById('address-summary-phone');
     const addressSummaryLine = document.getElementById('address-summary-line');
-    const saveAddressButton = document.getElementById('save-address');
     const useSavedAddressButton = document.getElementById('use-saved-address');
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -976,119 +897,97 @@ document.addEventListener('DOMContentLoaded', () => {
         return raw.slice(0, 3) + '****' + raw.slice(-3);
     }
 
-    function selectedText(select) {
-        if (!select || !select.value) {
-            return '';
-        }
-
-        return select.options[select.selectedIndex]?.text?.trim() || '';
-    }
-
-    function updateAddressSummary() {
-        const name = fullName?.value?.trim() || '';
-        const phoneValue = phone?.value?.trim() || '';
-        const detail = address?.value?.trim() || '';
-        const wardText = selectedText(ward);
-        const districtText = selectedText(district);
-        const provinceText = selectedText(province);
-
-        addressSummaryName.textContent = name || 'Địa chỉ giao hàng';
-        addressSummaryPhone.textContent = phoneValue ? maskPhone(phoneValue) : '';
-
-        const parts = [detail, wardText, districtText, provinceText]
-            .filter(Boolean);
-
-        addressSummaryLine.textContent = parts.length
-            ? parts.join(', ')
-            : 'Thêm địa chỉ nhận hàng';
+    function updateAddressSummary(selected = null) {
+        const record = selected || document.querySelector('[data-saved-address]:checked');
+        if (!record) return;
+        addressSummaryName.textContent = record.dataset.recipientName || 'Địa chỉ giao hàng';
+        addressSummaryPhone.textContent = record.dataset.phone ? maskPhone(record.dataset.phone) : '';
+        addressSummaryLine.textContent = record.dataset.fullAddress || '';
     }
 
     function openAddressEditor() {
+        if (!addressEditor) return;
         addressEditor.hidden = false;
         document.body.style.overflow = 'hidden';
+        addressEditor.querySelector('.tt-address-sheet')?.focus();
     }
 
     function closeAddressEditor() {
+        if (!addressEditor) return;
         addressEditor.hidden = true;
         document.body.style.overflow = '';
     }
 
-    function validateAddressBeforeClose() {
-        const requiredFields = [
-            fullName,
-            phone,
-            province,
-            district,
-            ward,
-            address,
-        ];
-
-        for (const field of requiredFields) {
-            if (!field || !field.value) {
-                field?.reportValidity?.();
-                field?.focus?.();
-                return false;
-            }
-        }
-
-        return true;
+    const addressPickerError = document.getElementById('ttAddressPickerError');
+    let addressReady = false;
+    function showAddressError(message) {
+        if (!addressPickerError) return;
+        addressPickerError.textContent = message;
+        addressPickerError.hidden = !message;
     }
 
     async function useSelectedSavedAddress() {
         const selected = document.querySelector('[data-saved-address]:checked');
-
         if (!selected) {
+            showAddressError('Vui lòng chọn một địa chỉ đã lưu.');
             return;
         }
-
-        fullName.value = selected.dataset.recipientName || '';
-        phone.value = selected.dataset.phone || '';
-        address.value = selected.dataset.addressDetail || '';
-
-        const provinceId = selected.dataset.provinceId || '';
-        const districtId = selected.dataset.districtId || '';
-        const wardCode = selected.dataset.wardCode || '';
-
-        province.value = provinceId;
-
-        if (provinceId) {
-            await loadDistricts(provinceId, districtId);
+        showAddressError('');
+        if (useSavedAddressButton) useSavedAddressButton.disabled = true;
+        addressReady = false;
+        try {
+            fullName.value = selected.dataset.recipientName || '';
+            phone.value = selected.dataset.phone || '';
+            address.value = selected.dataset.addressDetail || '';
+            province.value = selected.dataset.provinceId || '';
+            district.value = '';
+            ward.value = '';
+            if (!province.value || !selected.dataset.districtId || !selected.dataset.wardCode || !address.value) {
+                throw new Error('Địa chỉ này chưa đủ thông tin GHN. Hãy cập nhật địa chỉ trong Sổ địa chỉ.');
+            }
+            const districtsLoaded = await loadDistricts(province.value, selected.dataset.districtId);
+            if (!districtsLoaded || district.value !== String(selected.dataset.districtId)) {
+                throw new Error('Không tìm thấy quận/huyện của địa chỉ đã lưu. Vui lòng kiểm tra lại.');
+            }
+            const wardsLoaded = await loadWards(district.value, selected.dataset.wardCode);
+            if (!wardsLoaded || ward.value !== String(selected.dataset.wardCode)) {
+                throw new Error('Không tìm thấy phường/xã của địa chỉ đã lưu. Vui lòng kiểm tra lại.');
+            }
+            const feeLoaded = await calculateShippingFee();
+            if (!feeLoaded) {
+                throw new Error('Không tính được phí vận chuyển. Vui lòng thử lại trước khi đặt hàng.');
+            }
+            addressReady = true;
+            document.querySelectorAll('#checkout-form button[type="submit"]').forEach(b => b.disabled = false);
+            updateAddressSummary(selected);
+            closeAddressEditor();
+        } catch (e) {
+            console.error(e);
+            showAddressError(e.message || 'Không thể dùng địa chỉ này.');
+            document.querySelectorAll('#checkout-form button[type="submit"]').forEach(b => b.disabled = true);
+        } finally {
+            if (useSavedAddressButton) useSavedAddressButton.disabled = false;
         }
-
-        if (districtId) {
-            await loadWards(districtId, wardCode);
-        }
-
-        if (districtId && wardCode) {
-            await calculateShippingFee();
-        }
-
-        updateAddressSummary();
-        closeAddressEditor();
     }
 
     useSavedAddressButton?.addEventListener('click', useSelectedSavedAddress);
-
     document.querySelectorAll('[data-open-address]').forEach(button => {
         button.addEventListener('click', openAddressEditor);
     });
-
     document.querySelectorAll('[data-close-address]').forEach(button => {
         button.addEventListener('click', closeAddressEditor);
     });
-
-    saveAddressButton?.addEventListener('click', () => {
-        if (!validateAddressBeforeClose()) {
-            return;
-        }
-
-        updateAddressSummary();
-        closeAddressEditor();
-    });
-
     addressEditor?.addEventListener('click', event => {
-        if (event.target === addressEditor) {
-            closeAddressEditor();
+        if (event.target === addressEditor) closeAddressEditor();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && addressEditor && !addressEditor.hidden) closeAddressEditor();
+    });
+    document.getElementById('checkout-form')?.addEventListener('submit', event => {
+        if (!addressReady) {
+            event.preventDefault();
+            showAddressError('Chọn địa chỉ và đợi tính xong phí vận chuyển trước khi đặt hàng.');
+            openAddressEditor();
         }
     });
 
@@ -1175,103 +1074,47 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPricing();
     }
 
-    async function loadDistricts(provinceId, selectedDistrictId = null) {
-        district.disabled = true;
-        ward.disabled = true;
-        district.innerHTML = '<option value="">Đang tải...</option>';
-        ward.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+    // Xác thực ID với danh sách GHN nhưng không hiển thị lại form nhập địa chỉ.
+    async function loadDistricts(provinceId, districtId) {
+        district.value = '';
+        ward.value = '';
         resetShippingPricing();
-
-        if (!provinceId) {
-            district.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
-            updateAddressSummary();
-            return;
-        }
-
+        if (!provinceId || !districtId) return false;
         try {
             const response = await fetch(
-                `${config.routes.districts}?province_id=${provinceId}`,
-                {
-                    headers: {
-                        'Accept': 'application/json',
-                    },
-                }
+                `${config.routes.districts}?province_id=${encodeURIComponent(provinceId)}`,
+                { headers: { 'Accept': 'application/json' } }
             );
-
-            if (!response.ok) {
-                throw new Error('Không tải được quận/huyện.');
-            }
-
-            const data = await response.json();
-            district.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
-
-            data.forEach(item => {
-                const isSelected = selectedDistrictId
-                    && String(selectedDistrictId) === String(item.DistrictID)
-                    ? 'selected'
-                    : '';
-
-                district.innerHTML += `
-                    <option value="${item.DistrictID}" ${isSelected}>
-                        ${item.DistrictName}
-                    </option>
-                `;
-            });
-
-            district.disabled = false;
-            updateAddressSummary();
+            if (!response.ok) throw new Error('Không tải được quận/huyện từ GHN.');
+            const payload = await response.json();
+            const rows = Array.isArray(payload) ? payload : (payload.data || []);
+            const found = rows.some(item => String(item.DistrictID) === String(districtId));
+            if (found) district.value = String(districtId);
+            return found;
         } catch (error) {
-            district.innerHTML = '<option value="">Không tải được quận/huyện</option>';
             console.error(error);
+            return false;
         }
     }
 
-    async function loadWards(districtId, selectedWardCode = null) {
-        ward.disabled = true;
-        ward.innerHTML = '<option value="">Đang tải...</option>';
+    async function loadWards(districtId, wardCode) {
+        ward.value = '';
         resetShippingPricing();
-
-        if (!districtId) {
-            ward.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
-            updateAddressSummary();
-            return;
-        }
-
+        if (!districtId || !wardCode) return false;
         try {
             const response = await fetch(
-                `${config.routes.wards}?district_id=${districtId}`,
-                {
-                    headers: {
-                        'Accept': 'application/json',
-                    },
-                }
+                `${config.routes.wards}?district_id=${encodeURIComponent(districtId)}`,
+                { headers: { 'Accept': 'application/json' } }
             );
-
-            if (!response.ok) {
-                throw new Error('Không tải được phường/xã.');
-            }
-
-            const data = await response.json();
-            ward.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
-
-            data.forEach(item => {
-                const isSelected = selectedWardCode
-                    && String(selectedWardCode) === String(item.WardCode)
-                    ? 'selected'
-                    : '';
-
-                ward.innerHTML += `
-                    <option value="${item.WardCode}" ${isSelected}>
-                        ${item.WardName}
-                    </option>
-                `;
-            });
-
-            ward.disabled = false;
-            updateAddressSummary();
+            if (!response.ok) throw new Error('Không tải được phường/xã từ GHN.');
+            const payload = await response.json();
+            const rows = Array.isArray(payload) ? payload : (payload.data || []);
+            const found = rows.some(item => String(item.WardCode) === String(wardCode));
+            if (found) ward.value = String(wardCode);
+            return found;
         } catch (error) {
-            ward.innerHTML = '<option value="">Không tải được phường/xã</option>';
             console.error(error);
+            return false;
         }
     }
 
@@ -1308,171 +1151,95 @@ document.addEventListener('DOMContentLoaded', () => {
                     element.textContent = message;
                 });
                 console.error(data);
-                return;
+                return false;
             }
 
             applyPricingPayload(data);
+            return true;
         } catch (error) {
             shippingText.textContent = 'Không tính được phí';
             shippingMirrors.forEach(element => {
                 element.textContent = 'Không tính được phí';
             });
             console.error(error);
+            return false;
         }
     }
 
-    async function applyVoucher(type) {
+    // Lưu lựa chọn đã áp dụng để khôi phục nếu API từ chối mã mới.
+    const appliedVoucherIds = {
+        order: document.getElementById('voucher-order-id')?.value || '',
+        shipping: document.getElementById('voucher-shipping-id')?.value || '',
+    };
+    const voucherPending = { order: false, shipping: false };
+
+    async function changeVoucher(type, voucherId) {
         const select = document.getElementById(`voucher-${type}-id`);
         const status = document.getElementById(`voucher-${type}-status`);
-        const button = document.querySelector(
-            `[data-voucher-apply="${type}"]`
-        );
-        const removeButton = document.querySelector(
-            `[data-voucher-remove="${type}"]`
-        );
-        const voucherId = select?.value ?? '';
+        const removeButton = document.querySelector(`[data-voucher-remove="${type}"]`);
+        if (!select || !status || voucherPending[type]) return;
 
+        // Tránh gửi lại API nếu người dùng chọn đúng voucher đang áp dụng.
+        if (voucherId === appliedVoucherIds[type]) return;
+
+        voucherPending[type] = true;
+        select.disabled = true;
+        if (removeButton) removeButton.disabled = true;
         status.classList.remove('is-error');
-
-        if (!voucherId) {
-            status.textContent = 'Vui lòng chọn một mã ưu đãi trong ví.';
-            status.classList.add('is-error');
-            return;
-        }
-
-        button.disabled = true;
-        status.textContent = 'Đang kiểm tra mã...';
+        status.textContent = voucherId ? 'Đang áp dụng mã...' : 'Đang gỡ mã...';
 
         try {
-            const response = await fetch(config.routes.voucherApply, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken ?? '',
-                },
-                body: JSON.stringify({
-                    type,
-                    voucher_id: voucherId,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(
-                    data.message ?? 'Không thể áp dụng mã ưu đãi.'
-                );
-            }
-
-            select.value = data.voucher.id;
-            status.textContent = data.message;
-            removeButton.hidden = false;
-            applyPricingPayload(data.pricing);
-        } catch (error) {
-            status.textContent = error.message;
-            status.classList.add('is-error');
-        } finally {
-            button.disabled = false;
-        }
-    }
-
-    async function removeVoucher(type) {
-        const select = document.getElementById(`voucher-${type}-id`);
-        const status = document.getElementById(`voucher-${type}-status`);
-        const removeButton = document.querySelector(
-            `[data-voucher-remove="${type}"]`
-        );
-
-        removeButton.disabled = true;
-        status.classList.remove('is-error');
-
-        try {
-            const response = await fetch(config.routes.voucherRemove, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken ?? '',
-                },
-                body: JSON.stringify({ type }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(
-                    data.message ?? 'Không thể gỡ mã ưu đãi.'
-                );
-            }
-
-            select.value = '';
-            status.textContent = data.message;
-            removeButton.hidden = true;
-            applyPricingPayload(data.pricing);
-        } catch (error) {
-            status.textContent = error.message;
-            status.classList.add('is-error');
-        } finally {
-            removeButton.disabled = false;
-        }
-    }
-
-    document.querySelectorAll('[data-voucher-apply]').forEach(button => {
-        button.addEventListener('click', () => {
-            applyVoucher(button.dataset.voucherApply);
-        });
-    });
-
-    document.querySelectorAll('[data-voucher-remove]').forEach(button => {
-        button.addEventListener('click', () => {
-            removeVoucher(button.dataset.voucherRemove);
-        });
-    });
-
-    fullName?.addEventListener('input', updateAddressSummary);
-    phone?.addEventListener('input', updateAddressSummary);
-    address?.addEventListener('input', updateAddressSummary);
-
-    province.addEventListener('change', async () => {
-        await loadDistricts(province.value);
-        updateAddressSummary();
-    });
-
-    district.addEventListener('change', async () => {
-        await loadWards(district.value);
-        updateAddressSummary();
-    });
-
-    ward.addEventListener('change', async () => {
-        updateAddressSummary();
-        await calculateShippingFee();
-    });
-
-    async function restoreOldState() {
-        if (config.oldProvinceId) {
-            await loadDistricts(
-                config.oldProvinceId,
-                config.oldDistrictId
-            );
-
-            if (config.oldDistrictId) {
-                await loadWards(
-                    config.oldDistrictId,
-                    config.oldWardCode
-                );
-
-                if (config.oldWardCode) {
-                    await calculateShippingFee();
+            const response = await fetch(
+                voucherId ? config.routes.voucherApply : config.routes.voucherRemove,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken ?? '',
+                    },
+                    body: JSON.stringify(
+                        voucherId ? { type, voucher_id: voucherId } : { type }
+                    ),
                 }
+            );
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Không thể cập nhật voucher.');
             }
-        }
 
-        updateAddressSummary();
+            const acceptedId = voucherId ? String(data.voucher?.id ?? voucherId) : '';
+            appliedVoucherIds[type] = acceptedId;
+            select.value = acceptedId;
+            status.textContent = data.message || (acceptedId ? 'Đã áp dụng mã.' : 'Đã gỡ mã.');
+            if (removeButton) removeButton.hidden = !acceptedId;
+            applyPricingPayload(data.pricing);
+        } catch (error) {
+            // API không chấp nhận: đưa dropdown về mã đã được áp dụng thực sự.
+            select.value = appliedVoucherIds[type];
+            status.textContent = error.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+            status.classList.add('is-error');
+        } finally {
+            voucherPending[type] = false;
+            select.disabled = false;
+            if (removeButton) removeButton.disabled = false;
+        }
     }
 
+    ['order', 'shipping'].forEach(type => {
+        const select = document.getElementById(`voucher-${type}-id`);
+        select?.addEventListener('change', () => changeVoucher(type, select.value));
+
+        // Giữ nút Gỡ: người dùng cũng có thể chọn dòng trống trong dropdown.
+        document.querySelector(`[data-voucher-remove="${type}"]`)
+            ?.addEventListener('click', () => changeVoucher(type, ''));
+    });
+
+    // Tự chọn địa chỉ mặc định và tính phí lúc mở Checkout.
     renderPricing();
-    restoreOldState();
+    if (document.querySelector('[data-saved-address]:checked')) {
+        useSelectedSavedAddress();
+    }
 
     @if($errors->any())
         openAddressEditor();
