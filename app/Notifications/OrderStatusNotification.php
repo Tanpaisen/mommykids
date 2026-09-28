@@ -13,6 +13,7 @@ use Throwable;
 class OrderStatusNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+    public $tries = 1;
 
     /**
      * Create a new notification instance.
