@@ -11,6 +11,7 @@ use Illuminate\Notifications\Notification;
 class CancellationResultNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+    public $tries = 1;
 
     /**
      * Create a new notification instance.

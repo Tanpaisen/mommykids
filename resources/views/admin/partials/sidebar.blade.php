@@ -93,6 +93,7 @@
                 ['label' => 'Khách hàng', 'route' => 'admin.clients.index', 'can' => 'crm.view'], 
                 ['label' => 'Chăm sóc khách hàng', 'route' => 'admin.customer-care.index', 'can' => 'crm.view'],
                 ['label' => 'Voucher', 'route' => 'admin.vouchers.index', 'can' => 'vouchers.manage'],
+                ['label' => 'Log thông báo', 'route' => 'admin.notification-logs.index', 'active' => 'admin.notification-logs.*', 'can' => 'marketing.manage'],
                 ['label' => 'Cài đặt chung', 'route' => 'admin.settings.index', 'can' => 'marketing.manage'], 
             ],
         ],
