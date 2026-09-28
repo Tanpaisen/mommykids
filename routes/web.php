@@ -134,9 +134,16 @@ Route::get('/chinh-sach-doi-tra', [PageController::class, 'returnPolicy'])->name
 Route::get('/chinh-sach-van-chuyen', [PageController::class, 'shippingPolicy'])->name('pages.shipping');
 Route::get('/chinh-sach-bao-mat', [PageController::class, 'privacyPolicy'])->name('pages.privacy');
 
-Route::get('/thong-bao', [NotificationController::class, 'index'])
-    ->middleware('auth')
-    ->name('notifications.index');
+Route::middleware('auth')->prefix('thong-bao')->name('notifications.')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::get('/moi-nhat', [NotificationController::class, 'latest'])->name('latest'); // JSON cho dropdown chuông
+    Route::post('/doc-tat-ca', [NotificationController::class, 'readAll'])->name('readAll');
+    Route::post('/{id}/doc', [NotificationController::class, 'read'])->name('read');
+    Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+    Route::get('/so-luong', [NotificationController::class, 'unreadCount'])->name('count');
+    Route::get('/cai-dat', [NotificationController::class, 'preferences'])->name('preferences');
+    Route::put('/cai-dat', [NotificationController::class, 'updatePreferences'])->name('preferences.update');
+});
 
 Route::get('/khuyen-mai', [VoucherController::class, 'index'])
     ->name('vouchers.index');
