@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 
 class CategoryController extends Controller
@@ -219,6 +220,8 @@ class CategoryController extends Controller
 
         Category::create($validated);
 
+        Cache::forget('categories_sidebar');
+
         return redirect()
             ->route('admin.categories.index')
             ->with(
@@ -379,6 +382,8 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
+        Cache::forget('categories_sidebar');
+
         return redirect()
             ->route('admin.categories.index')
             ->with(
@@ -417,6 +422,8 @@ class CategoryController extends Controller
         ]);
 
         $category->delete();
+
+        Cache::forget('categories_sidebar');
 
         return redirect()
             ->route('admin.categories.index')
@@ -508,6 +515,8 @@ class CategoryController extends Controller
             'restored_at' => now(),
         ]);
 
+        Cache::forget('categories_sidebar');
+
         return redirect()
             ->route(
                 'admin.categories.trash'
@@ -559,6 +568,8 @@ class CategoryController extends Controller
         );
 
         $category->forceDelete();
+
+        Cache::forget('categories_sidebar');
 
         return redirect()
             ->route(

@@ -16,7 +16,7 @@ class GHNService
     public function __construct()
     {
         $this->baseUrl = config('ghn.base_url');
-        $this->token   = config('ghn.token');
+        $this->token = (string) (config('ghn.token') ?? '');
         $this->shopId  = (int) config('ghn.shop_id');
     }
 
@@ -293,8 +293,10 @@ public function calculateFee(
     private function get(string $path): array
     {
         try {
-            $resp = Http::withHeaders($this->headers())
-                ->get($this->baseUrl . $path);
+            $resp = Http::connectTimeout(3)
+            ->timeout(5)
+        ->withHeaders($this->headers())
+        ->get($this->baseUrl . $path);
             return $this->parseResponse($resp);
         } catch (\Throwable $e) {
             Log::error('GHN GET error', ['path' => $path, 'error' => $e->getMessage()]);
@@ -305,8 +307,10 @@ public function calculateFee(
     private function post(string $path, array $body = []): array
     {
         try {
-            $resp = Http::withHeaders($this->headers())
-                ->post($this->baseUrl . $path, $body);
+           $resp = Http::connectTimeout(3)
+            ->timeout(5)
+            ->withHeaders($this->headers())
+            ->post($this->baseUrl . $path, $body);
             return $this->parseResponse($resp);
         } catch (\Throwable $e) {
             Log::error('GHN POST error', ['path' => $path, 'error' => $e->getMessage()]);
