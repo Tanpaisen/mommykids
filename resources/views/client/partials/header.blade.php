@@ -568,12 +568,89 @@
                 🔥 Deal hot
             </a>
             @auth
-                <a href="{{ route('notifications.index') }}">
-                    🔔
-                    @if (($unread = auth()->user()->unreadNotifications()->count()) > 0)
-                        <span>{{ $unread }}</span>
-                    @endif
-                </a>
+                <div style="position:relative; display:inline-block">
+                    <button type="button" id="bell-btn">🔔 <span id="bell-count" style="display:none"></span></button>
+                    <div id="bell-menu" style="display:none; position:absolute; right:0; width:320px; background:#fff; border:1px solid #ddd; z-index:50">
+                        <div id="bell-list"></div>
+                        <a href="{{ route('notifications.index') }}">Xem tất cả</a>
+                    </div>
+                </div>
+                <script>
+                    (function () {
+                        const countUrl  = @json(route('notifications.count'));
+                        const latestUrl = @json(route('notifications.latest'));
+                        const readBase  = @json(url('/thong-bao'));
+                        const csrf      = document.querySelector('meta[name="csrf-token"]').content;
+                        const badge     = document.getElementById('bell-count');
+                        const list      = document.getElementById('bell-list');
+                        const menu      = document.getElementById('bell-menu');
+
+                        function setBadge(n) {
+                            badge.textContent = n;
+                            badge.style.display = n > 0 ? 'inline' : 'none';
+                        }
+
+                        // Polling: chỉ lấy số (1 truy vấn nhẹ)
+                        async function pollCount() {
+                            try {
+                                const res = await fetch(countUrl, { headers: { 'Accept': 'application/json' } });
+                                if (res.ok) setBadge((await res.json()).unread_count);
+                            } catch (e) {}
+                        }
+
+                        // Chỉ tải danh sách khi khách bấm mở chuông
+                        async function loadList() {
+                            list.textContent = 'Đang tải...';
+                            try {
+                                const res = await fetch(latestUrl, { headers: { 'Accept': 'application/json' } });
+                                if (!res.ok) return;
+                                const json = await res.json();
+                                setBadge(json.unread_count);
+
+                                list.textContent = json.data.length ? '' : 'Chưa có thông báo';
+                                json.data.forEach(n => {
+                                    const form = document.createElement('form');
+                                    form.method = 'POST';
+                                    form.action = readBase + '/' + n.id + '/doc';
+
+                                    const token = document.createElement('input');
+                                    token.type = 'hidden'; token.name = '_token'; token.value = csrf;
+
+                                    const btn = document.createElement('button');
+                                    btn.type = 'submit';
+                                    btn.style.cssText = 'display:block;width:100%;text-align:left;' + (n.read ? '' : 'font-weight:bold');
+                                    btn.textContent = n.title + ' - ' + n.body + ' (' + n.created_at + ')'; // textContent chống XSS
+
+                                    form.append(token, btn);
+                                    list.appendChild(form);
+                                });
+                            } catch (e) { list.textContent = 'Không tải được'; }
+                        }
+
+                        document.getElementById('bell-btn').addEventListener('click', () => {
+                            const open = menu.style.display === 'none';
+                            menu.style.display = open ? 'block' : 'none';
+                            if (open) loadList();
+                        });
+
+                        // Bấm ra ngoài thì đóng dropdown
+                        document.addEventListener('click', (e) => {
+                            if (!e.target.closest('#bell-btn') && !e.target.closest('#bell-menu')) menu.style.display = 'none';
+                        });
+
+                        // Polling 30s, tạm dừng khi tab bị ẩn
+                        pollCount();
+                        let timer = setInterval(pollCount, 30000);
+                        document.addEventListener('visibilitychange', () => {
+                            if (document.hidden) {
+                                clearInterval(timer);
+                            } else {
+                                pollCount();
+                                timer = setInterval(pollCount, 30000);
+                            }
+                        });
+                    })();
+                    </script>
             @endauth
         </nav>
 

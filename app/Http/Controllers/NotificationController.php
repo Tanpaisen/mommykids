@@ -30,6 +30,13 @@ class NotificationController extends Controller
         ]);
     }
 
+    public function unreadCount(Request $request)
+    {
+        return response()->json([
+            'unread_count' => $request->user()->unreadNotifications()->count(),
+        ]);
+    }
+
     // Bấm vào thông báo: đánh dấu đã đọc rồi chuyển tới trang liên quan
     public function read(Request $request, string $id)
     {

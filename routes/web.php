@@ -140,6 +140,7 @@ Route::middleware('auth')->prefix('thong-bao')->name('notifications.')->group(fu
     Route::post('/doc-tat-ca', [NotificationController::class, 'readAll'])->name('readAll');
     Route::post('/{id}/doc', [NotificationController::class, 'read'])->name('read');
     Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+    Route::get('/so-luong', [NotificationController::class, 'unreadCount'])->name('count');
 });
 
 Route::get('/khuyen-mai', [VoucherController::class, 'index'])
