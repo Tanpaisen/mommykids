@@ -567,7 +567,14 @@
             >
                 🔥 Deal hot
             </a>
-
+            @auth
+                <a href="{{ route('notifications.index') }}">
+                    🔔
+                    @if (($unread = auth()->user()->unreadNotifications()->count()) > 0)
+                        <span>{{ $unread }}</span>
+                    @endif
+                </a>
+            @endauth
         </nav>
 
 

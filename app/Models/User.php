@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\NotificationPreference;
 
 class User extends Authenticatable
 {
@@ -228,5 +229,10 @@ class User extends Authenticatable
             'user_id',
             'voucher_id'
         );
+    }
+
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
     }
 }

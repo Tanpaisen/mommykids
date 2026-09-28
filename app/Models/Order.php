@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use App\Models\VoucherUsage;
+use App\Events\OrderStatusChanged;
+
 class Order extends Model
 {
     use HasUlids;
@@ -29,6 +31,16 @@ class Order extends Model
         static::creating(function (Order $order) {
             $order->code = 'ORD-' . now()->format('Y') .
                 str_pad(static::whereYear('created_at', now()->year)->count() + 1, 5, '0', STR_PAD_LEFT);
+        });
+
+        static::updated(function (Order $order) {
+            if ($order->wasChanged('status')) {
+                event(new OrderStatusChanged(
+                    $order,
+                    $order->getOriginal('status'),
+                    $order->status
+                ));
+            }
         });
     }
 
