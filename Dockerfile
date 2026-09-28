@@ -37,7 +37,8 @@ RUN chmod -R 777 storage bootstrap/cache
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Xóa cache config cũ để tránh nhận diện sai môi trường
-RUN php artisan config:clear
+# Xóa cache view và config để Laravel nhận diện giao diện và asset mới nhất
+RUN php artisan view:clear && php artisan config:clear
 
 # Khởi chạy ứng dụng thông qua Supervisor (quản lý cả Web và Reverb)
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
