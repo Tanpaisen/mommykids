@@ -45,11 +45,23 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Cache categories 1 tiếng — chỉ query 1 lần/giờ thay vì mỗi request
-        View::composer(['client.partials.sidebar', 'client.layouts.app'], function ($view) {
-            $view->with('categories', Cache::remember('categories_sidebar', 3600, 
-                fn () => Category::active()->get()
-            ));
-        });
+        View::composer(
+    ['client.partials.sidebar', 'client.layouts.app'],
+    function ($view) {
+        $categories = Cache::rememberForever(
+            'categories_sidebar',
+            function () {
+                return Category::active()
+                    ->get();
+            }
+        );
+
+        $view->with(
+            'categories',
+            $categories
+        );
+    }
+);
 
         // Cache cart count theo cart_id
         View::composer('client.layouts.app', function ($view) {
