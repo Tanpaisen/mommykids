@@ -141,6 +141,8 @@ Route::middleware('auth')->prefix('thong-bao')->name('notifications.')->group(fu
     Route::post('/{id}/doc', [NotificationController::class, 'read'])->name('read');
     Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
     Route::get('/so-luong', [NotificationController::class, 'unreadCount'])->name('count');
+    Route::get('/cai-dat', [NotificationController::class, 'preferences'])->name('preferences');
+    Route::put('/cai-dat', [NotificationController::class, 'updatePreferences'])->name('preferences.update');
 });
 
 Route::get('/khuyen-mai', [VoucherController::class, 'index'])

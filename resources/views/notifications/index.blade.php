@@ -6,6 +6,7 @@
 
 @section('content')
 <h1>Thông báo</h1>
+<a href="{{ route('notifications.preferences') }}">Cài đặt thông báo</a>
 
 <form method="POST" action="{{ route('notifications.readAll') }}">
     @csrf

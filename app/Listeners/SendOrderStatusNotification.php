@@ -34,15 +34,21 @@ class SendOrderStatusNotification implements ShouldQueue
             return;
         }
 
-        $key = "notif_sent:{$event->order->id}:{$event->oldStatus}:{$event->newStatus}";
-        if (!Cache::add($key, true, now()->addHours(1))) {
+        $key = "notif_sent:{$order->id}:{$event->oldStatus}:{$event->newStatus}";
+        if (! Cache::add($key, true, now()->addHours(1))) {
             return;
         }
 
         try {
-            $user->notify(new OrderStatusNotification($event->order, $event->newStatus));
+            $notification = new OrderStatusNotification($order, $event->newStatus);
+
+            if ($user) {
+                $user->notify($notification);
+            } else {
+                Notification::route('mail', $order->recipient_email)->notify($notification);
+            }
         } catch (Throwable $e) {
-            Cache::forget($key); // cho phép retry
+            Cache::forget($key);
             throw $e;
         }
     }

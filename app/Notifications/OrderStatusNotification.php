@@ -29,7 +29,17 @@ class OrderStatusNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        if (! $notifiable instanceof \App\Models\User) {
+            return ['mail'];
+        }
+        $channels = ['database']; // giao dịch: luôn lưu trong app
+
+        $pref = $notifiable->notificationPreferences->firstWhere('type', 'order_status');
+        if ($pref?->mail ?? true) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     /**
@@ -37,10 +47,19 @@ class OrderStatusNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+        $label = $this->order->statusLabel();
+
+        $mail = (new MailMessage)
+            ->subject('Đơn hàng ' . $this->order->code . ': ' . $label['text'])
+            ->greeting('Xin chào ' . $this->order->recipient_name . ',')
+            ->line('Đơn hàng ' . $this->order->code . ' của bạn đã chuyển sang trạng thái: ' . $label['text'] . '.');
+
+        // Trang chi tiết đơn yêu cầu đăng nhập nên chỉ gắn nút cho thành viên
+        if ($notifiable instanceof \App\Models\User) {
+            $mail->action('Xem đơn hàng', route('profile.orders.show', $this->order));
+        }
+
+        return $mail;
     }
 
     /**

@@ -59,4 +59,33 @@ class NotificationController extends Controller
 
         return back();
     }
+
+    public function preferences(Request $request)
+{
+    $prefs = $request->user()->notificationPreferences->keyBy('type');
+
+    return view('notifications.preferences', compact('prefs'));
+}
+
+    public function updatePreferences(Request $request)
+    {
+        $user = $request->user();
+
+        // Đơn hàng: thông báo trong tài khoản luôn bật, khách chỉ chọn được email
+        $user->notificationPreferences()->updateOrCreate(
+            ['type' => 'order_status'],
+            ['database' => true, 'mail' => $request->boolean('order_mail')]
+        );
+
+        // Khuyến mãi: khách chọn cả hai kênh
+        $user->notificationPreferences()->updateOrCreate(
+            ['type' => 'marketing'],
+            [
+                'database' => $request->boolean('marketing_database'),
+                'mail'     => $request->boolean('marketing_mail'),
+            ]
+        );
+
+        return back()->with('status', 'Đã lưu cài đặt thông báo');
+    }
 }
