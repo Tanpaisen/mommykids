@@ -41,3 +41,6 @@ RUN php artisan config:clear
 
 # Khởi chạy ứng dụng thông qua Supervisor (quản lý cả Web và Reverb)
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+
+# Thêm pcntl vào danh sách các extension được cài đặt
+RUN docker-php-ext-install pdo pdo_mysql sockets pcntl
