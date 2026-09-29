@@ -1,0 +1,278 @@
+
+<?php
+
+namespace App\Http\Controllers\Admin\Concerns;
+
+use App\Models\Category;
+use App\Models\Product;
+use App\Services\InventoryService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+trait ProductTrashImportActions
+{
+    /**
+     * Xóa mềm sản phẩm.
+     */
+    public function destroy(Product $product)
+    {
+        // Tạm thời không ghi deleted_by vì ID Admin là ULID,
+        // trong khi cột deleted_by hiện tại sử dụng kiểu số nguyên.
+
+        // Xóa mềm, giữ nguyên ảnh và các quan hệ.
+        $product->delete();
+
+        return redirect()
+            ->route('admin.products.index')
+            ->with(
+                'success',
+                'Sản phẩm đã được chuyển vào thùng rác.'
+            );
+    }
+
+    /**
+     * Danh sách sản phẩm trong thùng rác.
+     */
+    public function trash(Request $request)
+    {
+        $query = Product::onlyTrashed()
+            ->with('category');
+
+        // Tìm kiếm sản phẩm đã xóa.
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+
+            $query->where(function ($q) use ($search) {
+                $q->where(
+                    'name',
+                    'like',
+                    '%' . $search . '%'
+                )->orWhere(
+                    'slug',
+                    'like',
+                    '%' . $search . '%'
+                );
+            });
+        }
+
+        // Hiển thị sản phẩm mới xóa trước.
+        $products = $query
+            ->orderByDesc('deleted_at')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view(
+            'admin.products.trash',
+            compact('products')
+        );
+    }
+
+    /**
+     * Khôi phục sản phẩm từ thùng rác.
+     */
+    public function restore(string $id)
+    {
+        $product = Product::onlyTrashed()
+            ->findOrFail($id);
+
+        DB::transaction(function () use ($product) {
+            // Khôi phục sản phẩm.
+            $product->restore();
+
+            // Tạm thời chưa ghi restored_by vì
+            // kiểu dữ liệu chưa tương thích với ULID.
+            $product->update([
+                'restored_by' => null,
+                'restored_at' => now(),
+            ]);
+        });
+
+        return redirect()
+            ->route('admin.products.trash')
+            ->with(
+                'success',
+                'Khôi phục sản phẩm thành công.'
+            );
+    }
+
+    /**
+     * Xóa vĩnh viễn sản phẩm.
+     */
+    public function forceDelete(string $id)
+    {
+        $product = Product::onlyTrashed()
+            ->findOrFail($id);
+
+        // Xóa ảnh đại diện.
+        $this->deleteStoredImage($product->image);
+
+        // Xóa toàn bộ ảnh gallery.
+        foreach ($product->images ?? [] as $image) {
+            $this->deleteStoredImage($image);
+        }
+
+        // Xóa các quan hệ pivot.
+        $product->stages()->detach();
+        $product->tags()->detach();
+
+        // Xóa vĩnh viễn sản phẩm khỏi database.
+        $product->forceDelete();
+
+        return redirect()
+            ->route('admin.products.trash')
+            ->with(
+                'success',
+                'Đã xóa vĩnh viễn sản phẩm.'
+            );
+    }
+
+    /**
+     * Hiển thị form import CSV.
+     */
+    public function importForm()
+    {
+        return view('admin.products.import');
+    }
+
+    /**
+     * Nhập sản phẩm hàng loạt từ file CSV.
+     */
+    public function importStore(
+        Request $request,
+        InventoryService $inventory
+    ) {
+        // Kiểm tra file CSV.
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $path = $request->file('file')->getRealPath();
+        $handle = fopen($path, 'r');
+
+        // Bỏ qua BOM của file Excel CSV UTF-8.
+        $bom = "\xef\xbb\xbf";
+
+        if (fgets($handle, 4) !== $bom) {
+            rewind($handle);
+        }
+
+        $header = fgetcsv($handle);
+
+        $success = 0;
+        $errors = [];
+        $rowNumber = 1;
+
+        // Lấy danh sách Category ID hợp lệ.
+        $validCategories = Category::pluck('id')
+            ->toArray();
+
+        while (($row = fgetcsv($handle)) !== false) {
+            $rowNumber++;
+
+            // CSV gồm 9 cột:
+            // name, category_id, sku, code, price,
+            // cost_price, stock, weight_grams, low_stock_alert.
+
+            [
+                $name,
+                $categoryId,
+                $sku,
+                $code,
+                $price,
+                $costPrice,
+                $stock,
+                $weight,
+                $lowStock
+            ] = $row + array_fill(0, 9, null);
+
+            // Kiểm tra các trường bắt buộc.
+            if (
+                empty($name)
+                || empty($categoryId)
+                || empty($price)
+                || empty($sku)
+            ) {
+                $errors[] =
+                    "Dòng $rowNumber: Thiếu tên/danh mục/giá hoặc SKU.";
+
+                continue;
+            }
+
+            // Kiểm tra danh mục có tồn tại không.
+            if (!in_array(
+                (int) $categoryId,
+                $validCategories
+            )) {
+                $errors[] =
+                    "Dòng $rowNumber: Danh mục ID $categoryId không tồn tại.";
+
+                continue;
+            }
+
+            try {
+                DB::beginTransaction();
+
+                // Tạo mới hoặc cập nhật sản phẩm theo SKU.
+                $product = Product::updateOrCreate(
+                    [
+                        'sku' => $sku,
+                    ],
+                    [
+                        'name' => $name,
+
+                        'slug' => Product::where(
+                            'sku',
+                            $sku
+                        )->value('slug')
+                            ?? Str::slug($name) . '-' . time(),
+
+                        'category_id' => $categoryId,
+
+                        'code' => $code ?: null,
+
+                        'price' => $price,
+
+                        'cost_price' => $costPrice ?: 0,
+
+                        'weight_grams' => $weight ?: 0,
+
+                        'low_stock_alert' => $lowStock ?: 5,
+
+                        'is_active' => true,
+                    ]
+                );
+
+                // Chỉ nhập kho ban đầu đối với sản phẩm mới.
+                if (
+                    $product->wasRecentlyCreated
+                    && (int) $stock > 0
+                ) {
+                    $inventory->import(
+                        $product,
+                        (int) $stock,
+                        null,
+                        "Import hàng loạt CSV (Dòng $rowNumber)"
+                    );
+                }
+
+                DB::commit();
+
+                $success++;
+            } catch (\Exception $e) {
+                DB::rollBack();
+
+                $errors[] =
+                    "Dòng $rowNumber: Lỗi hệ thống - "
+                    . $e->getMessage();
+            }
+        }
+
+        fclose($handle);
+
+        return back()->with([
+            'success' => "Xử lý thành công $success sản phẩm.",
+            'errors' => $errors,
+        ]);
+    }
+}
