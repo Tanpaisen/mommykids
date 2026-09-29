@@ -14,7 +14,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
        libonig-dev \
        libxml2-dev \
        supervisor \
-    && docker-php-ext-install pdo pdo_mysql sockets
+    && docker-php-ext-install pdo pdo_mysql sockets pcntl
 
 # Cài đặt Composer chính thức
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -37,11 +37,7 @@ RUN chmod -R 777 storage bootstrap/cache
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Xóa cache config cũ để tránh nhận diện sai môi trường
-# Xóa cache view và config để Laravel nhận diện giao diện và asset mới nhất
 RUN php artisan view:clear && php artisan config:clear
 
 # Khởi chạy ứng dụng thông qua Supervisor (quản lý cả Web và Reverb)
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-
-# Thêm pcntl vào danh sách các extension được cài đặt
-RUN docker-php-ext-install pdo pdo_mysql sockets pcntl
