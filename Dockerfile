@@ -27,6 +27,20 @@ COPY . .
 # Cài đặt các gói PHP (bỏ qua dev để tối ưu dung lượng)
 RUN composer install --no-dev --optimize-autoloader
 
+# --- PHẦN QUAN TRỌNG ĐỂ VITE NHẬN BIẾN TỪ RAILWAY ---
+ARG VITE_REVERB_APP_KEY
+ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY
+
+ARG VITE_REVERB_HOST
+ENV VITE_REVERB_HOST=$VITE_REVERB_HOST
+
+ARG VITE_REVERB_PORT
+ENV VITE_REVERB_PORT=$VITE_REVERB_PORT
+
+ARG VITE_REVERB_SCHEME
+ENV VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
+# ----------------------------------------------------
+
 # Cài đặt gói Node và Build giao diện (Vite)
 RUN npm install && npm run build
 
