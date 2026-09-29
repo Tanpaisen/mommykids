@@ -104,4 +104,8 @@ return [
         'redirect' => env('FACEBOOK_REDIRECT_URI'),
     ],
 
+    'brevo' => [
+        'key' => env('BREVO_KEY'),
+    ],
+
 ];
