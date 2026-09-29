@@ -16,7 +16,8 @@
         "predis/predis": "^3.6",
         "spatie/laravel-permission": "^6.25",
         "stripe/stripe-php": "^21.3",
-        "symfony/brevo-mailer": "^7.1"
+        "symfony/brevo-mailer": "^7.1",
+        "symfony/http-client": "^7.4"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",
