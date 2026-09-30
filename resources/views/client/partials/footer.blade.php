@@ -380,89 +380,87 @@
 
             </div>
 
+            {{-- Về chúng tôi --}}
+            <div>
 
-          {{-- =====================================================
-  {{-- Về chúng tôi --}}
-<div>
+                <p class="mk-footer-title">
+                    Về chúng tôi
+                </p>
 
-    <p class="mk-footer-title">
-        Về chúng tôi
-    </p>
+                <ul class="mk-footer-list">
 
-    <ul class="mk-footer-list">
-
-        <li>
-            <a href="{{ url('/gioi-thieu') }}">
-                Giới thiệu
-            </a>
-        </li>
+                    <li>
+                        <a href="{{ url('/gioi-thieu') }}">
+                            Giới thiệu
+                        </a>
+                    </li>
 
 
-        <li>
-            <a href="{{ url('/he-thong-cua-hang') }}">
-                Hệ thống cửa hàng
-            </a>
-        </li>
+                    <li>
+                        <a href="{{ url('/he-thong-cua-hang') }}">
+                            Hệ thống cửa hàng
+                        </a>
+                    </li>
 
 
-        <li>
-            <a href="{{ url('/tuyen-dung') }}">
-                Tuyển dụng
-            </a>
-        </li>
+                    <li>
+                        <a href="{{ url('/tuyen-dung') }}">
+                            Tuyển dụng
+                        </a>
+                    </li>
 
 
-        <li>
-            <a href="{{ url('/lien-he') }}">
-                Liên hệ
-            </a>
-        </li>
+                    <li>
+                        <a href="{{ url('/lien-he') }}">
+                            Liên hệ
+                        </a>
+                    </li>
 
-    </ul>
+                </ul>
 
-</div>
-
-
-{{-- Chính sách --}}
-<div>
-
-    <p class="mk-footer-title">
-        Chính sách
-    </p>
+            </div>
 
 
-    <ul class="mk-footer-list">
+            {{-- Chính sách --}}
+            <div>
 
-        <li>
-            <a href="{{ url('/chinh-sach-doi-tra') }}">
-                Đổi trả hàng
-            </a>
-        </li>
-
-
-        <li>
-            <a href="{{ url('/chinh-sach-van-chuyen') }}">
-                Vận chuyển
-            </a>
-        </li>
+                <p class="mk-footer-title">
+                    Chính sách
+                </p>
 
 
-        <li>
-            <a href="{{ url('/chinh-sach-bao-mat') }}">
-                Bảo mật
-            </a>
-        </li>
+                <ul class="mk-footer-list">
+
+                    <li>
+                        <a href="{{ url('/chinh-sach-doi-tra') }}">
+                            Đổi trả hàng
+                        </a>
+                    </li>
 
 
-        <li>
-            <a href="{{ url('/thanh-toan') }}">
-                Thanh toán
-            </a>
-        </li>
+                    <li>
+                        <a href="{{ url('/chinh-sach-van-chuyen') }}">
+                            Vận chuyển
+                        </a>
+                    </li>
 
-    </ul>
 
-</div>
+                    <li>
+                        <a href="{{ url('/chinh-sach-bao-mat') }}">
+                            Bảo mật
+                        </a>
+                    </li>
+
+
+                    <li>
+                        <a href="{{ url('/thanh-toan') }}">
+                            Thanh toán
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
 
 
             {{-- =====================================================
@@ -477,7 +475,7 @@
                 <ul class="mk-footer-list">
 
                     <li>
-                        <a href="{{ url('/cam-nang') }}">
+                        <a href="{{ route('handbook.show') }}" class="mk-header-link">
                             Mẹ mang thai
                         </a>
                     </li>

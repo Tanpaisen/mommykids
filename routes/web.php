@@ -136,9 +136,16 @@ Route::get('/chinh-sach-bao-mat', [PageController::class, 'privacyPolicy'])->nam
 Route::get('/lien-he', [PageController::class, 'contact'])
     ->name('pages.contact');
 
-Route::get('/thong-bao', [NotificationController::class, 'index'])
-    ->middleware('auth')
-    ->name('notifications.index');
+Route::middleware('auth')->prefix('thong-bao')->name('notifications.')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::get('/moi-nhat', [NotificationController::class, 'latest'])->name('latest'); // JSON cho dropdown chuông
+    Route::post('/doc-tat-ca', [NotificationController::class, 'readAll'])->name('readAll');
+    Route::post('/{id}/doc', [NotificationController::class, 'read'])->name('read');
+    Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+    Route::get('/so-luong', [NotificationController::class, 'unreadCount'])->name('count');
+    Route::get('/cai-dat', [NotificationController::class, 'preferences'])->name('preferences');
+    Route::put('/cai-dat', [NotificationController::class, 'updatePreferences'])->name('preferences.update');
+});
 
 Route::get('/khuyen-mai', [VoucherController::class, 'index'])
     ->name('vouchers.index');
@@ -165,6 +172,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/quy-dinh-chinh-sach', [ProfileController::class, 'policy'])
         ->name('profile.policy');
 
+    Route::name('profile.addresses.')->group(function () {
+        Route::get('/ho-so/dia-chi', [AddressController::class, 'index'])->name('index');
+        Route::get('/ho-so/dia-chi/tao', [AddressController::class, 'create'])->name('create');
+        Route::post('/ho-so/dia-chi', [AddressController::class, 'store'])->name('store');
+        Route::get('/ho-so/dia-chi/{address}/sua', [AddressController::class, 'edit'])->name('edit');
+        Route::put('/ho-so/dia-chi/{address}', [AddressController::class, 'update'])->name('update');
+        Route::delete('/ho-so/dia-chi/{address}', [AddressController::class, 'destroy'])->name('destroy');
+        Route::patch('/ho-so/dia-chi/{address}/mac-dinh', [AddressController::class, 'setDefault'])->name('default');
+    });
     Route::get(
         '/ho-so/don-hang',
         [ClientOrderController::class, 'index']

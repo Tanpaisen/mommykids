@@ -16,31 +16,33 @@ class AddressController extends Controller
 }
     public function index()
 {
-    $addresses = auth()->user()
+    // Lấy địa chỉ của người dùng đang đăng nhập
+    $addresses = Auth::user()
         ->addresses()
+        ->orderByDesc('is_default')
+        ->latest()
         ->get();
 
+    // Lấy danh sách tỉnh/thành phố từ GHN
     $provinceResponse = $this->ghn->getProvinces();
 
-    if (
-        isset($provinceResponse['data'])
-        && is_array($provinceResponse['data'])
-    ) {
-        $provinceResponse = $provinceResponse['data'];
-    }
+    // GHN có thể trả về mảng trực tiếp hoặc mảng chứa data
+    $provinceData = $provinceResponse['data'] ?? $provinceResponse;
 
     if (
-        isset($provinceResponse['ProvinceID'])
-        && isset($provinceResponse['ProvinceName'])
+        isset($provinceData['ProvinceID']) &&
+        isset($provinceData['ProvinceName'])
     ) {
-        $provinceResponse = [$provinceResponse];
+        $provinceData = [$provinceData];
     }
 
-    $provinces = collect($provinceResponse)
+    $provinces = collect($provinceData)
         ->filter(function ($province) {
             return is_array($province)
-                && isset($province['ProvinceID'])
-                && isset($province['ProvinceName']);
+                && isset(
+                    $province['ProvinceID'],
+                    $province['ProvinceName']
+                );
         })
         ->values();
 
@@ -101,6 +103,32 @@ class AddressController extends Controller
             'success',
             'Đã cập nhật địa chỉ.'
         );
+    }
+    
+   public function create()
+{
+    return redirect()
+        ->route('profile.addresses.index', ['add' => 1]);
+}
+
+    public function edit(int $address)
+    {
+        $address = $this->findOwnAddress($address);
+        
+        $provinceResponse = $this->ghn->getProvinces();
+        $provinceData = $provinceResponse['data'] ?? [];
+        if (isset($provinceData['ProvinceID'], $provinceData['ProvinceName'])) {
+            $provinceData = [$provinceData];
+        }
+        
+        $provinces = collect($provinceData)
+            ->filter(fn ($p) => 
+                is_array($p) &&
+                isset($p['ProvinceID'], $p['ProvinceName'])
+            )
+            ->values();
+
+        return view('client.addresses.edit', compact('address', 'provinces'));
     }
 
     public function destroy(string $address)

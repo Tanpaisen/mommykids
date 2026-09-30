@@ -1,6 +1,9 @@
 @extends('client.layouts.app')
 
 @section('title', 'Giới thiệu về MommyKids - Hệ thống Mẹ & Bé Hàng Đầu')
+@section('sidebar')
+    <div class="hidden"></div>
+@endsection
 
 @section('content')
 <div class="space-y-12 pb-16">

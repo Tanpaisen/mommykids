@@ -43,6 +43,17 @@ class DashboardController extends Controller
         $revenue['today_stripe']     = $todayStats->stripe ?? 0;
         $revenue['today_bank']       = $todayStats->bank ?? 0;
 
+        // TÍNH VỐN HÔM NAY
+        $todayCost = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->whereIn('orders.status', $paidStatuses)
+            ->whereDate('orders.created_at', now())
+            ->sum(DB::raw('order_items.quantity * products.cost_price'));
+
+        $revenue['today_cost']   = (int) $todayCost;
+        $revenue['today_profit'] = $revenue['today'] - $revenue['today_cost'];
+
         // ========== DOANH THU TUẦN NÀY — ĐỦ 3 CHIỀU ==========
         $weekStart = now()->startOfWeek();
         $weekStats = Order::whereIn('status', $paidStatuses)
@@ -71,6 +82,17 @@ class DashboardController extends Controller
         $revenue['week_stripe']      = $weekStats->stripe ?? 0;
         $revenue['week_bank']        = $weekStats->bank ?? 0;
 
+        // TÍNH VỐN TUẦN NÀY
+        $weekCost = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->whereIn('orders.status', $paidStatuses)
+            ->whereBetween('orders.created_at', [$weekStart, now()])
+            ->sum(DB::raw('order_items.quantity * products.cost_price'));
+
+        $revenue['week_cost']   = (int) $weekCost;
+        $revenue['week_profit'] = $revenue['week'] - $revenue['week_cost'];
+
        // ========== DOANH THU THÁNG NÀY ==========
         $monthStart = now()->startOfMonth();
         $monthStats = Order::whereIn('status', $paidStatuses)
@@ -84,6 +106,17 @@ class DashboardController extends Controller
         $revenue['month']          = $monthStats->total ?? 0;
         $revenue['month_subtotal'] = $monthStats->subtotal ?? 0;
         $revenue['month_discount'] = $monthStats->discount ?? 0;
+
+        // TÍNH VỐN THÁNG NÀY
+        $monthCost = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->whereIn('orders.status', $paidStatuses)
+            ->whereBetween('orders.created_at', [$monthStart, now()])
+            ->sum(DB::raw('order_items.quantity * products.cost_price'));
+
+        $revenue['month_cost']   = (int) $monthCost;
+        $revenue['month_profit'] = $revenue['month'] - $revenue['month_cost'];
         
         // ========== DOANH THU TOÀN HỆ THỐNG (ALL-TIME) ==========
         $allTimeStats = Order::whereIn('status', $paidStatuses)
@@ -93,10 +126,22 @@ class DashboardController extends Controller
                 CAST(SUM(discount) AS UNSIGNED) as discount
             ')->first();
 
+        // Tính tổng tiền vốn (Giá vốn * Số lượng) của các đơn hàng thành công
+        $totalCostAllTime = DB::table('order_items')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->whereIn('orders.status', $paidStatuses)
+            ->sum(DB::raw('order_items.quantity * products.cost_price'));
+
+        // Gán dữ liệu vào mảng trả về
         $revenue['all_time']          = $allTimeStats->total ?? 0;
         $revenue['all_time_subtotal'] = $allTimeStats->subtotal ?? 0;
         $revenue['all_time_discount'] = $allTimeStats->discount ?? 0;
         
+        // Thêm 2 biến mới: Vốn và Lợi nhuận
+        $revenue['all_time_cost']     = (int) $totalCostAllTime;
+        $revenue['all_time_profit']   = $revenue['all_time'] - $revenue['all_time_cost'];
+
         // ========== SỐ ĐƠN HÀNG ==========
         $orders['today'] = Order::whereIn('status', $paidStatuses)
             ->whereDate('created_at', now())

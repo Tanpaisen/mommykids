@@ -9,6 +9,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\NotificationPreference;
+use Illuminate\Support\Facades\Cache;
 
 
 class User extends Authenticatable
@@ -16,8 +18,23 @@ class User extends Authenticatable
 
     use HasApiTokens, HasFactory, Notifiable, HasUlids;
 
+    public function cachedUnreadCount(): int
+    {
+        return Cache::remember(self::unreadCacheKey($this->id), now()->addMinutes(30), function () {
+            return $this->unreadNotifications()->count();
+        });
+    }
 
+    public static function unreadCacheKey(string $userId): string
+    {
+        return "notif:unread:{$userId}";
+    }
 
+    /**
+     * Các thuộc tính được phép mass assignment.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
 
         'name',
@@ -590,6 +607,8 @@ class User extends Authenticatable
 
     }
 
-
-
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
 }

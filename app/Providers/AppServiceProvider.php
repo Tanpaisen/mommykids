@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoApiTransport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,11 +47,23 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Cache categories 1 tiếng — chỉ query 1 lần/giờ thay vì mỗi request
-        View::composer(['client.partials.sidebar', 'client.layouts.app'], function ($view) {
-            $view->with('categories', Cache::remember('categories_sidebar', 3600, 
-                fn () => Category::active()->get()
-            ));
-        });
+        View::composer(
+            ['client.partials.sidebar', 'client.layouts.app'],
+            function ($view) {
+                $categories = Cache::rememberForever(
+                    'categories_sidebar',
+                    function () {
+                        return Category::active()
+                            ->get();
+                    }
+                );
+
+                $view->with(
+                    'categories',
+                    $categories
+                );
+            }
+        );
 
         // Cache cart count theo cart_id
         View::composer('client.layouts.app', function ($view) {
@@ -61,6 +75,10 @@ class AppServiceProvider extends ServiceProvider
             );
             
             $view->with('cartCount', $count);
+        });
+
+        Mail::extend('brevo', function () {
+            return new BrevoApiTransport(config('services.brevo.key'));
         });
     }
 }

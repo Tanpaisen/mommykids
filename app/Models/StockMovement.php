@@ -17,7 +17,8 @@ class StockMovement extends Model
         'stock_after',
         'reference_type',
         'reference_id',
-        'user_id',
+        'causer_type',
+        'causer_id',
         'note',
     ];
 
