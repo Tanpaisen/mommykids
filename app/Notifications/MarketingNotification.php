@@ -15,7 +15,7 @@ class MarketingNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public const DAILY_CAP = 2; // tối đa số thông báo marketing/ngày/người
+    public const DAILY_CAP = 50; // tối đa số thông báo marketing/ngày/người
 
     public function __construct(public NotificationCampaign $campaign)
     {
@@ -24,7 +24,6 @@ class MarketingNotification extends Notification implements ShouldQueue
 
     public function via($notifiable): array
     {
-        // Gửi thử (AnonymousNotifiable): chỉ email
         if (! $notifiable instanceof User) {
             return ['mail'];
         }
@@ -40,6 +39,15 @@ class MarketingNotification extends Notification implements ShouldQueue
         }
 
         if ($channels && $this->reachedDailyCap($notifiable)) {
+            // Ghi log để biết vì sao người này không nhận được, thay vì im lặng
+            NotificationLog::create([
+                'campaign_id'   => $this->campaign->id,
+                'user_id'       => $notifiable->id,
+                'channel'       => 'skipped',
+                'status'        => 'skipped',
+                'error_message' => 'Đã đạt giới hạn ' . self::DAILY_CAP . ' thông báo marketing/ngày',
+            ]);
+
             return [];
         }
 
