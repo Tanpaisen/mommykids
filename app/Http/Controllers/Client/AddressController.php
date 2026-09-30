@@ -16,11 +16,8 @@ class AddressController extends Controller
 }
     public function index()
 {
-    $addresses = auth()->user()
-        ->addresses()
-        ->get();
-
-    $provinceResponse = $this->ghn->getProvinces();
+    $addresses = collect();
+    $provinceResponse = [];
 
     if (
         isset($provinceResponse['data'])

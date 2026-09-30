@@ -11,16 +11,39 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Events\ChatConversationUpdated;
+use App\Support\ChatRealtime;
+
+
 
 class ChatController extends Controller
 {
     public function __construct(private readonly ChatBotService $bot) {}
-
     public function session(Request $request): JsonResponse
-    {
-        $conversation = $this->findOrCreateConversation();
-        return response()->json($this->conversationPayload($conversation));
+{
+    $conversation = $this->findOrCreateConversation();
+
+    return response()->json(
+        $this->conversationPayload($conversation)
+    );
+}
+
+          private function broadcastConversationUpdated(
+    ChatConversation $conversation
+): void {
+    $conversationId = (string) $conversation->id;
+
+    $dispatch = static function () use ($conversationId): void {
+        ChatConversationUpdated::dispatch($conversationId);
+    };
+
+    if (DB::transactionLevel() > 0) {
+        DB::afterCommit($dispatch);
+        return;
     }
+
+    $dispatch();
+}
 
     public function messages(Request $request, ChatConversation $conversation): JsonResponse
     {
@@ -53,6 +76,7 @@ class ChatController extends Controller
             if ($locked->status !== ChatConversation::STATUS_BOT) {
                 return;
             }
+            
 
             $history = $conversation->messages()
     ->reorder()
@@ -282,41 +306,56 @@ $reply = $this->bot->respond(
     }
 
     private function createMessage(
-        ChatConversation $conversation,
-        string $senderType,
-        ?string $senderId,
-        string $message
-    ): ChatMessage {
-        $chatMessage = $conversation->messages()->create([
-            'sender_type' => $senderType,
-            'sender_id' => $senderId,
-            'message' => $message,
-            'message_type' => 'text',
-            'is_read' => false,
-        ]);
+    ChatConversation $conversation,
+    string $senderType,
+    ?string $senderId,
+    string $message
+): ChatMessage {
+    $chatMessage = $conversation->messages()->create([
+        'sender_type' => $senderType,
+        'sender_id' => $senderId,
+        'message' => $message,
+        'message_type' => 'text',
+        'is_read' => false,
+    ]);
 
-        $conversation->forceFill(['last_message_at' => now()])->save();
-        return $chatMessage;
-    }
+    $conversation->forceFill([
+    'last_message_at' =>
+        now(),
+])->save();
+
+$this->broadcastConversationUpdated($conversation);
+
+return $chatMessage;
+
+}
 
     private function conversationPayload(ChatConversation $conversation): array
     {
         $conversation->loadMissing(['staff:id,name']);
 
-        $messages = $conversation->messages()
-        ->reorder()
-        ->with('sender:id,name')
-        ->latest('created_at')
-        ->latest('id')
-        ->limit(100)
-        ->get()
-        ->reverse()
-        ->values();
+       $messages = $conversation->messages()
+    ->reorder()
+    ->with([
+        'sender:id,name',
+        'admin:id,name',
+    ])
+    ->latest('created_at')
+    ->latest('id')
+    ->limit(100)
+    ->get()
+    ->reverse()
+    ->values();
 
         return [
             'conversation' => [
-                'id' => (string) $conversation->id,
-                'status' => $conversation->status,
+    'id' => (string) $conversation->id,
+
+    'realtime_channel' => ChatRealtime::conversationChannel(
+        (string) $conversation->id
+    ),
+
+    'status' => $conversation->status,
                 'bot_fail_count' => (int) $conversation->bot_fail_count,
                 'staff' => $conversation->staff ? [
                     'id' => (string) $conversation->staff->id,
@@ -340,7 +379,7 @@ $reply = $this->bot->respond(
         return match ($message->sender_type) {
             ChatMessage::SENDER_CUSTOMER => 'Bạn',
             ChatMessage::SENDER_BOT => 'MommyKids Bot',
-            ChatMessage::SENDER_STAFF => $message->sender?->name ?? 'Nhân viên MommyKids',
+            ChatMessage::SENDER_STAFF => $message->admin?->name ?? 'Nhân viên MommyKids',
             ChatMessage::SENDER_SYSTEM => 'Hệ thống',
             default => 'MommyKids',
         };

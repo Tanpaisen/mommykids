@@ -108,22 +108,25 @@ class CheckoutController extends Controller
             'shipping'
         );
 
-        return view('checkout.index', compact(
-            'user',
-            'items',
-            'subtotal',
-            'shippingFee',
-            'usedPoints',
-            'pointsDiscount',
-            'total',
-            'provinces',
-            'voucherBreakdown',
-            'checkoutVouchers',
-            'availableOrderVouchers',
-            'availableShippingVouchers'
-        ));
-    }
+        $html = view('checkout.index', compact(
+        'user',
+        'items',
+        'subtotal',
+        'shippingFee',
+        'usedPoints',
+        'pointsDiscount',
+        'total',
+        'provinces',
+        'voucherBreakdown',
+        'checkoutVouchers',
+        'availableOrderVouchers',
+        'availableShippingVouchers'
+        ))->render();
 
+        $checkpoint('VIEW_RENDERED');
+
+    return response($html);
+    }
     public function districts(Request $request)
     {
         $data = $request->validate([
