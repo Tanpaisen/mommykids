@@ -30,5 +30,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         require __DIR__ . '/admin/articles.php';
         require __DIR__ . '/admin/reviews.php';
         require __DIR__ . '/admin/inventory.php';
+        require __DIR__ . '/admin/notification.php';
     });
 });

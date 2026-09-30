@@ -31,8 +31,18 @@ class CheckoutController extends Controller
 
     public function index()
     {
+        // Temporary checkout performance diagnostics; remove after investigating.
+        $checkoutStart = microtime(true);
+        $checkpoint = function (string $step) use ($checkoutStart): void {
+            \Illuminate\Support\Facades\Log::info('CHECKOUT_TIMING', [
+                'step' => $step,
+                'seconds' => round(microtime(true) - $checkoutStart, 3),
+            ]);
+        };
         $items = $this->cart->items();
         $subtotal = $this->cart->total();
+
+        $checkpoint('CART_LOADED');
 
         if ($items->isEmpty()) {
             return redirect()->route('cart.index')
@@ -54,6 +64,8 @@ class CheckoutController extends Controller
             false
         );
 
+        $checkpoint('VOUCHER_BREAKDOWN');
+
         $pointsDiscount = min(
             $pointsDiscount,
             max(0, (int) $subtotal - $voucherBreakdown['order_discount'])
@@ -69,6 +81,8 @@ class CheckoutController extends Controller
         );
 
         $provinceResponse = $this->ghn->getProvinces();
+
+        $checkpoint('GHN_PROVINCES');
 
         if (
             isset($provinceResponse['data']) &&
@@ -102,30 +116,32 @@ class CheckoutController extends Controller
             $items,
             'order'
         );
+        $checkpoint('ORDER_VOUCHERS_LOADED');
         $availableShippingVouchers = $this->getAvailableCheckoutVouchers(
             $user,
             $items,
             'shipping'
         );
+        $checkpoint('SHIPPING_VOUCHERS_LOADED');
 
         $html = view('checkout.index', compact(
-        'user',
-        'items',
-        'subtotal',
-        'shippingFee',
-        'usedPoints',
-        'pointsDiscount',
-        'total',
-        'provinces',
-        'voucherBreakdown',
-        'checkoutVouchers',
-        'availableOrderVouchers',
-        'availableShippingVouchers'
-        ))->render();
+            'user',
+            'items',
+            'subtotal',
+            'shippingFee',
+            'usedPoints',
+            'pointsDiscount',
+            'total',
+            'provinces',
+            'voucherBreakdown',
+            'checkoutVouchers',
+            'availableOrderVouchers',
+            'availableShippingVouchers'
+            ))->render();
 
-        $checkpoint('VIEW_RENDERED');
+            $checkpoint('VIEW_RENDERED');
 
-    return response($html);
+        return response($html);
     }
     public function districts(Request $request)
     {

@@ -1,5 +1,9 @@
 @extends('client.layouts.app')
 
+@section('sidebar')
+    <div class="hidden"></div>
+@endsection
+
 @section('title', 'Giỏ hàng - MommyKids')
 
 @section('content')
@@ -47,6 +51,59 @@
     >
         Giỏ hàng của bạn
     </h1>
+
+    {{-- THANH THÔNG TIN BẢO HÀNH & GIAO HÀNG --}}
+    <div class="mt-6 bg-white rounded-xl shadow-sm border border-slate-100 p-4 lg:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        {{-- Nhóm các tính năng --}}
+        <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 w-full md:w-auto">
+            
+            {{-- Miễn phí giao hàng --}}
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="text-2xl text-[#1DB8A0]">
+                    <i class="fas fa-truck"></i> {{-- Thay bằng icon SVG tương ứng nếu dùng hệ thống icon khác --}}
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-slate-800">Miễn phí giao hàng</p>
+                    <p class="text-xs text-slate-500">Nội thành đơn từ 2,990đ</p>
+                </div>
+            </div>
+
+            {{-- Tặng quà cho đơn --}}
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="text-2xl text-amber-500">
+                    <i class="fas fa-gift"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-slate-800">Tặng quà cho đơn</p>
+                    <p class="text-xs text-slate-500">Hàng từ 4,990đ</p>
+                </div>
+            </div>
+
+            {{-- Tích điểm thành viên --}}
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="text-2xl text-amber-500">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-slate-800">Tích điểm thành viên</p>
+                    <p class="text-xs text-slate-500">Cho mọi đơn hàng</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Cột Hotline --}}
+        <div class="flex items-center gap-3 w-full md:w-auto md:border-l border-slate-100 md:pl-8 mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0">
+            <div class="text-2xl text-[#1DB8A0]">
+                <i class="fas fa-phone-alt"></i>
+            </div>
+            <div class="text-left md:text-right w-full">
+                <p class="text-xs text-slate-500">Hotline hỗ trợ</p>
+                <p class="text-lg font-bold text-slate-800 tracking-wide">1800 1234</p>
+            </div>
+        </div>
+
+    </div>
 
 
     @if ($items->isEmpty())

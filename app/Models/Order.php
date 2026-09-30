@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use App\Models\VoucherUsage;
+use App\Events\OrderStatusChanged;
+
 class Order extends Model
 {
     use HasUlids;
@@ -30,6 +32,16 @@ class Order extends Model
             $order->code = 'ORD-' . now()->format('Y') .
                 str_pad(static::whereYear('created_at', now()->year)->count() + 1, 5, '0', STR_PAD_LEFT);
         });
+
+        static::updated(function (Order $order) {
+            if ($order->wasChanged('status')) {
+                event(new OrderStatusChanged(
+                    $order,
+                    $order->getOriginal('status'),
+                    $order->status
+                ));
+            }
+        });
     }
 
     public function user(): BelongsTo
@@ -48,9 +60,14 @@ class Order extends Model
     }
 
     public function voucherUsages(): HasMany
-{
-    return $this->hasMany(VoucherUsage::class);
-}
+    {
+        return $this->hasMany(VoucherUsage::class);
+    }
+
+    public function cancellationRequests(): HasMany
+    {
+        return $this->hasMany(OrderCancellationRequest::class);
+    }
 
     // Labels màu cho status
     public function statusLabel(): array

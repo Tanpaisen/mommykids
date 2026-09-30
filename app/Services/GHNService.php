@@ -16,7 +16,7 @@ class GHNService
     public function __construct()
     {
         $this->baseUrl = config('ghn.base_url');
-        $this->token   = config('ghn.token');
+        $this->token = (string) (config('ghn.token') ?? '');
         $this->shopId  = (int) config('ghn.shop_id');
     }
 

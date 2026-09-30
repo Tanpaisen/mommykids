@@ -19,7 +19,7 @@
                     <label class="block text-sm font-medium mb-1">Thuộc Chương (Để trống nếu là Chương lớn)</label>
                     <select name="parent_id" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:border-[#FF2A54]">
                         <option value="">-- Là Chương lớn (Cấp 1) --</option>
-                        @foreach($categories as $cat)
+                        @foreach ($categories as $cat)
                             <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                         @endforeach
                     </select>

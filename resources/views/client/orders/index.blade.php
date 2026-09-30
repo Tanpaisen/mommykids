@@ -1,8 +1,74 @@
 @extends('client.layouts.app')
 
+@section('sidebar')
+    <div class="hidden"></div>
+@endsection
+
 @section('title', 'Đơn hàng của tôi - MommyKids')
 
 @section('content')
+<style>
+    .mk-pagination {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 30px 0 12px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ffe2e9;
+    border-radius: 16px;
+}
+
+.mk-pagination-info {
+    margin: 0;
+    color: #777;
+    font-size: 13px;
+    text-align: center;
+}
+
+.mk-pagination-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mk-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid #f5d9e1;
+    border-radius: 10px;
+    background: #fff;
+    color: #555;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all .2s;
+}
+
+.mk-page-btn:hover {
+    background: #fff0f4;
+    border-color: #ff4775;
+    color: #ff3864;
+}
+
+.mk-page-btn.active {
+    background: #ff3864;
+    border-color: #ff3864;
+    color: white;
+}
+
+.mk-page-btn.disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+</style>
 @php
     $statusLabels = [
         'pending' => 'Chờ xác nhận',
@@ -227,9 +293,36 @@
             @endforelse
         </div>
 
-        @if($orders->hasPages())
-            <div class="mt-6">{{ $orders->links() }}</div>
-        @endif
+       @if($orders->hasPages())
+    <div class="mk-pagination">
+        <p class="mk-pagination-info">
+            Hiển thị {{ $orders->firstItem() }}–{{ $orders->lastItem() }}
+            trong tổng số {{ $orders->total() }} đơn hàng
+        </p>
+
+        <nav class="mk-pagination-nav" aria-label="Phân trang đơn hàng">
+            @if($orders->onFirstPage())
+                <span class="mk-page-btn disabled">‹</span>
+            @else
+                <a class="mk-page-btn" href="{{ $orders->previousPageUrl() }}">‹</a>
+            @endif
+
+            @foreach($orders->getUrlRange(1, $orders->lastPage()) as $page => $url)
+                <a href="{{ $url }}"
+                   class="mk-page-btn {{ $page == $orders->currentPage() ? 'active' : '' }}"
+                   @if($page == $orders->currentPage()) aria-current="page" @endif>
+                    {{ $page }}
+                </a>
+            @endforeach
+
+            @if($orders->hasMorePages())
+                <a class="mk-page-btn" href="{{ $orders->nextPageUrl() }}">›</a>
+            @else
+                <span class="mk-page-btn disabled">›</span>
+            @endif
+        </nav>
+    </div>
+@endif
     </div>
 </div>
 @endsection

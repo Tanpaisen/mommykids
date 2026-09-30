@@ -10,7 +10,7 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {{-- ========== THẺ DOANH THU HÔM NAY ========== --}}
         <div class="card p-5">
-            <p class="text-xs text-ink-soft uppercase tracking-wide">Doanh thu thực tế (Hôm nay)</p>
+            <p class="text-xs text-ink-soft uppercase tracking-wide font-semibold">Doanh thu thực tế (Hôm nay)</p>
             <p class="font-display font-bold text-2xl text-ink mt-1">
                 {{ number_format($revenue['today']) }}đ
             </p>
@@ -22,18 +22,27 @@
                 </div>
                 <div class="flex justify-between text-xs text-ink-soft">
                     <span>Đã khuyến mãi:</span>
-                    <span class="font-medium text-red-500">-{{ number_format($revenue['today_discount']) }}đ</span>
+                    <span class="font-medium text-coral">-{{ number_format($revenue['today_discount']) }}đ</span>
                 </div>
                 <div class="flex justify-between text-xs text-ink-soft mt-1 pt-1 border-t border-dashed">
                     <span>Thực nhận:</span>
-                    <span class="font-bold text-green-600">{{ number_format($revenue['today']) }}đ</span>
+                    <span class="font-bold text-ink">{{ number_format($revenue['today']) }}đ</span>
+                </div>
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Vốn bỏ ra:</span>
+                    <span class="font-medium text-orange-500">-{{ number_format($revenue['today_cost']) }}đ</span>
+                </div>
+                <div class="border-t border-dashed border-gray-200 my-1"></div>
+                <div class="flex justify-between text-xs font-bold">
+                    <span class="text-ink">Lợi nhuận gộp:</span>
+                    <span class="text-mint">{{ number_format($revenue['today_profit']) }}đ</span>
                 </div>
             </div>
         </div>
 
         {{-- ========== THẺ DOANH THU TUẦN NÀY ========== --}}
         <div class="card p-5">
-            <p class="text-xs text-ink-soft uppercase tracking-wide">Doanh thu thực tế (Tuần này)</p>
+            <p class="text-xs text-ink-soft uppercase tracking-wide font-semibold">Doanh thu thực tế (Tuần này)</p>
             <p class="font-display font-bold text-2xl text-ink mt-1">
                 {{ number_format($revenue['week']) }}đ
             </p>
@@ -45,18 +54,30 @@
                 </div>
                 <div class="flex justify-between text-xs text-ink-soft">
                     <span>Đã khuyến mãi:</span>
-                    <span class="font-medium text-red-500">-{{ number_format($revenue['week_discount']) }}đ</span>
+                    <span class="font-medium text-coral">-{{ number_format($revenue['week_discount']) }}đ</span>
                 </div>
                 <div class="flex justify-between text-xs text-ink-soft mt-1 pt-1 border-t border-dashed">
                     <span>Thực nhận:</span>
-                    <span class="font-bold text-green-600">{{ number_format($revenue['week']) }}đ</span>
+                    <span class="font-bold text-ink">{{ number_format($revenue['week']) }}đ</span>
+                </div>
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Vốn bỏ ra:</span>
+                    <span class="font-medium text-orange-500">-{{ number_format($revenue['week_cost']) }}đ</span>
+                </div>
+                <div class="border-t border-dashed border-gray-200 my-1"></div>
+                <div class="flex justify-between text-xs font-bold">
+                    <span class="text-ink">Lợi nhuận gộp:</span>
+                    <span class="text-mint">{{ number_format($revenue['week_profit']) }}đ</span>
                 </div>
             </div>
         </div>
-        {{-- Card Doanh thu tháng này --}}
+
+        {{-- ========== THẺ DOANH THU THÁNG NÀY ========== --}}
         <div class="card p-5">
-            <p class="text-xs text-ink-soft uppercase tracking-wide">Doanh thu tháng này</p>
-            <p class="font-display font-bold text-2xl text-ink mt-1">{{ number_format($revenue['month']) }}đ</p>
+            <p class="text-xs text-ink-soft uppercase tracking-wide font-semibold">Doanh thu tháng này</p>
+            <p class="font-display font-bold text-2xl text-ink mt-1">
+                {{ number_format($revenue['month']) }}đ
+            </p>
             
             <div class="mt-3 pt-3 border-t border-admin-border space-y-1">
                 <div class="flex justify-between text-xs text-ink-soft">
@@ -67,8 +88,22 @@
                     <span>Khuyến mãi:</span>
                     <span class="font-medium text-coral">-{{ number_format($revenue['month_discount']) }}đ</span>
                 </div>
+                <div class="flex justify-between text-xs text-ink-soft mt-1 pt-1 border-t border-dashed">
+                    <span>Thực nhận:</span>
+                    <span class="font-bold text-ink">{{ number_format($revenue['month']) }}đ</span>
+                </div>
+                <div class="flex justify-between text-xs text-ink-soft">
+                    <span>Vốn bỏ ra:</span>
+                    <span class="font-medium text-orange-500">-{{ number_format($revenue['month_cost']) }}đ</span>
+                </div>
+                <div class="border-t border-dashed border-gray-200 my-1"></div>
+                <div class="flex justify-between text-xs font-bold">
+                    <span class="text-ink">Lợi nhuận gộp:</span>
+                    <span class="text-mint">{{ number_format($revenue['month_profit']) }}đ</span>
+                </div>
             </div>
         </div>
+        
         {{-- Card Tổng doanh thu toàn hệ thống --}}
         <div class="card p-5 bg-gradient-to-br from-admin-bg to-white">
             <p class="text-xs text-ink-soft uppercase tracking-wide">Tổng doanh thu (All-time)</p>
@@ -83,6 +118,19 @@
                     <span>Khuyến mãi:</span>
                     <span class="font-medium text-coral">-{{ number_format($revenue['all_time_discount']) }}đ</span>
                 </div>
+            </div>
+            {{-- Vốn bỏ ra --}}
+            <div class="flex justify-between text-xs text-ink-soft">
+                <span>Vốn bỏ ra:</span>
+                <span class="font-medium text-orange-500">-{{ number_format($revenue['all_time_cost'] ?? 0) }}đ</span>
+            </div>
+            
+            <div class="border-t border-dashed border-gray-200 my-1"></div>
+            
+            {{-- Lợi nhuận gộp --}}
+            <div class="flex justify-between text-xs font-bold">
+                <span class="text-ink">Lợi nhuận gộp:</span>
+                <span class="text-mint">{{ number_format($revenue['all_time_profit'] ?? 0) }}đ</span>
             </div>
         </div>
         <div class="card p-5">

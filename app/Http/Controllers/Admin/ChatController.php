@@ -57,8 +57,6 @@ class ChatController extends Controller
         $conversations = $query->paginate(20);
 
         $conversations->withQueryString();
-        
-
         $counts = [
             'waiting' => ChatConversation::where(
                 'status',
