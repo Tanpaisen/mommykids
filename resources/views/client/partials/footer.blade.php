@@ -325,111 +325,144 @@
 
                 <div class="mk-footer-brand">
 
-                    <span class="mk-footer-logo">
-                        M
-                    </span>
+    @if(!empty($globalSetting->logo))
 
-                    <span class="mk-footer-brand-name">
-                        Mommy<span>Kids</span>
-                    </span>
+        <img
+            src="{{ asset('storage/'.$globalSetting->logo) }}"
+            alt="{{ $globalSetting->site_name ?? 'MommyKids' }}"
+            style="
+                width:2rem;
+                height:2rem;
+                object-fit:contain;
+                border-radius:50%;
+            "
+        >
 
-                </div>
+    @else
+
+        <span class="mk-footer-logo">
+            M
+        </span>
+
+    @endif
+
+
+    <span class="mk-footer-brand-name">
+        {{ $globalSetting->site_name ?? 'MommyKids' }}
+    </span>
+
+</div>
 
 
                 <p class="mk-footer-description">
-                    Chuỗi cửa hàng mẹ và bé chính hãng —
-                    Đồng hành cùng mẹ, chắp cánh cho bé.
+                    
                 </p>
 
 
                 <p class="mk-footer-hotline">
                     Hotline:
                     <strong>
-                        1800 6886
+                        {{ $globalSetting->hotline ?? '1800 6886' }}
                     </strong>
                 </p>
-
-            </div>
-
-
-            {{-- =====================================================
-                ABOUT
-            ====================================================== --}}
-            <div>
-
-                <p class="mk-footer-title">
-                    Về chúng tôi
+                <p class="mk-footer-hotline">
+                    Email:
+                    <strong>
+                        {{ $globalSetting->email ?? '' }}
+                   </strong>
+                </p>
+                <p class="mk-footer-hotline">
+                     Địa chỉ:
+                    <strong>
+                        {{ $globalSetting->address ?? '' }}
+                   </strong>
                 </p>
 
-                <ul class="mk-footer-list">
-
-                    <li>
-                        <a href="#mk-about">
-                            Giới thiệu
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="#mk-stores">
-                            Hệ thống cửa hàng
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="#">
-                            Tuyển dụng
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="#mk-footer">
-                            Liên hệ
-                        </a>
-                    </li>
-
-                </ul>
-
             </div>
 
 
-            {{-- =====================================================
-                POLICY
-            ====================================================== --}}
-            <div>
+          {{-- =====================================================
+  {{-- Về chúng tôi --}}
+<div>
 
-                <p class="mk-footer-title">
-                    Chính sách
-                </p>
+    <p class="mk-footer-title">
+        Về chúng tôi
+    </p>
 
-                <ul class="mk-footer-list">
+    <ul class="mk-footer-list">
 
-                    <li>
-                        <a href="#">
-                            Đổi trả hàng
-                        </a>
-                    </li>
+        <li>
+            <a href="{{ url('/gioi-thieu') }}">
+                Giới thiệu
+            </a>
+        </li>
 
-                    <li>
-                        <a href="#">
-                            Vận chuyển
-                        </a>
-                    </li>
 
-                    <li>
-                        <a href="#">
-                            Bảo mật
-                        </a>
-                    </li>
+        <li>
+            <a href="{{ url('/he-thong-cua-hang') }}">
+                Hệ thống cửa hàng
+            </a>
+        </li>
 
-                    <li>
-                        <a href="#">
-                            Thanh toán
-                        </a>
-                    </li>
 
-                </ul>
+        <li>
+            <a href="{{ url('/tuyen-dung') }}">
+                Tuyển dụng
+            </a>
+        </li>
 
-            </div>
+
+        <li>
+            <a href="{{ url('/lien-he') }}">
+                Liên hệ
+            </a>
+        </li>
+
+    </ul>
+
+</div>
+
+
+{{-- Chính sách --}}
+<div>
+
+    <p class="mk-footer-title">
+        Chính sách
+    </p>
+
+
+    <ul class="mk-footer-list">
+
+        <li>
+            <a href="{{ url('/chinh-sach-doi-tra') }}">
+                Đổi trả hàng
+            </a>
+        </li>
+
+
+        <li>
+            <a href="{{ url('/chinh-sach-van-chuyen') }}">
+                Vận chuyển
+            </a>
+        </li>
+
+
+        <li>
+            <a href="{{ url('/chinh-sach-bao-mat') }}">
+                Bảo mật
+            </a>
+        </li>
+
+
+        <li>
+            <a href="{{ url('/thanh-toan') }}">
+                Thanh toán
+            </a>
+        </li>
+
+    </ul>
+
+</div>
 
 
             {{-- =====================================================
@@ -485,7 +518,7 @@
                 <div class="mk-footer-social">
 
                     <a
-                        href="#"
+                        href="{{ $globalSetting->facebook_url ?? '#' }}"
                         class="mk-footer-social-link"
                         aria-label="Facebook"
                     >
@@ -493,7 +526,7 @@
                     </a>
 
                     <a
-                        href="#"
+                         href="{{ $globalSetting->zalo_url ?? '#' }}"
                         class="mk-footer-social-link"
                         aria-label="Zalo"
                     >
@@ -501,7 +534,7 @@
                     </a>
 
                     <a
-                        href="#"
+                        href="{{ $globalSetting->instagram_url ?? '#' }}"
                         class="mk-footer-social-link"
                         aria-label="Instagram"
                     >
@@ -529,8 +562,7 @@
         <div class="mk-footer-bottom">
 
             <p>
-                © {{ date('Y') }} MommyKids.
-                Đã đăng ký bản quyền.
+              {{ $globalSetting->copyright ?? ('© '.date('Y').' MommyKids. Đã đăng ký bản quyền.') }}
             </p>
 
 

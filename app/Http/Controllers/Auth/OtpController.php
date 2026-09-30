@@ -35,12 +35,14 @@ class OtpController extends Controller
 
         try {
             $otp = rand(100000, 999999);
+            Log::info('OTP REQUEST EMAIL: '.$request->email);
             
             // Lưu OTP vào Cache trong 5 phút
             Cache::put('otp_' . $request->email, $otp, now()->addMinutes(5));
 
             // Gửi mail OTP
             Mail::to($request->email)->send(new SendOtpMail($otp));
+            Log::info('OTP SENT SUCCESS: '.$request->email);
 
             return response()->json([
                 'success' => true, 

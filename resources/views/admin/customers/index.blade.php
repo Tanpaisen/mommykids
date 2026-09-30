@@ -99,38 +99,104 @@
                 <tbody class="divide-y divide-slate-100 text-sm">
                     @forelse($customers as $index => $customer)
                         @php
-                            // Tải mức chi tiêu & tính Rank
-                            $spent = $customer->total_spent ?? 0;
-                            if ($spent >= 10000000) {
-                                $rankName = 'Kim Cương';
-                                $rankBadge = 'bg-cyan-50 text-cyan-700 border-cyan-200/80';
-                            } elseif ($spent >= 5000000) {
-                                $rankName = 'Vàng';
-                                $rankBadge = 'bg-amber-50 text-amber-700 border-amber-200/80';
-                            } elseif ($spent >= 2000000) {
-                                $rankName = 'Bạc';
-                                $rankBadge = 'bg-slate-100 text-slate-700 border-slate-200/80';
-                            } else {
-                                $rankName = 'Đồng';
-                                $rankBadge = 'bg-orange-50 text-orange-700 border-orange-200/80';
-                            }
 
-                            // Tạo Avatar Initials ngẫu nhiên màu nhã nhặn
-                            $displayName = $customer->name ?? $customer->email ?? 'K';
-                            $initial = mb_strtoupper(mb_substr($displayName, 0, 1, 'UTF-8'));
-                            $colorIndex = abs(crc32($customer->id ?? $index)) % 5;
-                            $avatarStyles = [
-                                'bg-rose-100 text-rose-700',
-                                'bg-indigo-100 text-indigo-700',
-                                'bg-emerald-100 text-emerald-700',
-                                'bg-amber-100 text-amber-700',
-                                'bg-sky-100 text-sky-700'
-                            ];
-                            $avatarClass = $avatarStyles[$colorIndex];
-                            
-                            $stt = method_exists($customers, 'firstItem') ? ($customers->firstItem() + $index) : ($index + 1);
-                            $isActive = $customer->is_active ?? true;
-                        @endphp
+    /*
+    |--------------------------------------------------------------------------
+    | Lấy tổng chi tiêu
+    |--------------------------------------------------------------------------
+    */
+
+    $spent = (float) ($customer->total_spent ?? 0);
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lấy hạng từ User Model
+    | Không tự tính ở Blade nữa
+    |--------------------------------------------------------------------------
+    */
+
+    $rankName = $customer->tier_name;
+
+
+
+    $rankBadge = match($customer->calculateTier()) {
+
+
+        'diamond' => 
+            'bg-cyan-50 text-cyan-700 border-cyan-200/80',
+
+
+        'gold' => 
+            'bg-amber-50 text-amber-700 border-amber-200/80',
+
+
+        'silver' => 
+            'bg-slate-100 text-slate-700 border-slate-200/80',
+
+
+        default => 
+            'bg-orange-50 text-orange-700 border-orange-200/80',
+
+    };
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Avatar
+    |--------------------------------------------------------------------------
+    */
+
+    $displayName = $customer->name ?? $customer->email ?? 'K';
+
+
+    $initial = mb_strtoupper(
+        mb_substr($displayName,0,1,'UTF-8')
+    );
+
+
+    $colorIndex = abs(
+        crc32($customer->id ?? $index)
+    ) % 5;
+
+
+
+    $avatarStyles = [
+
+        'bg-rose-100 text-rose-700',
+
+        'bg-indigo-100 text-indigo-700',
+
+        'bg-emerald-100 text-emerald-700',
+
+        'bg-amber-100 text-amber-700',
+
+        'bg-sky-100 text-sky-700'
+
+    ];
+
+
+
+    $avatarClass = $avatarStyles[$colorIndex];
+
+
+
+    $stt = method_exists($customers,'firstItem')
+
+        ? ($customers->firstItem()+$index)
+
+        : ($index+1);
+
+
+
+    $isActive = $customer->is_active ?? true;
+
+
+@endphp
                         <tr class="hover:bg-slate-50/80 transition-colors">
                             <td class="py-3.5 px-4 text-center text-xs font-semibold text-slate-400">{{ $stt }}</td>
                             

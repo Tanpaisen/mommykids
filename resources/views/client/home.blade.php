@@ -908,18 +908,15 @@
             <div class="mk-home-hero-inner">
 
                 <span class="mk-home-hero-tag">
-                    🎁 Ưu đãi tháng 9
+                    🎁 {{ $settings->top_announcement ?? 'Ưu đãi tháng 9' }}
                 </span>
 
                 <h1>
-                    Sữa thùng
-                    <br>
-                    giá tốt tháng này
+                    {{ $settings->home_banner_title ?? 'Sữa thùng giá tốt tháng này' }}
                 </h1>
 
                 <p>
-                    Chính hãng · Hóa đơn VAT đầy đủ ·
-                    Bảo giá tốt nhất
+                    {{ $settings->footer_description ?? 'Chính hãng · Hóa đơn VAT đầy đủ · Bảo giá tốt nhất' }}
                 </p>
 
                 <div
@@ -935,7 +932,7 @@
                         href="{{ route('products.featured') }}"
                         class="mk-home-hero-button"
                     >
-                        Mua ngay
+                        {{ $settings->promo_button_text ?? 'Mua ngay' }}
                     </a>
 
                     <a
@@ -1163,7 +1160,7 @@
                     [
                         'icon' => '📞',
                         'label' => 'Hotline',
-                        'url' => 'tel:18006886',
+                        'url' => 'tel:' . ($settings->hotline ?? '18006886'),
                         'bg' => '#FFE3E8',
                     ],
                     [
@@ -1319,7 +1316,7 @@
                     font-weight:800;
                 "
             >
-                Ưu đãi dành cho ba mẹ
+                {{ $settings->promo_title ?? 'Ưu đãi dành cho ba mẹ' }}
             </h2>
 
             <p
@@ -1331,8 +1328,7 @@
                     font-size:.9rem;
                 "
             >
-                Nhập mã ngay để nhận ưu đãi
-                cho lần mua đầu tiên
+                {{ $settings->promo_subtitle ?? 'Nhập mã ngay để nhận ưu đãi cho lần mua đầu tiên' }}
             </p>
 
         </div>
@@ -1368,7 +1364,7 @@
                         font-weight:800;
                     "
                 >
-                    30K
+                    {{ $settings->promo_badge_1 ?? '30K' }}
                 </p>
 
                 <p
@@ -1408,7 +1404,7 @@
                         font-weight:800;
                     "
                 >
-                    Campaign
+                    {{ $settings->promo_badge_2 ?? 'Campaign' }}
                 </p>
 
                 <p
@@ -1445,7 +1441,7 @@
                 text-decoration:none;
             "
         >
-            Nhận ngay
+            {{ $settings->promo_button_text ?? 'Nhận ngay' }}
         </a>
 
     </section>
@@ -1713,8 +1709,7 @@
                         font-size:.825rem;
                     "
                 >
-                    Hệ thống cửa hàng MommyKids
-                    phục vụ ba mẹ mỗi ngày
+                    {{ $settings->footer_description ?? 'Hệ thống cửa hàng MommyKids phục vụ ba mẹ mỗi ngày' }}
                 </p>
 
 
@@ -2037,5 +2032,89 @@
     @endforeach
 
 </div>
+{{-- =====================================================
+    FAQ - CÂU HỎI THƯỜNG GẶP
+====================================================== --}}
+
+@if(isset($faqs) && $faqs->count())
+
+<section 
+    class="mk-home-card"
+    style="
+        margin-bottom:2rem;
+        padding:1.5rem;
+    "
+>
+
+    <div class="mk-section-header">
+
+        <div class="mk-section-title-wrap">
+
+            <span style="font-size:1.4rem;">
+                ❓
+            </span>
+
+            <h2 class="mk-section-title">
+                Câu hỏi thường gặp
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div style="
+        display:flex;
+        flex-direction:column;
+        gap:.75rem;
+    ">
+
+
+        @foreach($faqs as $faq)
+
+        <details
+            style="
+                border:1px solid #f0eef5;
+                border-radius:1rem;
+                padding:1rem;
+                background:#fff;
+                cursor:pointer;
+            "
+        >
+
+            <summary
+                style="
+                    font-weight:700;
+                    color:#2B2530;
+                    list-style:none;
+                "
+            >
+                {{ $faq->question }}
+            </summary>
+
+
+            <p
+                style="
+                    margin:.8rem 0 0;
+                    color:#6B6470;
+                    font-size:.9rem;
+                    line-height:1.6;
+                "
+            >
+                {{ $faq->answer }}
+            </p>
+
+
+        </details>
+
+        @endforeach
+
+
+    </div>
+
+
+</section>
+
+@endif
 
 @endsection

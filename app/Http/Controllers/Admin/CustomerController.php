@@ -12,76 +12,210 @@ class CustomerController extends Controller
     {
         $query = User::query()->withCount('orders');
 
-        // Tìm kiếm theo tên, email, SĐT
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tìm kiếm khách hàng
+        |--------------------------------------------------------------------------
+        | Chỉ dùng các cột đang có trong database users:
+        | name, email
+        |--------------------------------------------------------------------------
+        */
+
         if ($request->filled('keyword')) {
+
             $keyword = $request->keyword;
+
             $query->where(function ($q) use ($keyword) {
+
                 $q->where('name', 'like', "%{$keyword}%")
-                  ->orWhere('email', 'like', "%{$keyword}%")
-                  ->orWhere('phone', 'like', "%{$keyword}%");
+                  ->orWhere('email', 'like', "%{$keyword}%");
+
             });
+
         }
 
-        // Lọc theo trạng thái khóa / hoạt động
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Lọc trạng thái tài khoản
+        |--------------------------------------------------------------------------
+        */
+
         if ($request->filled('status')) {
-            $query->where('is_active', $request->status);
+
+            $query->where(
+                'is_active',
+                $request->status
+            );
+
         }
 
-        // Lọc theo tổng chi tiêu tối thiểu
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Lọc theo mức chi tiêu
+        |--------------------------------------------------------------------------
+        */
+
         if ($request->filled('min_spent')) {
-            $query->where('total_spent', '>=', $request->min_spent);
+
+            $query->where(
+                'total_spent',
+                '>=',
+                $request->min_spent
+            );
+
         }
 
-        // Lọc theo Hạng thành viên
-        if ($request->filled('rank')) {
-            match ($request->rank) {
-                'diamond' => $query->where('total_spent', '>=', 10000000),
-                'gold'    => $query->whereBetween('total_spent', [5000000, 9999999]),
-                'silver'  => $query->whereBetween('total_spent', [2000000, 4999999]),
-                'bronze'  => $query->where('total_spent', '<', 2000000),
-                default   => null
-            };
-        }
 
-        $customers = $query->latest('created_at')->paginate(10);
-        $customers->appends($request->all()); // Giữ lại tham số bộ lọc khi chuyển trang mà không bị lỗi IDE
 
-        return view('admin.customers.index', compact('customers'));
+       /*
+|--------------------------------------------------------------------------
+| Lọc theo hạng thành viên
+|--------------------------------------------------------------------------
+*/
+
+if ($request->filled('rank')) {
+
+    $query->where('tier', $request->rank);
+
+}
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Lấy danh sách khách hàng
+        |--------------------------------------------------------------------------
+        */
+
+        $customers = $query
+            ->latest('created_at')
+            ->paginate(10);
+
+
+
+        // giữ bộ lọc khi chuyển trang
+
+        $customers->appends(
+            $request->all()
+        );
+
+
+
+        return view(
+            'admin.customers.index',
+            compact('customers')
+        );
     }
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chi tiết khách hàng
+    |--------------------------------------------------------------------------
+    */
 
     public function show($id)
     {
-        $customer = User::withCount('orders')->findOrFail($id);
 
-        // Nạp danh sách đơn hàng mới nhất
+        $customer = User::withCount('orders')
+            ->findOrFail($id);
+
+
+
+        // Load đơn hàng
+
         if (method_exists($customer, 'orders')) {
-            $customer->load(['orders' => fn($q) => $q->latest()]);
+
+            $customer->load([
+                'orders' => function($q){
+
+                    $q->latest();
+
+                }
+            ]);
+
         }
 
-        // Nạp giỏ hàng an toàn (tránh lỗi nếu bảng cart_items thiếu cột user_id)
+
+
+        // Load giỏ hàng an toàn
+
         try {
-            $customer->load(['cartItems.product']);
+
+            $customer->load([
+                'cartItems.product'
+            ]);
+
         } catch (\Throwable $e) {
-            // Giữ giỏ hàng rỗng nếu cấu trúc bảng khác biệt
+
         }
 
-        // Nạp danh sách yêu thích an toàn
+
+
+        // Load wishlist an toàn
+
         try {
-            $customer->load(['wishlist.product']);
+
+            $customer->load([
+                'wishlist.product'
+            ]);
+
         } catch (\Throwable $e) {
-            // Giữ wishlist rỗng nếu chưa kết nối thành công
+
         }
 
-        return view('admin.customers.show', compact('customer'));
+
+
+        return view(
+            'admin.customers.show',
+            compact('customer')
+        );
+
     }
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Khóa / mở khóa tài khoản
+    |--------------------------------------------------------------------------
+    */
 
     public function toggleStatus($id)
     {
+
         $customer = User::findOrFail($id);
-        $customer->is_active = !($customer->is_active ?? true);
+
+
+
+        $customer->is_active =
+            !($customer->is_active ?? true);
+
+
+
         $customer->save();
 
-        $statusText = $customer->is_active ? 'mở khóa' : 'khóa';
-        return back()->with('success', "Đã {$statusText} tài khoản thành công!");
+
+
+        $statusText =
+            $customer->is_active
+            ? 'mở khóa'
+            : 'khóa';
+
+
+
+        return back()->with(
+            'success',
+            "Đã {$statusText} tài khoản thành công!"
+        );
+
     }
 }

@@ -133,6 +133,8 @@ Route::get('/tuyen-dung', [PageController::class, 'recruitment'])->name('pages.r
 Route::get('/chinh-sach-doi-tra', [PageController::class, 'returnPolicy'])->name('pages.return');
 Route::get('/chinh-sach-van-chuyen', [PageController::class, 'shippingPolicy'])->name('pages.shipping');
 Route::get('/chinh-sach-bao-mat', [PageController::class, 'privacyPolicy'])->name('pages.privacy');
+Route::get('/lien-he', [PageController::class, 'contact'])
+    ->name('pages.contact');
 
 Route::get('/thong-bao', [NotificationController::class, 'index'])
     ->middleware('auth')

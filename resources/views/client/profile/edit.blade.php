@@ -2,44 +2,17 @@
 
 @section('content')
 @php
-    // Gán thử số tiền chi tiêu để test (Bỏ comment dòng bên dưới để test nhanh)
-    //$user->total_spent = 75000000; 
 
-    $totalSpent = $user->total_spent ?? 0;
+$user = $user->fresh();
 
-    // Tự động xác định Hạng hiện tại và Tiến trình nâng hạng
-    if ($totalSpent >= 10000000) {
-        $currentTier = 'Hạng Kim Cương';
-        $progress = [
-            'percent'   => 100, 
-            'needed'    => 0, 
-            'next_tier' => ''
-        ];
-    } elseif ($totalSpent >= 5000000) {
-        $currentTier = 'Hạng Vàng';
-        $progress = [
-            'percent'   => round(($totalSpent - 5000000) / 5000000 * 100),
-            'needed'    => 10000000 - $totalSpent,
-            'next_tier' => 'Hạng Kim Cương'
-        ];
-    } elseif ($totalSpent >= 2000000) {
-        $currentTier = 'Hạng Bạc';
-        $progress = [
-            'percent'   => round(($totalSpent - 2000000) / 3000000 * 100),
-            'needed'    => 5000000 - $totalSpent,
-            'next_tier' => 'Hạng Vàng'
-        ];
-    } else {
-        $currentTier = 'Hạng Thành viên';
-        $progress = [
-            'percent'   => round($totalSpent / 2000000 * 100),
-            'needed'    => 2000000 - $totalSpent,
-            'next_tier' => 'Hạng Bạc'
-        ];
-    }
+$totalSpent = (float) $user->fresh()->total_spent;
 
-    // ĐỒNG BỘ MÃ KHÁCH HÀNG
-    $customerCode = $user->loyalty_code ?? ('MK-' . $user->id);
+$currentTier = $user->current_tier_name;
+
+$progress = $user->next_tier_progress;
+
+$customerCode = $user->loyalty_code ?? ('MK-' . $user->id);
+
 @endphp
 
 <style>
@@ -248,7 +221,7 @@
                     <div>
                         <!-- Hiển thị $currentTier động -->
                         <span class="glass-pill d-inline-block mb-1">
-                            👑 {{ $currentTier }}
+                            👑 {{ $user->current_tier_name }}
                         </span>
                         <h5 class="fw-bold mb-0 text-white" style="font-size: 17px;">
                             {{ $user->name ?? ($user->phone ? (substr($user->phone, 0, 4) . '*****' . substr($user->phone, -3)) : 'Khách hàng') }}

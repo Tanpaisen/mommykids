@@ -94,7 +94,7 @@
             <p class="text-xs text-ink-soft uppercase tracking-wide">Bình luận chưa trả lời</p>
             <p class="font-display font-bold text-2xl text-coral mt-1">{{ $pendingComments->count() }}</p>
             @can('handbook.view')
-                <a href="{{ route('admin.comments.index') }}" class="text-xs text-coral font-semibold hover:underline">Xử lý ngay →</a>
+                <a href="{{ route('admin.hoi-dap.index') }}" class="text-xs text-coral font-semibold hover:underline">Xử lý ngay →</a>
             @endcan
         </div>
     </div>
@@ -178,7 +178,7 @@
                             <span class="text-xs text-ink-soft">{{ $c['minutes_ago'] }} phút trước</span>
                         </div>
                         <p class="text-sm text-ink mt-0.5"><span class="font-medium">{{ $c['author'] }}:</span> {{ $c['excerpt'] }}</p>
-                        <a href="{{ route('admin.comments.index') }}" class="text-xs text-coral font-semibold hover:underline">Trả lời →</a>
+                        <a href="{{ route('admin.hoi-dap.index') }}" class="text-xs text-coral font-semibold hover:underline">Trả lời →</a>
                     </li>
                 @endforeach
             </ul>

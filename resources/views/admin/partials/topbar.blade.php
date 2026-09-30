@@ -15,7 +15,7 @@
 
     <div class="ml-auto flex items-center gap-2">
         {{-- Pending comments / questions bell --}}
-        <a href="{{ route('admin.comments.index') ?? '#' }}" class="relative w-10 h-10 rounded-full hover:bg-admin-bg flex items-center justify-center">
+        <a href="{{ route('admin.hoi-dap.index') }}" class="relative w-10 h-10 rounded-full hover:bg-admin-bg flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-ink-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5M21 12c0 4.418-4.03 8-9 8-1.06 0-2.07-.15-3-.43L3 21l1.5-4.5C3.55 15.19 3 13.65 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>

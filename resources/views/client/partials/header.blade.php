@@ -258,48 +258,59 @@
         </button>
 
 
-        {{-- LOGO --}}
-        <a
-            href="{{ route('home') }}"
-            class="mk-header-logo"
+       {{-- LOGO --}}
+<a 
+    href="{{ route('home') }}" 
+    class="mk-header-logo"
+>
+
+    @if(isset($globalSetting) && $globalSetting->logo)
+
+        <img
+            src="{{ asset('storage/'.$globalSetting->logo) }}"
+            alt="{{ $globalSetting->site_name ?? 'MommyKids' }}"
+            style="
+                height:40px;
+                width:auto;
+                object-fit:contain;
+            "
         >
-            <span
-                style="
-                    width:2rem;
-                    height:2rem;
 
-                    border-radius:50%;
+    @else
 
-                    background:#FF6F81;
-                    color:#fff;
+        <span
+            style="
+                width:2rem;
+                height:2rem;
+                border-radius:50%;
+                background:#FF6F81;
+                color:#fff;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-weight:800;
+            "
+        >
+            M
+        </span>
 
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
+    @endif
 
-                    font-family:'Baloo 2',cursive;
-                    font-size:.9rem;
-                    font-weight:800;
-                "
-            >
-                M
-            </span>
 
-            <span
-                class="hidden sm:inline"
-                style="
-                    color:#2B2530;
+    <span
+        class="hidden sm:inline"
+        style="
+            color:#2B2530;
+            font-family:'Baloo 2',cursive;
+            font-size:1.15rem;
+            font-weight:800;
+            white-space:nowrap;
+        "
+    >
+        {{ $globalSetting->site_name ?? 'MommyKids' }}
+    </span>
 
-                    font-family:'Baloo 2',cursive;
-                    font-size:1.15rem;
-                    font-weight:800;
-
-                    white-space:nowrap;
-                "
-            >
-                Mommy<span style="color:#FF6F81;">Kids</span>
-            </span>
-        </a>
+</a>
 
 
         {{-- =================================================
@@ -881,8 +892,15 @@
                         white-space:nowrap;
                     "
                 >
-                    Tài khoản
+                    {{ auth()->user()->name }}
                 </a>
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" style="background:none; border:none; color:red; cursor:pointer;">
+                        Đăng xuất
+                    </button>
+                </form>
 
             @else
 

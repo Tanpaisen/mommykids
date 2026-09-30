@@ -16,9 +16,15 @@
     <title>
         @yield(
             'title',
-            'MommyKids - Mẹ và bé'
+            
+            
         )
     </title>
+    <link 
+    rel="icon" 
+    type="image/png" 
+    href="{{ asset('storage/' . ($globalSetting->favicon ?? 'settings/favicon.png')) }}"
+>
 
     <meta
         name="description"
