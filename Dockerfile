@@ -44,8 +44,9 @@ ENV VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
 # Cài đặt gói Node và Build giao diện (Vite)
 RUN npm install && npm run build
 
-# Phân quyền lưu trữ cho Laravel
-RUN chmod -R 777 storage bootstrap/cache
+# Phân quyền lưu trữ cho Laravel và CẤP QUYỀN THỰC THI CHO SCRIPT
+RUN chmod -R 777 storage bootstrap/cache \
+    && chmod +x start.sh
 
 # Copy file cấu hình supervisor vào thư mục hệ thống
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -53,5 +54,5 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Xóa cache config cũ để tránh nhận diện sai môi trường
 RUN php artisan view:clear && php artisan config:clear
 
-# Khởi chạy ứng dụng thông qua Supervisor (quản lý cả Web và Reverb)
-CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# KHỞI CHẠY ỨNG DỤNG QUA SCRIPT THAY VÌ GỌI THẲNG SUPERVISOR
+CMD ["./start.sh"]
