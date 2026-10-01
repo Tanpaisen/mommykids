@@ -6,6 +6,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use App\Models\NotificationLog;
 use Illuminate\Notifications\Events\NotificationSent;
+use App\Notifications\MarketingNotification;
 
 class LogNotificationSent
 {

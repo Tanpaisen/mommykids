@@ -11,8 +11,8 @@ class NotificationLogController extends Controller
     public function index(Request $request)
     {
         $filters = $request->validate([
-            'channel' => 'nullable|in:database,mail',
-            'status'  => 'nullable|in:pending,sent,failed',
+            'channel' => 'nullable|in:database,mail,queue',
+            'status'  => 'nullable|in:pending,sent,failed,skipped',
             'q'       => 'nullable|string|max:100',
             'from'    => 'nullable|date',
             'to'      => 'nullable|date',
