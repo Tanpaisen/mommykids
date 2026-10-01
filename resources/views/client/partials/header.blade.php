@@ -568,13 +568,25 @@
                 🔥 Deal hot
             </a>
             @auth
-                <div style="position:relative; display:inline-block">
-                    <button type="button" id="bell-btn">🔔 <span id="bell-count" style="display:none"></span></button>
-                    <div id="bell-menu" style="display:none; position:absolute; right:0; width:320px; background:#fff; border:1px solid #ddd; z-index:50">
-                        <div id="bell-list"></div>
-                        <a href="{{ route('notifications.index') }}">Xem tất cả</a>
+                <div class="relative inline-block">
+                    <button type="button" id="bell-btn" class="relative flex items-center justify-center w-8 h-8 text-gray-700 hover:text-coral transition-colors">
+                        <svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span id="bell-count"
+                            class="hidden absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-coral text-white text-[10px] font-bold flex items-center justify-center">
+                        </span>
+                    </button>
+
+                    <div id="bell-menu" class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-100 rounded-2xl shadow-lg z-50 overflow-hidden">
+                        <div id="bell-list" class="max-h-80 overflow-y-auto divide-y divide-gray-50"></div>
+                        <a href="{{ route('notifications.index') }}" class="block text-center text-sm text-coral font-medium py-3 border-t border-gray-100 hover:bg-pink-50">
+                            Xem tất cả
+                        </a>
                     </div>
                 </div>
+
                 <script>
                     (function () {
                         const countUrl  = @json(route('notifications.count'));
@@ -587,10 +599,9 @@
 
                         function setBadge(n) {
                             badge.textContent = n;
-                            badge.style.display = n > 0 ? 'inline' : 'none';
+                            badge.classList.toggle('hidden', n <= 0);
                         }
 
-                        // Polling: chỉ lấy số (1 truy vấn nhẹ)
                         async function pollCount() {
                             try {
                                 const res = await fetch(countUrl, { headers: { 'Accept': 'application/json' } });
@@ -598,47 +609,66 @@
                             } catch (e) {}
                         }
 
-                        // Chỉ tải danh sách khi khách bấm mở chuông
                         async function loadList() {
-                            list.textContent = 'Đang tải...';
+                            list.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">Đang tải...</p>';
                             try {
                                 const res = await fetch(latestUrl, { headers: { 'Accept': 'application/json' } });
                                 if (!res.ok) return;
                                 const json = await res.json();
                                 setBadge(json.unread_count);
 
-                                list.textContent = json.data.length ? '' : 'Chưa có thông báo';
+                                list.innerHTML = '';
+                                if (!json.data.length) {
+                                    list.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">Chưa có thông báo</p>';
+                                    return;
+                                }
+
                                 json.data.forEach(n => {
                                     const form = document.createElement('form');
                                     form.method = 'POST';
                                     form.action = readBase + '/' + n.id + '/doc';
+                                    form.className = 'block';
 
                                     const token = document.createElement('input');
                                     token.type = 'hidden'; token.name = '_token'; token.value = csrf;
 
                                     const btn = document.createElement('button');
                                     btn.type = 'submit';
-                                    btn.style.cssText = 'display:block;width:100%;text-align:left;' + (n.read ? '' : 'font-weight:bold');
-                                    btn.textContent = n.title + ' - ' + n.body + ' (' + n.created_at + ')'; // textContent chống XSS
+                                    btn.className = 'w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors';
 
-                                    form.append(token, btn);
+                                    const title = document.createElement('p');
+                                    title.className = 'text-sm ' + (n.read ? 'text-gray-600' : 'font-semibold text-gray-800');
+                                    title.textContent = n.title;
+
+                                    const body = document.createElement('p');
+                                    body.className = 'text-xs text-gray-500 mt-0.5 line-clamp-2';
+                                    body.textContent = n.body;
+
+                                    const time = document.createElement('p');
+                                    time.className = 'text-[11px] text-gray-400 mt-1';
+                                    time.textContent = n.created_at;
+
+                                    btn.append(title, body, time);
+                                    form.appendChild(btn);
                                     list.appendChild(form);
                                 });
-                            } catch (e) { list.textContent = 'Không tải được'; }
+                            } catch (e) {
+                                list.innerHTML = '<p class="text-sm text-red-400 text-center py-6">Không tải được</p>';
+                            }
                         }
 
                         document.getElementById('bell-btn').addEventListener('click', () => {
-                            const open = menu.style.display === 'none';
-                            menu.style.display = open ? 'block' : 'none';
+                            const open = menu.classList.contains('hidden');
+                            menu.classList.toggle('hidden', !open);
                             if (open) loadList();
                         });
 
-                        // Bấm ra ngoài thì đóng dropdown
                         document.addEventListener('click', (e) => {
-                            if (!e.target.closest('#bell-btn') && !e.target.closest('#bell-menu')) menu.style.display = 'none';
+                            if (!e.target.closest('#bell-btn') && !e.target.closest('#bell-menu')) {
+                                menu.classList.add('hidden');
+                            }
                         });
 
-                        // Polling 30s, tạm dừng khi tab bị ẩn
                         pollCount();
                         let timer = setInterval(pollCount, 30000);
                         document.addEventListener('visibilitychange', () => {
@@ -650,7 +680,7 @@
                             }
                         });
                     })();
-                    </script>
+                </script>
             @endauth
         </nav>
 
@@ -779,40 +809,6 @@
 
                 {{ $currentCity ?? 'Hà Nội' }} ▾
             </button>
-
-
-            {{-- NOTIFICATION --}}
-            @auth
-                <a
-                    href="{{ route('notifications.index') }}"
-                    title="Thông báo"
-                    style="
-                        width:28px;
-                        height:28px;
-
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-
-                        color:#2B2530;
-                        text-decoration:none;
-                    "
-                >
-                    <svg
-                        width="18"
-                        height="18"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                        />
-                    </svg>
-                </a>
-            @endauth
-
 
             {{-- WISHLIST --}}
             @auth
