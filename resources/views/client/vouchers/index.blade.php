@@ -67,7 +67,12 @@
                 🚚 Phí Vận chuyển ({{ $shippingVouchers->count() }})
             </button>
         </div>
-        <a href="#" class="hidden md:block text-sm font-medium text-gray-500 hover:text-pink-500 whitespace-nowrap ml-4 transition-colors">Xem lịch sử ></a>
+       <a
+             href="{{ route('profile.vouchers.index') }}"
+            class="hidden md:inline-flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all hover:shadow-md whitespace-nowrap ml-4"
+            >
+                🎟 Kho voucher của tôi
+            </a>
     </div>
 
     <!-- 4. KHU VỰC SĂN VOUCHER KIỂU TINDER (NÂNG CẤP BOARD UI) -->

@@ -76,6 +76,7 @@ class ChatController extends Controller
             if ($locked->status !== ChatConversation::STATUS_BOT) {
                 return;
             }
+            
 
             $history = $conversation->messages()
     ->reorder()

@@ -11,23 +11,23 @@ use App\Services\GHNService;
 class AddressController extends Controller
 {
     public function __construct(
-    protected GHNService $ghn
-) {
-}
+        protected GHNService $ghn
+    ) {
+    }
     public function index()
-{
+    {
     // Lấy địa chỉ của người dùng đang đăng nhập
-    $addresses = Auth::user()
-        ->addresses()
-        ->orderByDesc('is_default')
-        ->latest()
-        ->get();
+        $addresses = Auth::user()
+            ->addresses()
+            ->orderByDesc('is_default')
+            ->latest()
+            ->get();
 
-    // Lấy danh sách tỉnh/thành phố từ GHN
-    $provinceResponse = $this->ghn->getProvinces();
+        // Lấy danh sách tỉnh/thành phố từ GHN
+        $provinceResponse = $this->ghn->getProvinces();
 
-    // GHN có thể trả về mảng trực tiếp hoặc mảng chứa data
-    $provinceData = $provinceResponse['data'] ?? $provinceResponse;
+        // GHN có thể trả về mảng trực tiếp hoặc mảng chứa data
+        $provinceData = $provinceResponse['data'] ?? $provinceResponse;
 
     if (
         isset($provinceData['ProvinceID']) &&

@@ -15,10 +15,6 @@ class ZaloPayController extends Controller
 {
     /**
      * Tạo giao dịch ZaloPay.
-     *
-     * Với sandbox AppID 553, API có thể trả order_url dưới dạng payload QR
-     * thay vì URL https://..., vì vậy ta ưu tiên dùng qr_code và hiển thị QR
-     * ngay trên website.
      */
     public function create()
     {
@@ -58,6 +54,12 @@ class ZaloPayController extends Controller
                 ->with('error', 'Đơn hàng này không sử dụng ZaloPay.');
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Cấu hình
+        |--------------------------------------------------------------------------
+        */
+
         $appId = (int) config('services.zalopay.app_id');
         $key1 = (string) config('services.zalopay.key1');
 
@@ -66,8 +68,13 @@ class ZaloPayController extends Controller
             'https://sb-openapi.zalopay.vn/v2/create'
         );
 
-        $callbackUrl = (string) config('services.zalopay.callback_url');
-        $redirectUrl = (string) config('services.zalopay.redirect_url');
+        $callbackUrl = (string) config(
+            'services.zalopay.callback_url'
+        );
+
+        $redirectUrl = (string) config(
+            'services.zalopay.redirect_url'
+        );
 
         if (
             !$appId ||
@@ -85,8 +92,9 @@ class ZaloPayController extends Controller
         |--------------------------------------------------------------------------
         | app_trans_id
         |--------------------------------------------------------------------------
-        | Format: yymmdd_ORDER_ULID_RANDOM6
-        | Tổng cộng tối đa 40 ký tự.
+        |
+        | yymmdd_ORDER_ULID_RANDOM6
+        |
         */
 
         $appTransId =
@@ -98,22 +106,51 @@ class ZaloPayController extends Controller
 
         $appTransId = substr($appTransId, 0, 40);
 
-        $appTime = (int) floor(microtime(true) * 1000);
+        $appTime = (int) floor(
+            microtime(true) * 1000
+        );
 
         $appUser = Auth::check()
             ? (string) Auth::id()
             : 'mommykids_guest';
 
         $amount = (int) $order->total;
+
         $item = '[]';
+
+        /*
+        |--------------------------------------------------------------------------
+        | embed_data
+        |--------------------------------------------------------------------------
+        |
+        | domestic_card + account:
+        | phục vụ luồng test thanh toán nội địa.
+        |
+        */
 
         $embedData = json_encode([
             'redirecturl' => $redirectUrl,
+
             'preferred_payment_method' => [
-                'zalopay_wallet',
-            ],
+    'zalopay_wallet',
+],
+
             'order_id' => (string) $order->id,
+
         ], JSON_UNESCAPED_SLASHES);
+
+        if ($embedData === false) {
+            Log::error('ZaloPay embed_data encode failed', [
+                'order_id' => $order->id,
+            ]);
+
+            return redirect()
+                ->route('checkout.index')
+                ->with(
+                    'error',
+                    'Không thể tạo dữ liệu thanh toán ZaloPay.'
+                );
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -131,36 +168,68 @@ class ZaloPayController extends Controller
             $item,
         ]);
 
-        $mac = hash_hmac('sha256', $macData, $key1);
+        $mac = hash_hmac(
+            'sha256',
+            $macData,
+            $key1
+        );
 
         try {
             $response = Http::timeout(30)
                 ->asForm()
                 ->post($endpoint, [
                     'app_id' => $appId,
+
                     'app_user' => $appUser,
+
                     'app_trans_id' => $appTransId,
+
                     'app_time' => $appTime,
+
                     'amount' => $amount,
-                    'description' => 'Thanh toan don hang ' . $order->code,
+
+                    'description' =>
+                        'Thanh toan don hang ' . $order->code,
+
                     'bank_code' => '',
+
                     'item' => $item,
+
                     'embed_data' => $embedData,
+
                     'callback_url' => $callbackUrl,
+
                     'mac' => $mac,
 
-                    // Cho thời gian test 15 phút.
+                    // 15 phút để test.
                     'expire_duration_seconds' => 900,
                 ]);
 
             $result = $response->json();
 
+            if (!is_array($result)) {
+                $result = [];
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Log kết quả create
+            |--------------------------------------------------------------------------
+            */
+
             Log::info('ZaloPay create order', [
                 'order_id' => $order->id,
                 'order_code' => $order->code,
                 'app_trans_id' => $appTransId,
+                'http_status' => $response->status(),
                 'response' => $result,
             ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Kiểm tra create thành công
+            |--------------------------------------------------------------------------
+            */
 
             if (
                 !$response->successful() ||
@@ -168,6 +237,7 @@ class ZaloPayController extends Controller
             ) {
                 Log::warning('ZaloPay create failed', [
                     'order_id' => $order->id,
+                    'app_trans_id' => $appTransId,
                     'response' => $result,
                 ]);
 
@@ -181,38 +251,124 @@ class ZaloPayController extends Controller
                     );
             }
 
-            $qrCode = trim((string) ($result['qr_code'] ?? ''));
-
             /*
             |--------------------------------------------------------------------------
-            | Sandbox AppID 553: ưu tiên qr_code
+            | Lưu session giao dịch
             |--------------------------------------------------------------------------
             */
 
-            if ($qrCode === '') {
-                Log::error('ZaloPay missing qr_code', [
-                    'order_id' => $order->id,
-                    'response' => $result,
+            session([
+                'zalopay_order_id' =>
+                    (string) $order->id,
+
+                'zalopay_app_trans_id' =>
+                    $appTransId,
+
+                'zalopay_amount' =>
+                    (int) $order->total,
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | ZaloPay có thể trả:
+            |
+            | 1. URL gateway thật
+            | 2. QR payload
+            |--------------------------------------------------------------------------
+            */
+
+            $orderUrl = trim(
+                (string) ($result['order_url'] ?? '')
+            );
+
+            $qrCode = trim(
+                (string) ($result['qr_code'] ?? '')
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Nếu là URL thật → redirect tới ZaloPay
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $orderUrl !== '' &&
+                filter_var(
+                    $orderUrl,
+                    FILTER_VALIDATE_URL
+                )
+            ) {
+                Log::info(
+                    'ZaloPay redirect to gateway',
+                    [
+                        'order_id' => $order->id,
+                        'app_trans_id' => $appTransId,
+                    ]
+                );
+
+                return redirect()->away($orderUrl);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Nếu là QR payload → hiển thị QR
+            |--------------------------------------------------------------------------
+            */
+
+            if ($qrCode !== '') {
+                session([
+                    'zalopay_qr_code' => $qrCode,
                 ]);
 
                 return redirect()
-                    ->route('checkout.index')
-                    ->with('error', 'ZaloPay không trả về mã QR thanh toán.');
+                    ->route('zalopay.qr');
             }
 
-            session([
-                'zalopay_qr_code' => $qrCode,
-                'zalopay_order_id' => (string) $order->id,
-                'zalopay_app_trans_id' => $appTransId,
-                'zalopay_amount' => (int) $order->total,
-            ]);
+            /*
+            |--------------------------------------------------------------------------
+            | Một số sandbox có thể đặt QR payload trong order_url
+            |--------------------------------------------------------------------------
+            */
 
-            return redirect()->route('zalopay.qr');
+            if (
+                $orderUrl !== '' &&
+                !filter_var(
+                    $orderUrl,
+                    FILTER_VALIDATE_URL
+                )
+            ) {
+                session([
+                    'zalopay_qr_code' => $orderUrl,
+                ]);
+
+                return redirect()
+                    ->route('zalopay.qr');
+            }
+
+            Log::error(
+                'ZaloPay missing payment target',
+                [
+                    'order_id' => $order->id,
+                    'app_trans_id' => $appTransId,
+                    'response' => $result,
+                ]
+            );
+
+            return redirect()
+                ->route('checkout.index')
+                ->with(
+                    'error',
+                    'ZaloPay không trả về đường dẫn hoặc mã QR thanh toán.'
+                );
+
         } catch (\Throwable $e) {
-            Log::error('ZaloPay create exception', [
-                'order_id' => $order->id,
-                'message' => $e->getMessage(),
-            ]);
+            Log::error(
+                'ZaloPay create exception',
+                [
+                    'order_id' => $order->id,
+                    'message' => $e->getMessage(),
+                ]
+            );
 
             return redirect()
                 ->route('checkout.index')
@@ -229,12 +385,16 @@ class ZaloPayController extends Controller
     public function qr()
     {
         $qrCode = session('zalopay_qr_code');
+
         $orderId = session('zalopay_order_id');
 
         if (!$qrCode || !$orderId) {
             return redirect()
                 ->route('checkout.index')
-                ->with('error', 'Không tìm thấy giao dịch ZaloPay.');
+                ->with(
+                    'error',
+                    'Không tìm thấy giao dịch ZaloPay.'
+                );
         }
 
         $order = Order::find($orderId);
@@ -242,28 +402,47 @@ class ZaloPayController extends Controller
         if (!$order) {
             return redirect()
                 ->route('checkout.index')
-                ->with('error', 'Không tìm thấy đơn hàng.');
+                ->with(
+                    'error',
+                    'Không tìm thấy đơn hàng.'
+                );
         }
 
-        return view('checkout.zalopay-qr', compact(
-            'qrCode',
-            'order'
-        ));
+        if ($order->payment_status === 'paid') {
+            return redirect()
+                ->route('checkout.success');
+        }
+
+        return view(
+            'checkout.zalopay-qr',
+            compact(
+                'qrCode',
+                'order'
+            )
+        );
     }
 
     /**
-     * Endpoint AJAX để trang QR kiểm tra trạng thái thanh toán.
+     * AJAX kiểm tra trạng thái thanh toán.
      *
-     * Nếu callback chưa tới, chủ động Query Order một lần để đồng bộ.
+     * Nếu callback chưa tới thì query trực tiếp ZaloPay.
      */
     public function status()
     {
-        $orderId = session('zalopay_order_id');
-        $appTransId = session('zalopay_app_trans_id');
+        $orderId = session(
+            'zalopay_order_id'
+        );
+
+        $appTransId = session(
+            'zalopay_app_trans_id'
+        );
 
         if (!$orderId) {
             return response()->json([
                 'paid' => false,
+                'processing' => false,
+                'message' =>
+                    'Không tìm thấy giao dịch ZaloPay.',
             ], 404);
         }
 
@@ -272,46 +451,85 @@ class ZaloPayController extends Controller
         if (!$order) {
             return response()->json([
                 'paid' => false,
+                'processing' => false,
+                'message' =>
+                    'Không tìm thấy đơn hàng.',
             ], 404);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Nếu DB chưa paid thì chủ động query ZaloPay
+        |--------------------------------------------------------------------------
+        */
 
         if (
             $order->payment_status !== 'paid' &&
             is_string($appTransId) &&
             $appTransId !== ''
         ) {
-            $this->queryAndSyncOrder($order, $appTransId);
+            $this->queryAndSyncOrder(
+                $order,
+                $appTransId
+            );
+
             $order->refresh();
         }
 
-        $paid = $order->payment_status === 'paid';
+        $paid =
+            $order->payment_status === 'paid';
 
         if ($paid) {
             session([
                 'checkout_order' => array_merge(
-                    session('checkout_order', []),
+                    session(
+                        'checkout_order',
+                        []
+                    ),
                     [
-                        'id' => (string) $order->id,
-                        'code' => $order->code,
-                        'total' => $order->total,
+                        'id' =>
+                            (string) $order->id,
+
+                        'code' =>
+                            $order->code,
+
+                        'total' =>
+                            $order->total,
                     ]
                 ),
 
                 'checkout_payment' => [
                     'status' => 'paid',
-                    'transaction_id' => $appTransId,
-                    'paid_at' => now()->toDateTimeString(),
-                    'bank' => 'ZaloPay',
-                    'amount' => $order->total,
-                    'content' => $order->code,
+
+                    'transaction_id' =>
+                        $appTransId,
+
+                    'paid_at' =>
+                        now()->toDateTimeString(),
+
+                    'bank' =>
+                        'ZaloPay',
+
+                    'amount' =>
+                        $order->total,
+
+                    'content' =>
+                        $order->code,
                 ],
             ]);
         }
 
         return response()->json([
             'paid' => $paid,
+
+            'processing' => !$paid,
+
             'redirect' => $paid
-                ? route('checkout.success', [], false)
+                ? route(
+                    'checkout.success',
+                    [],
+                    false
+                )
                 : null,
         ]);
     }
@@ -323,11 +541,38 @@ class ZaloPayController extends Controller
      */
     public function callback(Request $request)
     {
-        $dataString = (string) $request->input('data', '');
-        $receivedMac = (string) $request->input('mac', '');
-        $type = (int) $request->input('type', 1);
+        /*
+        |--------------------------------------------------------------------------
+        | Ghi log callback tới
+        |--------------------------------------------------------------------------
+        */
 
-        $key2 = (string) config('services.zalopay.key2');
+        Log::info('ZaloPay callback received', [
+            'type' => $request->input('type'),
+            'has_data' =>
+                $request->filled('data'),
+            'has_mac' =>
+                $request->filled('mac'),
+        ]);
+
+        $dataString = (string) $request->input(
+            'data',
+            ''
+        );
+
+        $receivedMac = (string) $request->input(
+            'mac',
+            ''
+        );
+
+        $type = (int) $request->input(
+            'type',
+            1
+        );
+
+        $key2 = (string) config(
+            'services.zalopay.key2'
+        );
 
         if (
             !$dataString ||
@@ -335,11 +580,22 @@ class ZaloPayController extends Controller
             !$key2 ||
             $type !== 1
         ) {
+            Log::warning(
+                'ZaloPay callback invalid data'
+            );
+
             return response()->json([
                 'return_code' => 2,
-                'return_message' => 'Invalid callback data',
+                'return_message' =>
+                    'Invalid callback data',
             ]);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Verify MAC bằng KEY2
+        |--------------------------------------------------------------------------
+        */
 
         $expectedMac = hash_hmac(
             'sha256',
@@ -347,91 +603,195 @@ class ZaloPayController extends Controller
             $key2
         );
 
-        if (!hash_equals(
-            strtolower($expectedMac),
-            strtolower($receivedMac)
-        )) {
-            Log::warning('ZaloPay callback invalid MAC');
+        if (
+            !hash_equals(
+                strtolower($expectedMac),
+                strtolower($receivedMac)
+            )
+        ) {
+            Log::warning(
+                'ZaloPay callback invalid MAC'
+            );
 
             return response()->json([
                 'return_code' => 2,
-                'return_message' => 'Invalid MAC',
+                'return_message' =>
+                    'Invalid MAC',
             ]);
         }
 
-        $data = json_decode($dataString, true);
+        $data = json_decode(
+            $dataString,
+            true
+        );
 
         if (!is_array($data)) {
             return response()->json([
                 'return_code' => 2,
-                'return_message' => 'Invalid JSON',
+                'return_message' =>
+                    'Invalid JSON',
             ]);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Kiểm tra app_id
+        |--------------------------------------------------------------------------
+        */
 
         if (
             (int) ($data['app_id'] ?? 0)
             !==
-            (int) config('services.zalopay.app_id')
+            (int) config(
+                'services.zalopay.app_id'
+            )
         ) {
             return response()->json([
                 'return_code' => 2,
-                'return_message' => 'Invalid app_id',
+                'return_message' =>
+                    'Invalid app_id',
             ]);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Lấy order_id từ embed_data
+        |--------------------------------------------------------------------------
+        */
 
         $embedData = json_decode(
             $data['embed_data'] ?? '{}',
             true
         );
 
-        $orderId = $embedData['order_id'] ?? null;
+        if (!is_array($embedData)) {
+            $embedData = [];
+        }
+
+        $orderId =
+            $embedData['order_id'] ?? null;
 
         if (!$orderId) {
             return response()->json([
                 'return_code' => 2,
-                'return_message' => 'Missing order_id',
+                'return_message' =>
+                    'Missing order_id',
             ]);
         }
 
-        $amount = (int) ($data['amount'] ?? 0);
+        $amount = (int) (
+            $data['amount'] ?? 0
+        );
 
         try {
             $success = DB::transaction(
-                function () use ($orderId, $amount, $data) {
+                function () use (
+                    $orderId,
+                    $amount,
+                    $data
+                ) {
                     $order = Order::query()
                         ->lockForUpdate()
                         ->find($orderId);
 
                     if (!$order) {
-                        return false;
-                    }
-
-                    if ($order->payment_method !== 'zalopay') {
-                        return false;
-                    }
-
-                    if ((int) $order->total !== $amount) {
-                        Log::warning('ZaloPay amount mismatch', [
-                            'order_id' => $order->id,
-                            'db_amount' => $order->total,
-                            'callback_amount' => $amount,
-                        ]);
+                        Log::warning(
+                            'ZaloPay callback order not found',
+                            [
+                                'order_id' =>
+                                    $orderId,
+                            ]
+                        );
 
                         return false;
                     }
 
-                    if ($order->payment_status !== 'paid') {
-                        $order->payment_status = 'paid';
+                    if (
+                        $order->payment_method
+                        !== 'zalopay'
+                    ) {
+                        Log::warning(
+                            'ZaloPay callback wrong payment method',
+                            [
+                                'order_id' =>
+                                    $order->id,
+
+                                'payment_method' =>
+                                    $order->payment_method,
+                            ]
+                        );
+
+                        return false;
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Kiểm tra số tiền
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        (int) $order->total
+                        !==
+                        $amount
+                    ) {
+                        Log::warning(
+                            'ZaloPay amount mismatch',
+                            [
+                                'order_id' =>
+                                    $order->id,
+
+                                'db_amount' =>
+                                    $order->total,
+
+                                'callback_amount' =>
+                                    $amount,
+                            ]
+                        );
+
+                        return false;
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Idempotent:
+                    | callback nhiều lần cũng chỉ paid một lần
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        $order->payment_status
+                        !== 'paid'
+                    ) {
+                        $order->payment_status =
+                            'paid';
+
                         $order->save();
                     }
 
-                    Log::info('ZaloPay payment completed', [
-                        'order_id' => $order->id,
-                        'order_code' => $order->code,
-                        'app_trans_id' => $data['app_trans_id'] ?? null,
-                        'zp_trans_id' => $data['zp_trans_id'] ?? null,
-                        'amount' => $amount,
-                    ]);
+                    Log::info(
+                        'ZaloPay payment completed',
+                        [
+                            'order_id' =>
+                                $order->id,
+
+                            'order_code' =>
+                                $order->code,
+
+                            'app_trans_id' =>
+                                $data[
+                                    'app_trans_id'
+                                ] ?? null,
+
+                            'zp_trans_id' =>
+                                $data[
+                                    'zp_trans_id'
+                                ] ?? null,
+
+                            'amount' =>
+                                $amount,
+                        ]
+                    );
 
                     return true;
                 }
@@ -440,50 +800,105 @@ class ZaloPayController extends Controller
             if (!$success) {
                 return response()->json([
                     'return_code' => 2,
-                    'return_message' => 'Order validation failed',
+
+                    'return_message' =>
+                        'Order validation failed',
                 ]);
             }
 
             return response()->json([
                 'return_code' => 1,
-                'return_message' => 'Success',
+                'return_message' =>
+                    'Success',
             ]);
+
         } catch (\Throwable $e) {
-            Log::error('ZaloPay callback exception', [
-                'message' => $e->getMessage(),
-            ]);
+            Log::error(
+                'ZaloPay callback exception',
+                [
+                    'message' =>
+                        $e->getMessage(),
+                ]
+            );
 
             return response()->json([
                 'return_code' => 2,
-                'return_message' => 'Internal error',
+                'return_message' =>
+                    'Internal error',
             ]);
         }
     }
 
     /**
-     * ZaloPay redirect browser về đây sau thanh toán.
-     *
-     * Luồng QR hiện tại không phụ thuộc route này, nhưng vẫn giữ để
-     * tương thích nếu sandbox/production sau này trả gateway URL thật.
+     * ZaloPay redirect browser về đây.
      */
     public function result(Request $request)
     {
-        $key2 = (string) config('services.zalopay.key2');
+        $key2 = (string) config(
+            'services.zalopay.key2'
+        );
 
         if (!$key2) {
             return redirect()
                 ->route('checkout.index')
-                ->with('error', 'Thiếu cấu hình ZaloPay Key2.');
+                ->with(
+                    'error',
+                    'Thiếu cấu hình ZaloPay Key2.'
+                );
         }
 
-        $appId = (string) $request->query('appid', '');
-        $appTransId = (string) $request->query('apptransid', '');
-        $pmcId = (string) $request->query('pmcid', '');
-        $bankCode = (string) $request->query('bankcode', '');
-        $amount = (string) $request->query('amount', '');
-        $discountAmount = (string) $request->query('discountamount', '');
-        $status = (string) $request->query('status', '');
-        $receivedChecksum = (string) $request->query('checksum', '');
+        /*
+        |--------------------------------------------------------------------------
+        | Các query params ZaloPay redirect
+        |--------------------------------------------------------------------------
+        */
+
+        $appId = (string) $request->query(
+            'appid',
+            ''
+        );
+
+        $appTransId = (string) $request->query(
+            'apptransid',
+            ''
+        );
+
+        $pmcId = (string) $request->query(
+            'pmcid',
+            ''
+        );
+
+        $bankCode = (string) $request->query(
+            'bankcode',
+            ''
+        );
+
+        $amount = (string) $request->query(
+            'amount',
+            ''
+        );
+
+        $discountAmount = (string) $request->query(
+            'discountamount',
+            ''
+        );
+
+        $status = (string) $request->query(
+            'status',
+            ''
+        );
+
+        $receivedChecksum = (string)
+            $request->query(
+                'checksum',
+                ''
+            );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Verify checksum redirect
+        |--------------------------------------------------------------------------
+        */
 
         $checksumData = implode('|', [
             $appId,
@@ -508,6 +923,14 @@ class ZaloPayController extends Controller
                 strtolower($receivedChecksum)
             )
         ) {
+            Log::warning(
+                'ZaloPay redirect invalid checksum',
+                [
+                    'app_trans_id' =>
+                        $appTransId,
+                ]
+            );
+
             return redirect()
                 ->route('checkout.index')
                 ->with(
@@ -516,9 +939,17 @@ class ZaloPayController extends Controller
                 );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Verify app_id
+        |--------------------------------------------------------------------------
+        */
+
         if (
             (int) $appId !==
-            (int) config('services.zalopay.app_id')
+            (int) config(
+                'services.zalopay.app_id'
+            )
         ) {
             return redirect()
                 ->route('checkout.index')
@@ -527,6 +958,12 @@ class ZaloPayController extends Controller
                     'App ID ZaloPay không hợp lệ.'
                 );
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Nếu redirect báo chưa thành công
+        |--------------------------------------------------------------------------
+        */
 
         if ($status !== '1') {
             return redirect()
@@ -537,8 +974,19 @@ class ZaloPayController extends Controller
                 );
         }
 
-        $parts = explode('_', $appTransId);
-        $orderId = $parts[1] ?? null;
+        /*
+        |--------------------------------------------------------------------------
+        | Lấy order ID trong app_trans_id
+        |--------------------------------------------------------------------------
+        */
+
+        $parts = explode(
+            '_',
+            $appTransId
+        );
+
+        $orderId =
+            $parts[1] ?? null;
 
         if (!$orderId) {
             return redirect()
@@ -560,7 +1008,17 @@ class ZaloPayController extends Controller
                 );
         }
 
-        if ($order->payment_status !== 'paid') {
+        /*
+        |--------------------------------------------------------------------------
+        | Không tin redirect tuyệt đối.
+        | Query trực tiếp ZaloPay nếu DB chưa paid.
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $order->payment_status
+            !== 'paid'
+        ) {
             $this->queryAndSyncOrder(
                 $order,
                 $appTransId
@@ -569,7 +1027,10 @@ class ZaloPayController extends Controller
             $order->refresh();
         }
 
-        if ($order->payment_status !== 'paid') {
+        if (
+            $order->payment_status
+            !== 'paid'
+        ) {
             return redirect()
                 ->route('checkout.index')
                 ->with(
@@ -578,27 +1039,53 @@ class ZaloPayController extends Controller
                 );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Đồng bộ session checkout
+        |--------------------------------------------------------------------------
+        */
+
         session([
             'checkout_order' => array_merge(
-                session('checkout_order', []),
+                session(
+                    'checkout_order',
+                    []
+                ),
                 [
-                    'id' => (string) $order->id,
-                    'code' => $order->code,
-                    'total' => $order->total,
+                    'id' =>
+                        (string) $order->id,
+
+                    'code' =>
+                        $order->code,
+
+                    'total' =>
+                        $order->total,
                 ]
             ),
 
             'checkout_payment' => [
-                'status' => 'paid',
-                'transaction_id' => $appTransId,
-                'paid_at' => now()->toDateTimeString(),
-                'bank' => 'ZaloPay',
-                'amount' => $order->total,
-                'content' => $order->code,
+                'status' =>
+                    'paid',
+
+                'transaction_id' =>
+                    $appTransId,
+
+                'paid_at' =>
+                    now()->toDateTimeString(),
+
+                'bank' =>
+                    'ZaloPay',
+
+                'amount' =>
+                    $order->total,
+
+                'content' =>
+                    $order->code,
             ],
         ]);
 
-        return redirect()->route('checkout.success');
+        return redirect()
+            ->route('checkout.success');
     }
 
     /**
@@ -608,17 +1095,32 @@ class ZaloPayController extends Controller
         Order $order,
         string $appTransId
     ): bool {
-        $appId = (int) config('services.zalopay.app_id');
-        $key1 = (string) config('services.zalopay.key1');
+        $appId = (int) config(
+            'services.zalopay.app_id'
+        );
+
+        $key1 = (string) config(
+            'services.zalopay.key1'
+        );
 
         $endpoint = (string) config(
             'services.zalopay.query_endpoint',
             'https://sb-openapi.zalopay.vn/v2/query'
         );
 
-        if (!$appId || !$key1 || !$endpoint) {
+        if (
+            !$appId ||
+            !$key1 ||
+            !$endpoint
+        ) {
             return false;
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Query MAC
+        |--------------------------------------------------------------------------
+        */
 
         $macInput =
             $appId
@@ -637,59 +1139,135 @@ class ZaloPayController extends Controller
             $response = Http::timeout(20)
                 ->asForm()
                 ->post($endpoint, [
-                    'app_id' => $appId,
-                    'app_trans_id' => $appTransId,
-                    'mac' => $mac,
+                    'app_id' =>
+                        $appId,
+
+                    'app_trans_id' =>
+                        $appTransId,
+
+                    'mac' =>
+                        $mac,
                 ]);
 
-            $result = $response->json();
+            $result =
+                $response->json();
 
-            Log::info('ZaloPay query order', [
-                'order_id' => $order->id,
-                'app_trans_id' => $appTransId,
-                'response' => $result,
-            ]);
+            if (!is_array($result)) {
+                $result = [];
+            }
+
+            Log::info(
+                'ZaloPay query order',
+                [
+                    'order_id' =>
+                        $order->id,
+
+                    'app_trans_id' =>
+                        $appTransId,
+
+                    'http_status' =>
+                        $response->status(),
+
+                    'response' =>
+                        $result,
+                ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | return_code != 1:
+            | pending / failed / system error
+            |--------------------------------------------------------------------------
+            */
 
             if (
                 !$response->successful() ||
-                (int) ($result['return_code'] ?? 0) !== 1
+                (int) (
+                    $result['return_code']
+                    ?? 0
+                ) !== 1
             ) {
                 return false;
             }
 
-            $paidAmount = (int) ($result['amount'] ?? 0);
+            /*
+            |--------------------------------------------------------------------------
+            | Verify amount
+            |--------------------------------------------------------------------------
+            */
 
-            if ($paidAmount !== (int) $order->total) {
-                Log::warning('ZaloPay query amount mismatch', [
-                    'order_id' => $order->id,
-                    'db_amount' => $order->total,
-                    'zalopay_amount' => $paidAmount,
-                ]);
+            $paidAmount = (int) (
+                $result['amount'] ?? 0
+            );
+
+            if (
+                $paidAmount !==
+                (int) $order->total
+            ) {
+                Log::warning(
+                    'ZaloPay query amount mismatch',
+                    [
+                        'order_id' =>
+                            $order->id,
+
+                        'db_amount' =>
+                            $order->total,
+
+                        'zalopay_amount' =>
+                            $paidAmount,
+                    ]
+                );
 
                 return false;
             }
 
-            DB::transaction(function () use ($order) {
-                $lockedOrder = Order::query()
-                    ->lockForUpdate()
-                    ->find($order->id);
+            /*
+            |--------------------------------------------------------------------------
+            | Cập nhật paid an toàn
+            |--------------------------------------------------------------------------
+            */
 
-                if (
-                    $lockedOrder &&
-                    $lockedOrder->payment_method === 'zalopay' &&
-                    $lockedOrder->payment_status !== 'paid'
-                ) {
-                    $lockedOrder->payment_status = 'paid';
-                    $lockedOrder->save();
+            DB::transaction(
+                function () use ($order) {
+                    $lockedOrder =
+                        Order::query()
+                            ->lockForUpdate()
+                            ->find($order->id);
+
+                    if (
+                        $lockedOrder &&
+                        $lockedOrder
+                            ->payment_method
+                            === 'zalopay' &&
+                        $lockedOrder
+                            ->payment_status
+                            !== 'paid'
+                    ) {
+                        $lockedOrder
+                            ->payment_status =
+                            'paid';
+
+                        $lockedOrder->save();
+                    }
                 }
-            });
+            );
 
             return true;
+
         } catch (\Throwable $e) {
-            Log::error('ZaloPay query exception', [
-                'order_id' => $order->id,
-                'message' => $e->getMessage(),
-            ]);
+            Log::error(
+                'ZaloPay query exception',
+                [
+                    'order_id' =>
+                        $order->id,
+
+                    'app_trans_id' =>
+                        $appTransId,
+
+                    'message' =>
+                        $e->getMessage(),
+                ]
+            );
 
             return false;
         }
