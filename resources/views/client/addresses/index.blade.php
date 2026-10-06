@@ -294,218 +294,408 @@
 
 </div>
 
+<script type="application/json" id="address-page-config">
+{
+    "hasValidationErrors": {{ $errors->any() ? 'true' : 'false' }},
+    "oldProvinceId": {!! json_encode(old('province_id')) !!}
+}
+</script>
+
 <script>
-
 document.addEventListener('DOMContentLoaded', function () {
-
     const overlay = document.getElementById('mkAddressOverlay');
-
-    const dialog = overlay.querySelector('.mk-address-dialog');
+    const dialog = overlay?.querySelector('.mk-address-dialog');
 
     const province = document.getElementById('mkProvince');
-
     const district = document.getElementById('mkDistrict');
-
     const ward = document.getElementById('mkWard');
-
     const error = document.getElementById('mkAddressLoadError');
 
+    const configElement = document.getElementById('address-page-config');
+
+    const addressPageConfig = configElement
+        ? JSON.parse(configElement.textContent)
+        : {
+            hasValidationErrors: false,
+            oldProvinceId: null
+        };
+
+    const hasValidationErrors = Boolean(
+        addressPageConfig.hasValidationErrors
+    );
+
+    const oldProvinceId = addressPageConfig.oldProvinceId;
+
     let previousFocus = null;
-
     let provinceRequest = 0;
-
     let districtRequest = 0;
 
-
-
     function openModal() {
+        if (!overlay || !dialog) {
+            return;
+        }
 
         previousFocus = document.activeElement;
 
         overlay.hidden = false;
-
         document.body.style.overflow = 'hidden';
 
         dialog.focus();
 
-        document.getElementById('mkRecipient').focus();
-
+        document.getElementById('mkRecipient')?.focus();
     }
 
     function closeModal() {
+        if (!overlay) {
+            return;
+        }
 
         overlay.hidden = true;
-
         document.body.style.overflow = '';
 
-        if (previousFocus && previousFocus.focus) previousFocus.focus();
-
+        if (
+            previousFocus &&
+            typeof previousFocus.focus === 'function'
+        ) {
+            previousFocus.focus();
+        }
     }
 
-    document.getElementById('mkOpenAddress').addEventListener('click', openModal);
+    document
+        .getElementById('mkOpenAddress')
+        ?.addEventListener('click', openModal);
 
-    document.getElementById('mkCloseAddress').addEventListener('click', closeModal);
+    document
+        .getElementById('mkCloseAddress')
+        ?.addEventListener('click', closeModal);
 
-    document.getElementById('mkCancelAddress').addEventListener('click', closeModal);
+    document
+        .getElementById('mkCancelAddress')
+        ?.addEventListener('click', closeModal);
 
-    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
-
-    document.addEventListener('keydown', e => {
-
-        if (overlay.hidden) return;
-
-        if (e.key === 'Escape') closeModal();
-
-        if (e.key !== 'Tab') return;
-
-        const focusable = [...dialog.querySelectorAll('button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled])')];
-
-        if (!focusable.length) return;
-
-        const first = focusable[0], last = focusable[focusable.length - 1];
-
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-
+    overlay?.addEventListener('click', function (event) {
+        if (event.target === overlay) {
+            closeModal();
+        }
     });
 
+    document.addEventListener('keydown', function (event) {
+        if (!overlay || overlay.hidden || !dialog) {
+            return;
+        }
 
+        if (event.key === 'Escape') {
+            closeModal();
+            return;
+        }
 
-    function resetSelect(el, label) {
+        if (event.key !== 'Tab') {
+            return;
+        }
 
-        el.replaceChildren(new Option(label, ''));
+        const focusable = [
+            ...dialog.querySelectorAll(
+                'button:not([disabled]), ' +
+                'input:not([disabled]):not([type="hidden"]), ' +
+                'select:not([disabled])'
+            )
+        ];
 
-        el.disabled = true;
+        if (!focusable.length) {
+            return;
+        }
 
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (
+            event.shiftKey &&
+            document.activeElement === first
+        ) {
+            event.preventDefault();
+            last.focus();
+        } else if (
+            !event.shiftKey &&
+            document.activeElement === last
+        ) {
+            event.preventDefault();
+            first.focus();
+        }
+    });
+
+    function resetSelect(element, label) {
+        if (!element) {
+            return;
+        }
+
+        element.replaceChildren(
+            new Option(label, '')
+        );
+
+        element.disabled = true;
     }
 
-    function setName(el, dest) {
+    function setName(element, destinationId) {
+        const destination = document.getElementById(destinationId);
 
-        document.getElementById(dest).value = el.value ? el.selectedOptions[0].textContent : '';
+        if (!element || !destination) {
+            return;
+        }
 
+        destination.value =
+            element.value && element.selectedOptions.length
+                ? element.selectedOptions[0].textContent
+                : '';
     }
 
-    province.addEventListener('change', async function () {
-
-        const req = ++provinceRequest;
+    province?.addEventListener('change', async function () {
+        const requestId = ++provinceRequest;
 
         ++districtRequest;
 
-        error.hidden = true;
+        if (error) {
+            error.hidden = true;
+            error.textContent = '';
+        }
 
         setName(province, 'mkProvinceName');
 
-        document.getElementById('mkDistrictName').value = '';
+        const districtName =
+            document.getElementById('mkDistrictName');
 
-        document.getElementById('mkWardName').value = '';
+        const wardName =
+            document.getElementById('mkWardName');
 
-        resetSelect(district, '-- Chọn Quận/Huyện --');
+        if (districtName) {
+            districtName.value = '';
+        }
 
-        resetSelect(ward, '-- Chọn Phường/Xã --');
+        if (wardName) {
+            wardName.value = '';
+        }
 
-        if (!province.value) return;
+        resetSelect(
+            district,
+            '-- Chọn Quận/Huyện --'
+        );
 
-        resetSelect(district, 'Đang tải...');
+        resetSelect(
+            ward,
+            '-- Chọn Phường/Xã --'
+        );
+
+        if (!province.value) {
+            return;
+        }
+
+        resetSelect(
+            district,
+            'Đang tải...'
+        );
 
         try {
+            const response = await fetch(
+                '/checkout/districts?province_id=' +
+                encodeURIComponent(province.value),
+                {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }
+            );
 
-            const res = await fetch('/checkout/districts?province_id=' + encodeURIComponent(province.value), {headers: {'Accept': 'application/json'}});
+            if (!response.ok) {
+                throw new Error(
+                    'HTTP ' + response.status
+                );
+            }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const payload = await response.json();
 
-            const payload = await res.json();
+            if (requestId !== provinceRequest) {
+                return;
+            }
 
-            if (req !== provinceRequest) return;
+            const rows = Array.isArray(payload)
+                ? payload
+                : (
+                    Array.isArray(payload.data)
+                        ? payload.data
+                        : []
+                );
 
-            const rows = Array.isArray(payload) ? payload : (Array.isArray(payload.data) ? payload.data : []);
+            district.replaceChildren(
+                new Option(
+                    '-- Chọn Quận/Huyện --',
+                    ''
+                )
+            );
 
-            district.replaceChildren(new Option('-- Chọn Quận/Huyện --', ''));
-
-            for (const item of rows) if (item && item.DistrictID != null && item.DistrictName != null) district.add(new Option(String(item.DistrictName), String(item.DistrictID)));
+            for (const item of rows) {
+                if (
+                    item &&
+                    item.DistrictID != null &&
+                    item.DistrictName != null
+                ) {
+                    district.add(
+                        new Option(
+                            String(item.DistrictName),
+                            String(item.DistrictID)
+                        )
+                    );
+                }
+            }
 
             district.disabled = rows.length === 0;
+        } catch (exception) {
+            console.error(exception);
 
-        } catch (e) {
+            if (requestId !== provinceRequest) {
+                return;
+            }
 
-            if (req !== provinceRequest) return;
+            resetSelect(
+                district,
+                '-- Chọn Quận/Huyện --'
+            );
 
-            resetSelect(district, '-- Chọn Quận/Huyện --');
+            if (error) {
+                error.textContent =
+                    'Không tải được quận/huyện. Vui lòng thử lại.';
 
-            error.textContent = 'Không tải được quận/huyện. Vui lòng thử lại.';
-
-            error.hidden = false;
-
+                error.hidden = false;
+            }
         }
-
     });
 
-    district.addEventListener('change', async function () {
+    district?.addEventListener('change', async function () {
+        const requestId = ++districtRequest;
 
-        const req = ++districtRequest;
+        if (error) {
+            error.hidden = true;
+            error.textContent = '';
+        }
 
-        error.hidden = true;
+        setName(
+            district,
+            'mkDistrictName'
+        );
 
-        setName(district, 'mkDistrictName');
+        const wardName =
+            document.getElementById('mkWardName');
 
-        document.getElementById('mkWardName').value = '';
+        if (wardName) {
+            wardName.value = '';
+        }
 
-        resetSelect(ward, '-- Chọn Phường/Xã --');
+        resetSelect(
+            ward,
+            '-- Chọn Phường/Xã --'
+        );
 
-        if (!district.value) return;
+        if (!district.value) {
+            return;
+        }
 
-        resetSelect(ward, 'Đang tải...');
+        resetSelect(
+            ward,
+            'Đang tải...'
+        );
 
         try {
+            const response = await fetch(
+                '/checkout/wards?district_id=' +
+                encodeURIComponent(district.value),
+                {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }
+            );
 
-            const res = await fetch('/checkout/wards?district_id=' + encodeURIComponent(district.value), {headers: {'Accept': 'application/json'}});
+            if (!response.ok) {
+                throw new Error(
+                    'HTTP ' + response.status
+                );
+            }
 
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const payload = await response.json();
 
-            const payload = await res.json();
+            if (requestId !== districtRequest) {
+                return;
+            }
 
-            if (req !== districtRequest) return;
+            const rows = Array.isArray(payload)
+                ? payload
+                : (
+                    Array.isArray(payload.data)
+                        ? payload.data
+                        : []
+                );
 
-            const rows = Array.isArray(payload) ? payload : (Array.isArray(payload.data) ? payload.data : []);
+            ward.replaceChildren(
+                new Option(
+                    '-- Chọn Phường/Xã --',
+                    ''
+                )
+            );
 
-            ward.replaceChildren(new Option('-- Chọn Phường/Xã --', ''));
-
-            for (const item of rows) if (item && item.WardCode != null && item.WardName != null) ward.add(new Option(String(item.WardName), String(item.WardCode)));
+            for (const item of rows) {
+                if (
+                    item &&
+                    item.WardCode != null &&
+                    item.WardName != null
+                ) {
+                    ward.add(
+                        new Option(
+                            String(item.WardName),
+                            String(item.WardCode)
+                        )
+                    );
+                }
+            }
 
             ward.disabled = rows.length === 0;
+        } catch (exception) {
+            console.error(exception);
 
-        } catch (e) {
+            if (requestId !== districtRequest) {
+                return;
+            }
 
-            if (req !== districtRequest) return;
+            resetSelect(
+                ward,
+                '-- Chọn Phường/Xã --'
+            );
 
-            resetSelect(ward, '-- Chọn Phường/Xã --');
+            if (error) {
+                error.textContent =
+                    'Không tải được phường/xã. Vui lòng thử lại.';
 
-            error.textContent = 'Không tải được phường/xã. Vui lòng thử lại.';
-
-            error.hidden = false;
-
+                error.hidden = false;
+            }
         }
-
     });
 
-    ward.addEventListener('change', () => setName(ward, 'mkWardName'));
+    ward?.addEventListener('change', function () {
+        setName(
+            ward,
+            'mkWardName'
+        );
+    });
 
-
-
-    @if($errors->any())
-
+    if (hasValidationErrors) {
         openModal();
 
-        @if(old('province_id'))
+        if (oldProvinceId && province) {
+            province.value = String(oldProvinceId);
 
-        province.dispatchEvent(new Event('change'));
-
-        @endif
-
-    @endif
-
+            province.dispatchEvent(
+                new Event('change')
+            );
+        }
+    }
 });
-
 </script>
 
 @endsection

@@ -1,6 +1,8 @@
 @extends('client.layouts.app')
 
-
+@section('sidebar')
+    <div class="hidden"></div>
+@endsection
 
 @section('content')
 
@@ -622,13 +624,8 @@
                     Thông tin tài khoản
 
                 </a>
-
-<<<<<<< HEAD
                 <a href="#" class="menu-link-vibrant">
-
-=======
                 <a href="{{ route('profile.orders.index') }}" class="menu-link-vibrant">
->>>>>>> 7c31440ed4c34c242d95993bd9cb7492e3e4e3b6
                     <span class="icon-box-sm">🛍️</span>
 
                     Quản lý đơn hàng

@@ -1,5 +1,7 @@
 @extends('client.layouts.app')
-
+@section('sidebar')
+    <div class="hidden"></div>
+@endsection
 @section('title', 'Thanh toán thành công - MommyKids')
 
 @section('content')

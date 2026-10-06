@@ -566,25 +566,25 @@ return response()->json([
         ]);
 
         if ($this->cart->hasMissingWeights()) {
-    return back()
-        ->withInput()
-        ->with(
-            'error',
-            'Có sản phẩm chưa khai báo khối lượng. '
-            . 'Không thể tính chính xác phí vận chuyển GHN.'
-        );
-}
+            return back()
+                ->withInput()
+                ->with(
+                    'error',
+                    'Có sản phẩm chưa khai báo khối lượng. '
+                    . 'Không thể tính chính xác phí vận chuyển GHN.'
+            );
+        }
 
-$weight = $this->cart->totalWeightGrams();
+        $weight = $this->cart->totalWeightGrams();
 
-if ($weight <= 0) {
-    return back()
-        ->withInput()
-        ->with(
-            'error',
-            'Tổng khối lượng đơn hàng không hợp lệ.'
-        );
-}
+        if ($weight <= 0) {
+            return back()
+                ->withInput()
+                ->with(
+                    'error',
+                    'Tổng khối lượng đơn hàng không hợp lệ.'
+                );
+        }
         $feeData = $this->ghn->calculateFee(
             (int) $data['to_district_id'],
             $data['to_ward_code'],
@@ -1224,49 +1224,57 @@ if ($weight <= 0) {
 
         // Lọc tiếp theo điều kiện áp dụng thực tế
         return $vouchers
-            ->filter(function (Voucher $voucher) use ($user, $voucherItems) {
-                try {
-                    $this->voucherValidation->validate(
-                        $voucher,
-                        $user,
-                        $voucherItems
-                    );
-                    return true;
-                } catch (Throwable $e) {
-                    return false;
-                }
-            })
-            ->map(function (Voucher $voucher) {
-                $benefit = match ($voucher->discount_type) {
-                    'percent' => 'Giảm ' . (int) $voucher->discount_value . '%'
-                        . ($voucher->max_discount_amount
-                            ? ' · tối đa ' . number_format((int) $voucher->max_discount_amount, 0, ',', '.') . 'đ'
-                            : ''),
-                    'fixed' => 'Giảm ' . number_format((int) $voucher->discount_value, 0, ',', '.') . 'đ',
-                    'free_shipping' => (int) $voucher->max_discount_amount > 0
-                        ? 'Giảm phí ship tối đa ' . number_format((int) $voucher->max_discount_amount, 0, ',', '.') . 'đ'
-                        : 'Miễn phí vận chuyển',
-                    default => 'Ưu đãi',
-                };
-                return [
-                    'id' => (string) $voucher->id,
-                    'code' => $voucher->code,
-                    'name' => $voucher->name,
-                    'benefit' => $benefit,
-                    'expires_at' => $voucher->expires_at?->format('d/m/Y'),
-                    'is_auto' => !$voucher->require_save_to_user, // Đánh dấu loại tự động
-                ];
-            })
-            ->values();
-    }
+    ->filter(function (Voucher $voucher) use ($user, $voucherItems) {
+        try {
+            $this->voucherValidation->validate(
+                $voucher,
+                $user,
+                $voucherItems
+            );
 
+            return true;
+        } catch (Throwable $e) {
+            \Log::warning('Voucher rejected at checkout', [
+                'voucher_id' => $voucher->id,
+                'voucher_code' => $voucher->code,
+                'voucher_name' => $voucher->name,
+                'reason' => $e->getMessage(),
+            ]);
 
-    /**
-     * Tính lại cả hai slot voucher từ session. Không tin số discount lưu ở frontend/session.
-     * Khi $strict=true, voucher invalid sẽ throw để chặn tạo Order.
-     * Khi $lock=true, khóa row voucher trong transaction checkout.
-     */
-    private function calculateVoucherBreakdown(
+            return false;
+        }
+    })
+    ->map(function (Voucher $voucher) {
+        $benefit = match ($voucher->discount_type) {
+            'percent' => 'Giảm ' . (int) $voucher->discount_value . '%'
+                . ($voucher->max_discount_amount
+                    ? ' · tối đa ' . number_format((int) $voucher->max_discount_amount, 0, ',', '.') . 'đ'
+                    : ''),
+            'fixed' => 'Giảm ' . number_format((int) $voucher->discount_value, 0, ',', '.') . 'đ',
+            'free_shipping' => (int) $voucher->max_discount_amount > 0
+                ? 'Giảm phí ship tối đa ' . number_format((int) $voucher->max_discount_amount, 0, ',', '.') . 'đ'
+                : 'Miễn phí vận chuyển',
+            default => 'Ưu đãi',
+        };
+
+        return [
+            'id' => (string) $voucher->id,
+            'code' => $voucher->code,
+            'name' => $voucher->name,
+            'benefit' => $benefit,
+            'expires_at' => $voucher->expires_at?->format('d/m/Y'),
+            'is_auto' => !$voucher->require_save_to_user,
+        ];
+    })
+     ->values();
+}
+
+/**
+ * Tính lại cả hai slot voucher từ session. Không tin số discount lưu ở frontend/session.
+ * Khi $strict=true, voucher invalid sẽ throw để chặn tạo Order.
+ * Khi $lock=true, khóa row voucher trong transaction checkout.
+ */
+private function calculateVoucherBreakdown(
         Collection $items,
         int $subtotal,
         int $shippingFee,
