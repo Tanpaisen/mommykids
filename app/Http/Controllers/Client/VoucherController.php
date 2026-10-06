@@ -17,7 +17,7 @@ class VoucherController extends Controller
             $now = now();
             return Voucher::where('status', 'active')
                 ->where('is_public', true)
-                ->where('require_save_to_user', false)
+                ->where('require_save_to_user', true)
                 ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
                 ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>=', $now))
                 ->where(fn ($q) => $q->whereNull('total_quantity')->orWhere('total_quantity', '>', 0))
@@ -91,4 +91,49 @@ class VoucherController extends Controller
             'message' => 'Đã lưu mã vào ví thành công!'
         ]);
     }
+   public function wallet()
+{
+    $user = Auth::user();
+
+    $vouchers = $user->savedVouchers()
+        ->with('usages')
+        ->latest('vouchers.created_at')
+        ->get();
+
+    $now = now();
+
+    $availableVouchers = $vouchers->filter(function ($voucher) use ($user, $now) {
+        if ($voucher->status !== 'active') return false;
+        if ($voucher->starts_at && $voucher->starts_at->gt($now)) return false;
+        if ($voucher->expires_at && $voucher->expires_at->lt($now)) return false;
+
+        if (
+            $voucher->total_quantity !== null &&
+            $voucher->used_count >= $voucher->total_quantity
+        ) {
+            return false;
+        }
+
+        return true;
+    });
+
+    $usedVouchers = $vouchers->filter(function ($voucher) use ($user) {
+        return $voucher->usages
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->isNotEmpty();
+    });
+
+    $expiredVouchers = $vouchers->filter(function ($voucher) use ($now) {
+        return $voucher->expires_at &&
+               $voucher->expires_at->lt($now);
+    });
+
+    return view('client.vouchers.wallet', compact(
+        'vouchers',
+        'availableVouchers',
+        'usedVouchers',
+        'expiredVouchers'
+    ));
+}
 }

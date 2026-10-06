@@ -170,6 +170,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/quy-dinh-chinh-sach', [ProfileController::class, 'policy'])
         ->name('profile.policy');
 
+    Route::get('/ho-so/voucher', [VoucherController::class, 'wallet'])
+        ->name('profile.vouchers.index');
+
     Route::name('profile.addresses.')->group(function () {
         Route::get('/ho-so/dia-chi', [AddressController::class, 'index'])->name('index');
         Route::get('/ho-so/dia-chi/tao', [AddressController::class, 'create'])->name('create');
@@ -372,6 +375,8 @@ Route::middleware('auth')->group(function () {
         '/yeu-thich/{product:id}',
         [WishlistController::class, 'destroy']
     )->name('wishlist.destroy');
+    Route::get('/ho-so/voucher', [VoucherController::class, 'wallet'])
+    ->name('profile.vouchers.index');
 });
 
 

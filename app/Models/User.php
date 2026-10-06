@@ -122,8 +122,8 @@ class User extends Authenticatable
      */
     public function wishlist()
     {
-        if (class_exists(\App\Models\Wishlist::class)) {
-            return $this->hasMany(\App\Models\Wishlist::class, 'user_id');
+        if (class_exists(\App\Models\WishlistItem::class)) {
+            return $this->hasMany(\App\Models\WishlistItem::class, 'user_id');
         }
         return $this->hasMany(self::class, 'id')->whereRaw('1 = 0');
     }

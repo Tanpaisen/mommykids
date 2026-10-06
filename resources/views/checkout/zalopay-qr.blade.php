@@ -1,5 +1,7 @@
 @extends('client.layouts.app')
-
+@section('sidebar')
+    <div class="hidden"></div>
+@endsection
 @section('title', 'Thanh toán ZaloPay - MommyKids')
 
 @section('content')
@@ -99,35 +101,132 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const statusUrl = @json(route('zalopay.status', [], false));
 
-    const timer = setInterval(async () => {
+    let stopped = false;
+    let checking = false;
+    let attempts = 0;
+
+    const MAX_ATTEMPTS = 90;      // 90 lần
+    const POLL_INTERVAL = 10000;  // 10 giây/lần
+
+    async function checkPaymentStatus() {
+        if (stopped || checking) {
+            return;
+        }
+
+        checking = true;
+        attempts++;
+
         try {
             const response = await fetch(statusUrl, {
+                method: 'GET',
                 headers: {
                     'Accept': 'application/json'
-                }
+                },
+                cache: 'no-store'
             });
 
             if (!response.ok) {
+                statusTarget.textContent =
+                    '⏳ Đang chờ ZaloPay xác nhận giao dịch...';
+
                 return;
             }
 
             const data = await response.json();
 
             if (data.paid) {
-                clearInterval(timer);
+                stopped = true;
 
-                statusTarget.textContent = '✅ Thanh toán thành công';
-                statusTarget.style.background = '#ecfdf3';
-                statusTarget.style.color = '#067647';
+                statusTarget.textContent =
+                    '✅ Thanh toán thành công';
+
+                statusTarget.style.background =
+                    '#ecfdf3';
+
+                statusTarget.style.color =
+                    '#067647';
 
                 if (data.redirect) {
-                    window.location.href = data.redirect;
+                    setTimeout(() => {
+                        window.location.href =
+                            data.redirect;
+                    }, 700);
                 }
+
+                return;
             }
+
+            /*
+             * Chưa thanh toán / ZaloPay vẫn đang xử lý.
+             *
+             * Không coi đây là thất bại vì controller hiện
+             * có thể nhận return_code 3 hoặc lỗi sandbox -172
+             * nhưng is_processing vẫn true.
+             */
+            if (data.processing) {
+                statusTarget.textContent =
+                    '⏳ ZaloPay đang xử lý giao dịch. Vui lòng không thanh toán lại.';
+
+                statusTarget.style.background =
+                    '#fff7e6';
+
+                statusTarget.style.color =
+                    '#9a6700';
+            } else {
+                statusTarget.textContent =
+                    data.message ||
+                    '⏳ Đang chờ thanh toán...';
+            }
+
         } catch (error) {
-            console.error('ZaloPay status error:', error);
+            console.error(
+                'ZaloPay status error:',
+                error
+            );
+
+            statusTarget.textContent =
+                '⚠️ Tạm thời chưa kiểm tra được trạng thái. Hệ thống sẽ thử lại.';
+
+            statusTarget.style.background =
+                '#fff7e6';
+
+            statusTarget.style.color =
+                '#9a6700';
+
+        } finally {
+            checking = false;
+
+            /*
+             * Khoảng 15 phút.
+             *
+             * 90 lần × 10 giây = 900 giây.
+             */
+            if (!stopped && attempts < MAX_ATTEMPTS) {
+                setTimeout(
+                    checkPaymentStatus,
+                    POLL_INTERVAL
+                );
+            }
+
+            if (!stopped && attempts >= MAX_ATTEMPTS) {
+                stopped = true;
+
+                statusTarget.textContent =
+                    '⚠️ Chưa nhận được xác nhận thanh toán. Vui lòng kiểm tra lại đơn hàng trước khi thanh toán lại.';
+
+                statusTarget.style.background =
+                    '#fff4f0';
+
+                statusTarget.style.color =
+                    '#b42318';
+            }
         }
-    }, 2500);
+    }
+
+    /*
+     * Chờ 5 giây sau khi trang QR mở rồi mới query lần đầu.
+     */
+    setTimeout(checkPaymentStatus, 5000);
 });
 </script>
 @endsection
