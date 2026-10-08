@@ -145,17 +145,17 @@ if ($request->filled('rank')) {
 
 
 
-        // Load giỏ hàng an toàn
+        // Load giỏ hàng hiện tại
 
-        try {
+try {
 
-            $customer->load([
-                'cartItems.product'
-            ]);
+    $customer->load([
+        'carts.items.product'
+    ]);
 
-        } catch (\Throwable $e) {
+} catch (\Throwable $e) {
 
-        }
+}
 
 
 

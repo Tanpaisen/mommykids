@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\NotificationPreference;
+use App\Models\WishlistItem;
 use Illuminate\Support\Facades\Cache;
 
 
@@ -173,29 +174,34 @@ class User extends Authenticatable
 
 
 
-    public function cartItems()
-    {
-
-        return $this->hasMany(
-            CartItem::class,
-            'user_id'
-        );
-
-    }
+    public function carts()
+{
+    return $this->hasMany(
+        Cart::class,
+        'user_id'
+    );
+}
 
 
+public function activeCart()
+{
+    return $this->hasOne(
+        Cart::class,
+        'user_id'
+    )->where('status','active');
+}
 
 
 
-    public function wishlist()
-    {
 
-        return $this->hasMany(
-        self::class,
-        'id'
-    )->whereRaw('1 = 0');
 
-    }
+  public function wishlist(): HasMany
+{
+    return $this->hasMany(
+        WishlistItem::class,
+        'user_id'
+    );
+}
 
 
 

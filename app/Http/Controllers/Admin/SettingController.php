@@ -93,6 +93,12 @@ class SettingController extends Controller
             'instagram_url'
             =>'nullable|url|max:255',
 
+            'meta_description'
+            =>'nullable|string',
+
+            'header_scripts'
+            =>'nullable|string',
+
 
         ]);
 

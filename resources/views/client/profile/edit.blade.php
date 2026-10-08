@@ -123,8 +123,7 @@ $customerCode = $user->loyalty_code ?? ('MK-' . $user->id);
         font-weight: 800;
 
         font-size: 24px;
-
-        border-radius: 50%;
+border-radius: 50%;
 
         display: flex;
 
@@ -329,8 +328,7 @@ $customerCode = $user->loyalty_code ?? ('MK-' . $user->id);
         font-size: 12px;
 
         color: #718096;
-
-        font-weight: 500;
+font-weight: 500;
 
         margin-bottom: 2px;
 
@@ -427,7 +425,7 @@ $customerCode = $user->loyalty_code ?? ('MK-' . $user->id);
     .profile-address-location { margin: 7px 0 0; color: #66616b; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
     .profile-address-label { display: inline-block; margin-top: 10px; background: #f5f5f7; color: #6c6570; padding: 3px 9px; border-radius: 7px; font-size: 12px; }
     .profile-address-edit { align-self: flex-start; white-space: nowrap; color: #ed315d; text-decoration: none; font-size: 13px; font-weight: 750; padding: 8px 0; }
-    .profile-address-edit:hover { color: #c91f4b; text-decoration: underline; }
+.profile-address-edit:hover { color: #c91f4b; text-decoration: underline; }
     .profile-address-empty { text-align: center; border: 1px dashed #f2baca; border-radius: 15px; padding: 28px 18px; color: #66616b; }
     .profile-address-empty a { color: #e82a58; font-weight: 750; text-decoration: none; }
     @media (max-width: 640px) {
@@ -462,169 +460,305 @@ $customerCode = $user->loyalty_code ?? ('MK-' . $user->id);
 
 
     <div class="row g-4">
-        <!-- CỘT TRÁI: THẺ VIP & MENU ĐIỀU HƯỚNG -->
-        <div class="col-lg-4 col-md-5">
-            <!-- Thẻ VIP Rực Rỡ -->
-            <div class="vip-card-vibrant mb-3">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="avatar-glow">
-                        {{ strtoupper(substr($user->name ?? 'K', 0, 1)) }}
-                    </div>
-                    <div>
-                        <!-- Hiển thị $currentTier động -->
-                        <span class="glass-pill d-inline-block mb-1">
-                        👑 {{ $currentTier }}
-                        </span>
-                        <h5 class="fw-bold mb-0 text-white" style="font-size: 17px;">
-                            {{ $user->name ?? ($user->phone ? (substr($user->phone, 0, 4) . '*****' . substr($user->phone, -3)) : 'Khách hàng') }}
-                        </h5>
-                    </div>
-                </div>
-                <div class="pt-3 border-top border-white-20 d-flex justify-content-between text-white-50" style="font-size: 12.5px;">
-                    <!-- ĐÃ ĐỒNG BỘ MÃ KHÁCH HÀNG -->
-                    <span>Mã KH: <strong class="text-white fw-bold">{{ $customerCode }}</strong></span>
-                    <span>Điểm tích lũy: <strong class="text-white fw-bold">{{ number_format($user->points ?? 0) }} đ</strong></span>
-                </div>
-            </div>
-            <!-- Khung Tiến Trình Đăng Hạng -->
-            <div class="loyalty-progress-card mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 12.5px;">
-                    <span class="text-secondary">Chi tiêu: <strong class="text-dark">{{ number_format($totalSpent) }}đ</strong></span>
-                    @if(($progress['needed'] ?? 0) > 0)
-                        <span class="fw-bold" style="color: #FF2A54;">Cần {{ number_format($progress['needed']) }}đ lên {{ $progress['next_tier'] }}</span>
-                    @else
-                        <span class="text-success fw-bold">Hạng Cao Nhất</span>
-                    @endif
-                </div>
-                <div class="progress-track">
-                    <div class="progress-fill-neon" style="width: {{ $progress['percent'] }}%;"></div>
-                </div>
-            </div>
-            <!-- Menu Điều Hướng Sidebar -->
-            <div class="d-flex flex-column">
-                <a href="{{ route('profile.edit') }}" class="menu-link-vibrant active">
-                    <span class="icon-box-sm">👤</span>
-                    Thông tin tài khoản
-                </a>
-                <a href="{{ route('profile.orders.index') }}" class="menu-link-vibrant">
-                    <span class="icon-box-sm">🛍️</span>
-                    Quản lý đơn hàng
-                </a>
-                <a href="{{ route('profile.support') }}" class="menu-link-vibrant">
-                    <span class="icon-box-sm">🎧</span>
-                    Trung tâm hỗ trợ
-                </a>
-                <a href="{{ route('profile.policy') }}" class="menu-link-vibrant">
-                    <span class="icon-box-sm">📜</span>
-                    Quy định & Chính sách
-                </a>
-                <a href="{{ route('notifications.index') }}" class="menu-link-vibrant">
-                    <span class="icon-box-sm">🔔</span>
-                    Thông báo & Ưu đãi
-                </a>
-            </div>
-        </div>
-        <!-- CỘT PHẢI: CHI TIẾT THÔNG TIN -->
-        <div class="col-lg-8 col-md-7">
-            <h5 class="fw-bold mb-3 text-dark" style="font-size: 19px;">Hồ sơ cá nhân</h5>
-            <!-- Box 1: Thông tin cá nhân -->
-            <div class="info-card-modern mb-4">
-                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                    <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                        <span style="color: #FF2A54;">✨</span> Thông tin cá nhân
-                    </h6>
-                    <a href="#" class="text-decoration-none fw-bold" style="color: #FF2A54; font-size: 13px;">Chỉnh sửa</a>
-                </div>
-                <div class="row g-3">
-                    <div class="col-sm-6">
-                        <div class="field-box">
-                            <div class="label-title">Họ và tên</div>
-                            <div class="label-value">{{ $user->name ?? 'Chưa cập nhật' }}</div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="field-box">
-                            <div class="label-title">Số điện thoại</div>
-                            <div class="label-value">{{ $user->phone ?? 'Chưa cập nhật' }}</div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="field-box">
-                            <div class="label-title">Ngày tháng năm sinh</div>
-                            <div class="label-value">{{ $user->dob ?? 'Chưa cập nhật' }}</div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="field-box">
-                            <div class="label-title">Giới tính</div>
-                            <div class="label-value">{{ $user->gender ?? 'Nữ' }}</div>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="field-box">
-                            <div class="label-title">Địa chỉ Email</div>
-                            <div class="label-value">{{ $user->email ?? 'Chưa cập nhật' }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Box 2: Banner Khuyến Mãi Bé Yêu -->
-            <div class="info-card-modern mb-4" style="background: linear-gradient(135deg, #FFF8F0 0%, #FFF0F3 100%); border-color: #FFE1E7;">
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="p-3 bg-white rounded-circle shadow-sm flex-shrink-0" style="font-size: 26px;">
-                            🎂
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1" style="color: #9C4221; font-size: 15px;">Thông tin bé yêu</h6>
-                            <p class="mb-0 text-secondary" style="font-size: 13px; max-width: 400px; line-height: 1.4;">
-                                Thêm ngày sinh của bé để MommyKids gửi tặng voucher đặc biệt trong tháng sinh nhật!
-                            </p>
-                        </div>
-                    </div>
-                    <button class="btn-gradient-danger">Cập nhật ngay</button>
-                </div>
-            </div>
-           <!-- Box 3: Sổ địa chỉ nhận hàng (trang Hồ sơ) -->
-            <section class="profile-address-section mb-4" aria-labelledby="profileAddressTitle">
-                <div class="profile-address-head">
-                    <h5 class="profile-address-title" id="profileAddressTitle"><span aria-hidden="true" style="color:#ff2a54;">📍</span> Sổ địa chỉ nhận hàng</h5>
-                    <a href="{{ route('profile.addresses.index') }}?add=1" class="btn-gradient-danger profile-address-add">+ Thêm địa chỉ mới</a>
-                </div>
-                @php
-                    $profileAddresses = auth()->user()->addresses()
-                        ->orderByDesc('is_default')->latest()->get();
-                @endphp
-                @forelse($profileAddresses as $address)
-                    @if($loop->first)<div class="profile-address-list">@endif
-                    <article class="profile-address-item {{ $address->is_default ? 'is-default' : '' }}">
-                        <div class="profile-address-content">
-                            <div class="profile-address-name-row">
-                                <strong class="profile-address-name">{{ $address->recipient_name }}</strong>
-                                @if($address->is_default)
-                                    <span class="profile-address-badge">Mặc định</span>
-                                @endif
-                            </div>
-                            <p class="profile-address-phone">{{ $address->phone }}</p>
-                            <p class="profile-address-location">
-                                {{ collect([$address->address_detail, $address->ward_name, $address->district_name, $address->province_name])->filter()->implode(', ') }}
-                            </p>
-                            @if($address->label)
-                                <span class="profile-address-label">{{ $address->label }}</span>
-                            @endif
-                        </div>
-                        <a href="{{ route('profile.addresses.index') }}" class="profile-address-edit" aria-label="Quản lý địa chỉ của {{ $address->recipient_name }}">Chỉnh sửa ↗</a>
-                    </article>
-                    @if($loop->last)</div>@endif
-                @empty
-                    <div class="profile-address-empty">
-                        <div style="font-size:30px;margin-bottom:8px;" aria-hidden="true">🏠</div>
-                        <p>Bạn chưa lưu địa chỉ nhận hàng nào.</p>
-                        <a href="{{ route('profile.addresses.index') }}?add=1">Thêm địa chỉ đầu tiên</a>
-                    </div>
-                @endforelse
-            </section>
-        </div><!-- /.col-lg-8 -->
-    </div><!-- /.row -->
+
+        <!-- CỘT TRÁI: THẺ VIP & MENU ĐIỀU HƯỚNG -->
+
+        <div class="col-lg-4 col-md-5">
+
+            <!-- Thẻ VIP Rực Rỡ -->
+
+            <div class="vip-card-vibrant mb-3">
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+
+                    <div class="avatar-glow">
+
+                        {{ strtoupper(substr($user->name ?? 'K', 0, 1)) }}
+
+                    </div>
+
+                    <div>
+
+                        <!-- Hiển thị $currentTier động -->
+
+                        <span class="glass-pill d-inline-block mb-1">
+
+                            👑 {{ $currentTier }}
+
+                        </span>
+
+                        <h5 class="fw-bold mb-0 text-white" style="font-size: 17px;">
+
+                            {{ $user->name ?? ($user->phone ? (substr($user->phone, 0, 4) . '*****' . substr($user->phone, -3)) : 'Khách hàng') }}
+
+                        </h5>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="pt-3 border-top border-white-20 d-flex justify-content-between text-white-50" style="font-size: 12.5px;">
+
+                    <!-- ĐÃ ĐỒNG BỘ MÃ KHÁCH HÀNG -->
+
+                    <span>Mã KH: <strong class="text-white fw-bold">{{ $customerCode }}</strong></span>
+
+                    <span>Điểm tích lũy: <strong class="text-white fw-bold">{{ number_format($user->points ?? 0) }} đ</strong></span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Khung Tiến Trình Đăng Hạng -->
+
+            <div class="loyalty-progress-card mb-3">
+
+                <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 12.5px;">
+<span class="text-secondary">Chi tiêu: <strong class="text-dark">{{ number_format($totalSpent) }}đ</strong></span>
+
+                    @if(($progress['needed'] ?? 0) > 0)
+
+                        <span class="fw-bold" style="color: #FF2A54;">Cần {{ number_format($progress['needed']) }}đ lên {{ $progress['next_tier'] }}</span>
+
+                    @else
+
+                        <span class="text-success fw-bold">Hạng Cao Nhất</span>
+
+                    @endif
+
+                </div>
+
+                <div class="progress-track">
+
+                    <div class="progress-fill-neon" style="width: {{ $progress['percent'] }}%;"></div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Menu Điều Hướng Sidebar -->
+
+            <div class="d-flex flex-column">
+
+                <a href="{{ route('profile.edit') }}" class="menu-link-vibrant active">
+
+                    <span class="icon-box-sm">👤</span>
+
+                    Thông tin tài khoản
+
+                </a>
+
+                <a href="{{ route('profile.orders.index') }}" class="menu-link-vibrant">
+                    <span class="icon-box-sm">🛍️</span>
+                    Quản lý đơn hàng
+                </a>
+                <a href="{{ route('profile.support') }}" class="menu-link-vibrant">
+
+                    <span class="icon-box-sm">🎧</span>
+
+                    Trung tâm hỗ trợ
+
+                </a>
+
+                <a href="{{ route('profile.policy') }}" class="menu-link-vibrant">
+
+                    <span class="icon-box-sm">📜</span>
+
+                    Quy định & Chính sách
+
+                </a>
+
+                <a href="{{ route('notifications.index') }}" class="menu-link-vibrant">
+
+                    <span class="icon-box-sm">🔔</span>
+
+                    Thông báo & Ưu đãi
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- CỘT PHẢI: CHI TIẾT THÔNG TIN -->
+
+        <div class="col-lg-8 col-md-7">
+
+            <h5 class="fw-bold mb-3 text-dark" style="font-size: 19px;">Hồ sơ cá nhân</h5>
+
+
+
+            <!-- Box 1: Thông tin cá nhân -->
+
+            <div class="info-card-modern mb-4">
+
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+
+                    <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+
+                        <span style="color: #FF2A54;">✨</span> Thông tin cá nhân
+
+                    </h6>
+
+                    <a href="#" class="text-decoration-none fw-bold" style="color: #FF2A54; font-size: 13px;">Chỉnh sửa</a>
+
+                </div>
+
+
+
+                <div class="row g-3">
+
+                    <div class="col-sm-6">
+
+                        <div class="field-box">
+
+                            <div class="label-title">Họ và tên</div>
+
+                            <div class="label-value">{{ $user->name ?? 'Chưa cập nhật' }}</div>
+
+                        </div>
+</div>
+
+                    <div class="col-sm-6">
+
+                        <div class="field-box">
+
+                            <div class="label-title">Số điện thoại</div>
+
+                            <div class="label-value">{{ $user->phone ?? 'Chưa cập nhật' }}</div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-sm-6">
+
+                        <div class="field-box">
+
+                            <div class="label-title">Ngày tháng năm sinh</div>
+
+                            <div class="label-value">{{ $user->dob ?? 'Chưa cập nhật' }}</div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-sm-6">
+
+                        <div class="field-box">
+
+                            <div class="label-title">Giới tính</div>
+
+                            <div class="label-value">{{ $user->gender ?? 'Nữ' }}</div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <div class="field-box">
+
+                            <div class="label-title">Địa chỉ Email</div>
+
+                            <div class="label-value">{{ $user->email ?? 'Chưa cập nhật' }}</div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Box 2: Banner Khuyến Mãi Bé Yêu -->
+
+            <div class="info-card-modern mb-4" style="background: linear-gradient(135deg, #FFF8F0 0%, #FFF0F3 100%); border-color: #FFE1E7;">
+
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="p-3 bg-white rounded-circle shadow-sm flex-shrink-0" style="font-size: 26px;">
+
+                            🎂
+
+                        </div>
+
+                        <div>
+
+                            <h6 class="fw-bold mb-1" style="color: #9C4221; font-size: 15px;">Thông tin bé yêu</h6>
+
+                            <p class="mb-0 text-secondary" style="font-size: 13px; max-width: 400px; line-height: 1.4;">
+
+                                Thêm ngày sinh của bé để MommyKids gửi tặng voucher đặc biệt trong tháng sinh nhật!
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <button class="btn-gradient-danger">Cập nhật ngay</button>
+
+                </div>
+
+            </div>
+
+
+
+           <!-- Box 3: Sổ địa chỉ nhận hàng (trang Hồ sơ) -->
+            <section class="profile-address-section mb-4" aria-labelledby="profileAddressTitle">
+                <div class="profile-address-head">
+                    <h5 class="profile-address-title" id="profileAddressTitle"><span aria-hidden="true" style="color:#ff2a54;">📍</span> Sổ địa chỉ nhận hàng</h5>
+<a href="{{ route('profile.addresses.index') }}?add=1" class="btn-gradient-danger profile-address-add">+ Thêm địa chỉ mới</a>
+                </div>
+
+                @php
+                    $profileAddresses = auth()->user()->addresses()
+                        ->orderByDesc('is_default')->latest()->get();
+                @endphp
+
+                @forelse($profileAddresses as $address)
+                    @if($loop->first)<div class="profile-address-list">@endif
+                    <article class="profile-address-item {{ $address->is_default ? 'is-default' : '' }}">
+                        <div class="profile-address-content">
+                            <div class="profile-address-name-row">
+                                <strong class="profile-address-name">{{ $address->recipient_name }}</strong>
+                                @if($address->is_default)
+                                    <span class="profile-address-badge">Mặc định</span>
+                                @endif
+                            </div>
+                            <p class="profile-address-phone">{{ $address->phone }}</p>
+                            <p class="profile-address-location">
+                                {{ collect([$address->address_detail, $address->ward_name, $address->district_name, $address->province_name])->filter()->implode(', ') }}
+                            </p>
+                            @if($address->label)
+                                <span class="profile-address-label">{{ $address->label }}</span>
+                            @endif
+                        </div>
+                        <a href="{{ route('profile.addresses.index') }}" class="profile-address-edit" aria-label="Quản lý địa chỉ của {{ $address->recipient_name }}">Chỉnh sửa ↗</a>
+                    </article>
+                    @if($loop->last)</div>@endif
+                @empty
+                    <div class="profile-address-empty">
+                        <div style="font-size:30px;margin-bottom:8px;" aria-hidden="true">🏠</div>
+                        <p>Bạn chưa lưu địa chỉ nhận hàng nào.</p>
+                        <a href="{{ route('profile.addresses.index') }}?add=1">Thêm địa chỉ đầu tiên</a>
+                    </div>
+                @endforelse
+            </section>
+        </div><!-- /.col-lg-8 -->
+    </div><!-- /.row -->
 </div><!-- /.profile-master-container -->
 @endsection
