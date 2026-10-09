@@ -10,13 +10,13 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
-use App\Http\Controllers\CartController;
+use App\Http\Controllers\Cart\CartController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Auth\SocialLoginController; // <-- Đã thêm Controller Social Login
-use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Cart\CheckoutController;
 use App\Http\Controllers\PageController;
 
 // --- CONTROLLERS ADMIN ---
@@ -133,6 +133,8 @@ Route::get('/tuyen-dung', [PageController::class, 'recruitment'])->name('pages.r
 Route::get('/chinh-sach-doi-tra', [PageController::class, 'returnPolicy'])->name('pages.return');
 Route::get('/chinh-sach-van-chuyen', [PageController::class, 'shippingPolicy'])->name('pages.shipping');
 Route::get('/chinh-sach-bao-mat', [PageController::class, 'privacyPolicy'])->name('pages.privacy');
+Route::get('/lien-he', [PageController::class, 'contact'])
+    ->name('pages.contact');
 
 Route::middleware('auth')->prefix('thong-bao')->name('notifications.')->group(function () {
     Route::get('/', [NotificationController::class, 'index'])->name('index');

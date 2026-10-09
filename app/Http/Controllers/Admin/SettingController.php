@@ -3,106 +3,156 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminMenu;
 use App\Models\Setting;
-use App\Models\AdminMenu; // <-- Khai báo Model AdminMenu
+use Cloudinary\Cloudinary;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use RuntimeException;
+use GuzzleHttp\RequestOptions;
+use Illuminate\Support\Facades\Log;
 
 class SettingController extends Controller
 {
     /**
-     * Hiển thị trang Cài đặt chung & Danh sách Menu Admin
+     * Hiển thị trang Cài đặt chung.
      */
     public function index()
     {
-        // Lấy bản ghi cài đặt đầu tiên hoặc tạo bản ghi mặc định nếu chưa có
-        $setting = Setting::firstOrCreate([], [
-            'site_name' => 'MommyKids',
-            'hotline'   => '1800 6886',
-            'email'     => 'hotro@mommykids.vn',
-        ]);
+        $setting = Setting::first();
 
-        // Lấy toàn bộ Menu Admin theo thứ tự sắp xếp
+        if (!$setting) {
+            $setting = Setting::create([
+                'site_name' => 'MommyKids',
+                'hotline'   => '1800 6886',
+                'email'     => 'hotro@mommykids.vn',
+            ]);
+        }
+
         $menus = AdminMenu::orderBy('order')->get();
 
-        return view('admin.settings.index', compact('setting', 'menus'));
+        return view(
+            'admin.settings.index',
+            compact('setting', 'menus')
+        );
     }
 
     /**
-     * Cập nhật thông tin Cài đặt chung
+     * Cập nhật cài đặt.
+     * Logo và favicon được upload lên Cloudinary.
      */
     public function update(Request $request)
     {
-        $setting = Setting::firstOrCreate([]);
+        $setting = Setting::first();
 
-        // 1. Validate tất cả trường dữ liệu
+        if (!$setting) {
+            $setting = Setting::create([
+                'site_name' => 'MommyKids',
+            ]);
+        }
+
         $request->validate([
-            'site_name'          => 'nullable|string|max:255',
-            'logo'               => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-            'favicon'            => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp,ico|max:1024',
-            'copyright'          => 'nullable|string|max:255',
-            'hotline'            => 'nullable|string|max:50',
-            'email'              => 'nullable|email|max:255',
-            'address'            => 'nullable|string|max:500',
-            'facebook_url'       => 'nullable|url|max:255',
-            'zalo_url'           => 'nullable|url|max:255',
-            'instagram_url'      => 'nullable|url|max:255',
-            'top_announcement'   => 'nullable|string|max:255',
-            'default_location'   => 'nullable|string|max:255',
-            'search_placeholder' => 'nullable|string|max:255',
-            'home_banner_title'  => 'nullable|string|max:255',
-            'promo_title'        => 'nullable|string|max:255',
-            'promo_subtitle'     => 'nullable|string|max:255',
-            'promo_badge_1'      => 'nullable|string|max:255',
-            'promo_badge_2'      => 'nullable|string|max:255',
-            'promo_badge_3'      => 'nullable|string|max:255',
-            'promo_button_text'  => 'nullable|string|max:255',
-            'footer_description' => 'nullable|string',
-            'meta_description'   => 'nullable|string',
-            'header_scripts'     => 'nullable|string',
-        ], [
-            'logo.image'        => 'Logo phải là định dạng hình ảnh.',
-            'logo.mimes'        => 'Logo hỗ trợ các định dạng: jpeg, png, jpg, gif, svg, webp.',
-            'logo.max'          => 'Kích thước Logo không được vượt quá 2MB.',
-            'favicon.image'     => 'Favicon phải là định dạng hình ảnh.',
-            'favicon.max'       => 'Kích thước Favicon không được vượt quá 1MB.',
-            'email.email'       => 'Định dạng Email không hợp lệ.',
-            'facebook_url.url'  => 'Đường dẫn Facebook không hợp lệ.',
-            'zalo_url.url'      => 'Đường dẫn Zalo không hợp lệ.',
-            'instagram_url.url' => 'Đường dẫn Instagram không hợp lệ.',
+            'site_name'        => 'nullable|string|max:255',
+            'logo'             => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'favicon'          => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp,ico|max:1024',
+            'copyright'        => 'nullable|string|max:255',
+            'hotline'          => 'nullable|string|max:50',
+            'email'            => 'nullable|email|max:255',
+            'address'          => 'nullable|string|max:500',
+            'facebook_url'     => 'nullable|url|max:255',
+            'zalo_url'         => 'nullable|url|max:255',
+            'instagram_url'    => 'nullable|url|max:255',
+            'meta_description' => 'nullable|string',
+            'header_scripts'   => 'nullable|string',
         ]);
 
-        // 2. Lấy toàn bộ dữ liệu gửi lên (loại trừ các file ảnh)
-        $data = $request->except(['logo', 'favicon', '_token']);
+        $data = $request->except([
+            'logo',
+            'favicon',
+            '_token',
+            '_method',
+        ]);
 
-        // 3. Xử lý Upload Logo mới
-        if ($request->hasFile('logo')) {
-            if ($setting->logo && Storage::disk('public')->exists($setting->logo)) {
-                Storage::disk('public')->delete($setting->logo);
+        $oldLogo = $setting->logo;
+        $oldFavicon = $setting->favicon;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Upload LOGO lên Cloudinary
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+
+            if ($request->hasFile('logo')) {
+                $data['logo'] =
+                    $this->uploadToCloudinary(
+                        $request->file('logo'),
+                        'mommykids/settings/logo'
+                    );
             }
-            $data['logo'] = $request->file('logo')->store('settings', 'public');
+
+            if ($request->hasFile('favicon')) {
+                $data['favicon'] =
+                    $this->uploadToCloudinary(
+                        $request->file('favicon'),
+                        'mommykids/settings/favicon'
+                    );
+            }
+
+        } catch (\Throwable $e) {
+
+            Log::error(
+                'SETTING CLOUDINARY ERROR',
+                [
+                    'error' => $e->getMessage(),
+                ]
+            );
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'logo' =>
+                        'Không thể tải ảnh lên Cloudinary. '
+                        . 'Vui lòng thử lại.',
+                ]);
         }
 
-        // 4. Xử lý Upload Favicon mới
-        if ($request->hasFile('favicon')) {
-            if ($setting->favicon && Storage::disk('public')->exists($setting->favicon)) {
-                Storage::disk('public')->delete($setting->favicon);
-            }
-            $data['favicon'] = $request->file('favicon')->store('settings', 'public');
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | Lưu database
+        |--------------------------------------------------------------------------
+        */
 
-        // 5. Cập nhật dữ liệu vào Database
         $setting->update($data);
 
-        // 6. XÓA CACHE ĐỂ NGOÀI CLIENT ĐỔI TỨC THÌ
+        /*
+        |--------------------------------------------------------------------------
+        | Chỉ xóa ảnh cũ sau khi DB đã lưu thành công
+        |--------------------------------------------------------------------------
+        */
+
+        // if ($request->hasFile('logo') && $oldLogo) {
+        //     $this->deleteStoredImage($oldLogo);
+        // }
+
+        // if ($request->hasFile('favicon') && $oldFavicon) {
+        //     $this->deleteStoredImage($oldFavicon);
+        // }
+
         Cache::forget('global_settings');
 
-        return redirect()->back()->with('success', 'Cập nhật cài đặt hệ thống thành công!');
+        return back()->with(
+            'success',
+            'Cập nhật cài đặt hệ thống thành công!'
+        );
     }
 
     /**
-     * Cập nhật danh sách tên Menu Admin
+     * Cập nhật menu Admin.
      */
     public function updateMenus(Request $request)
     {
@@ -116,6 +166,273 @@ class SettingController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Cập nhật danh sách Menu Admin thành công!');
+        return back()->with(
+            'success',
+            'Cập nhật danh sách Menu Admin thành công!'
+        );
+    }
+
+    /**
+     * Khởi tạo Cloudinary.
+     */
+    private function cloudinary(): Cloudinary
+    {
+        $cloudUrl = config('cloudinary.cloud_url');
+
+        if (!$cloudUrl) {
+            throw new RuntimeException(
+                'CLOUDINARY_URL chưa được cấu hình. Kiểm tra .env.'
+            );
+        }
+
+        return new Cloudinary($cloudUrl);
+    }
+
+    /**
+     * Upload ảnh lên Cloudinary và trả về URL HTTPS.
+     */
+    private function uploadToCloudinary(
+        UploadedFile $file,
+        string $folder
+    ): string {
+        Log::info('CLOUDINARY_UPLOAD_START', [
+            'folder' => $folder,
+            'file'   => $file->getClientOriginalName(),
+            'size'   => $file->getSize(),
+        ]);
+
+        $startedAt = microtime(true);
+
+        try {
+            $result = $this->cloudinary()
+                ->uploadApi()
+                ->upload(
+                    $file->getRealPath(),
+                    [
+                        'folder' => $folder,
+
+                        'resource_type' => 'image',
+
+                        'use_filename' => true,
+
+                        'unique_filename' => true,
+
+                        'overwrite' => false,
+
+                        /*
+                        * Cloudinary SDK timeout.
+                        * Không cho request nằm chờ 60 giây.
+                        */
+                        'timeout' => 12,
+
+                        /*
+                        * Guzzle:
+                        * kết nối tối đa 5 giây.
+                        */
+                        RequestOptions::CONNECT_TIMEOUT => 5,
+
+                        /*
+                        * Tránh một số trường hợp upload
+                        * bị chậm vì HTTP Expect: 100-continue.
+                        */
+                        RequestOptions::EXPECT => false,
+                    ]
+                );
+
+            Log::info('CLOUDINARY_UPLOAD_OK', [
+                'seconds' =>
+                    round(
+                        microtime(true) - $startedAt,
+                        2
+                    ),
+
+                'public_id' =>
+                    $result['public_id']
+                    ?? null,
+            ]);
+
+            $url =
+                $result['secure_url']
+                ?? null;
+
+            if (!$url) {
+                throw new RuntimeException(
+                    'Cloudinary không trả về secure_url.'
+                );
+            }
+
+            return $url;
+
+        } catch (\Throwable $e) {
+
+            Log::error('CLOUDINARY_UPLOAD_FAILED', [
+                'seconds' =>
+                    round(
+                        microtime(true) - $startedAt,
+                        2
+                    ),
+
+                'folder' => $folder,
+
+                'file' =>
+                    $file->getClientOriginalName(),
+
+                'error' =>
+                    $e->getMessage(),
+            ]);
+
+            throw new RuntimeException(
+                'Không thể tải ảnh lên Cloudinary: '
+                . $e->getMessage(),
+                0,
+                $e
+            );
+        }
+    }
+
+    /**
+     * Xóa ảnh cũ.
+     *
+     * Cloudinary URL -> xóa trên Cloudinary.
+     * Local cũ -> xóa storage.
+     */
+    private function deleteStoredImage(?string $image): void
+    {
+        if (!$image) {
+            return;
+        }
+
+        if ($this->isCloudinaryUrl($image)) {
+            $publicId = $this->extractCloudinaryPublicId($image);
+
+            if (!$publicId) {
+                return;
+            }
+
+            try {
+                $this->cloudinary()
+                    ->uploadApi()
+                    ->destroy(
+                        $publicId,
+                        [
+                            'resource_type' => 'image',
+                            'invalidate'    => true,
+                        ]
+                    );
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
+            return;
+        }
+
+        /*
+         * Nếu là URL ngoài nhưng không phải Cloudinary
+         * thì không tự xóa.
+         */
+        if (Str::startsWith($image, ['http://', 'https://'])) {
+            return;
+        }
+
+        /*
+         * Hỗ trợ dữ liệu local cũ:
+         *
+         * settings/abc.png
+         * storage/settings/abc.png
+         * public/settings/abc.png
+         */
+        $cleanPath = ltrim(
+            str_replace(
+                ['public/', 'storage/'],
+                '',
+                $image
+            ),
+            '/'
+        );
+
+        Storage::disk('public')->delete($cleanPath);
+    }
+
+    private function isCloudinaryUrl(string $url): bool
+    {
+        $host = parse_url(
+            $url,
+            PHP_URL_HOST
+        );
+
+        if (!is_string($host)) {
+            return false;
+        }
+
+        return $host === 'res.cloudinary.com'
+            || Str::endsWith(
+                $host,
+                '.cloudinary.com'
+            );
+    }
+
+    /**
+     * Chuyển URL Cloudinary thành public_id để xóa.
+     */
+    private function extractCloudinaryPublicId(
+        string $url
+    ): ?string {
+        $path = parse_url(
+            $url,
+            PHP_URL_PATH
+        );
+
+        if (!is_string($path)) {
+            return null;
+        }
+
+        $marker = '/image/upload/';
+        $position = strpos(
+            $path,
+            $marker
+        );
+
+        if ($position === false) {
+            return null;
+        }
+
+        $relativePath = substr(
+            $path,
+            $position + strlen($marker)
+        );
+
+        /*
+         * Bỏ version Cloudinary:
+         * v1234567890/
+         */
+        $relativePath = preg_replace(
+            '#^v\d+/#',
+            '',
+            $relativePath
+        );
+
+        if (!$relativePath) {
+            return null;
+        }
+
+        /*
+         * Bỏ extension .png/.jpg...
+         */
+        $publicId = preg_replace(
+            '/\.[^\.\/]+$/',
+            '',
+            $relativePath
+        );
+
+        if (!$publicId) {
+            return null;
+        }
+
+        return rawurldecode(
+            ltrim(
+                $publicId,
+                '/'
+            )
+        );
     }
 }

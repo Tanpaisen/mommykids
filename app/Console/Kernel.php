@@ -12,7 +12,19 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        /*
+         * Refresh GHN 2 lần/ngày.
+         *
+         * --force-ghn ở bản stale-safe KHÔNG xóa cache cũ trước.
+         * Nó chỉ bỏ qua cache đọc để lấy dữ liệu mới; nếu GHN lỗi
+         * thì GHNService vẫn giữ/serve cache cũ.
+         */
+        $schedule
+            ->command('cache:warm --force-ghn --ghn-delay=100')
+            ->twiceDaily(0, 12)
+            ->withoutOverlapping(180)
+            ->onOneServer()
+            ->runInBackground();
     }
 
     /**

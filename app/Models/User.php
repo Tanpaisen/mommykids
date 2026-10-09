@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,23 +10,14 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\NotificationPreference;
+use App\Models\WishlistItem;
 use Illuminate\Support\Facades\Cache;
+
 
 class User extends Authenticatable
 {
+
     use HasApiTokens, HasFactory, Notifiable, HasUlids;
-
-    public function cachedUnreadCount(): int
-    {
-        return Cache::remember(self::unreadCacheKey($this->id), now()->addMinutes(30), function () {
-            return $this->unreadNotifications()->count();
-        });
-    }
-
-    public static function unreadCacheKey(string $userId): string
-    {
-        return "notif:unread:{$userId}";
-    }
 
     /**
      * Các thuộc tính được phép mass assignment.
@@ -35,87 +25,139 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+
         'name',
         'email',
         'password',
+
         'phone',
         'dob',
         'gender',
+
         'loyalty_code',
+
         'tier',
         'points',
         'total_spent',
+
         'role',
         'status',
         'is_active',
+
         'last_seen_at',
-        'provider',      // <-- Thêm để lưu social network (facebook)
-        'provider_id',   // <-- Thêm để lưu Facebook User ID
-        'avatar',        // <-- Thêm để lưu link ảnh đại diện Facebook
+
+        'provider',
+        'provider_id',
+        'avatar',
+
     ];
 
-    /**
-     * Các thuộc tính bị ẩn khi serialize.
-     *
-     * @var array<int, string>
-     */
+
+
+
     protected $hidden = [
+
         'password',
         'remember_token',
+
     ];
 
-    /**
-     * Cast dữ liệu.
-     *
-     * @var array<string, string>
-     */
+
+
+
     protected $casts = [
+
         'email_verified_at' => 'datetime',
-        'last_seen_at'      => 'datetime',
-        'points'            => 'integer',
-        'total_spent'       => 'decimal:2',
+
+        'last_seen_at' => 'datetime',
+
+        'points' => 'integer',
+
+        'total_spent' => 'decimal:2',
+
     ];
+
+
+
+
 
     protected static function booted(): void
     {
+
+
         static::creating(function ($user) {
-            if (empty($user->loyalty_code)) {
+
+
+            if(empty($user->loyalty_code)){
+
+
                 do {
-                    $code = '893' . mt_rand(1000000000, 9999999999);
-                } while (static::where('loyalty_code', $code)->exists());
+
+                    $code = '893'.mt_rand(1000000000,9999999999);
+
+
+                } while(
+                    static::where(
+                        'loyalty_code',
+                        $code
+                    )->exists()
+                );
+
 
                 $user->loyalty_code = $code;
+
             }
+
+
         });
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tự động đồng bộ tier
+        |--------------------------------------------------------------------------
+        */
+
+        static::saving(function($user){
+
+            $user->tier = $user->calculateTier();
+
+        });
+
+
     }
+
+
+
+
+
 
     public function addresses(): HasMany
-{
-    return $this->hasMany(UserAddress::class)
+    {
+
+        return $this->hasMany(
+            UserAddress::class
+        )
         ->orderByDesc('is_default')
         ->latest();
-}
-    /**
-     * Mối quan hệ với Đơn hàng
-     */
-    public function orders()
-    {
-        if (class_exists(\App\Models\Order::class)) {
-            return $this->hasMany(\App\Models\Order::class, 'user_id');
-        }
-        return $this->hasMany(self::class, 'id')->whereRaw('1 = 0');
+
     }
 
-    /**
-     * Mối quan hệ với Giỏ hàng (Kiểm tra an toàn nếu chưa có Model)
-     */
-    public function cartItems()
+
+
+
+
+    public function orders()
     {
-        if (class_exists(\App\Models\CartItem::class)) {
-            return $this->hasMany(\App\Models\CartItem::class, 'user_id');
-        }
-        return $this->hasMany(self::class, 'id')->whereRaw('1 = 0');
+
+        return $this->hasMany(
+            Order::class,
+            'user_id'
+        );
+
     }
+
 
     /**
      * Mối quan hệ với Danh sách yêu thích (Kiểm tra an toàn nếu chưa có Model)
@@ -128,124 +170,456 @@ class User extends Authenticatable
         return $this->hasMany(self::class, 'id')->whereRaw('1 = 0');
     }
 
-    /**
-     * Lịch sử tích điểm
-     */
+
+
+    public function carts()
+{
+    return $this->hasMany(
+        Cart::class,
+        'user_id'
+    );
+}
+
+
+public function activeCart()
+{
+    return $this->hasOne(
+        Cart::class,
+        'user_id'
+    )->where('status','active');
+}
+
     public function pointLogs()
     {
-        if (class_exists(\App\Models\PointLog::class)) {
-            return $this->hasMany(\App\Models\PointLog::class, 'user_id')->latest();
-        }
-        return $this->hasMany(self::class, 'id')->whereRaw('1 = 0');
+
+        return $this->hasMany(
+            PointLog::class,
+            'user_id'
+        )
+        ->latest();
+
     }
+
+
+
+
 
     public function productReviews(): HasMany
     {
+
         return $this->hasMany(
-            \App\Models\ProductReview::class
+            ProductReview::class
         );
+
     }
+
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tính hạng theo tổng chi tiêu
+    |--------------------------------------------------------------------------
+    */
+
+    public function calculateTier(): string
+    {
+
+
+        $spent = (float)$this->total_spent;
+
+
+
+        if($spent >= 10000000){
+
+            return 'diamond';
+
+        }
+
+
+
+        if($spent >= 5000000){
+
+            return 'gold';
+
+        }
+
+
+
+        if($spent >= 2000000){
+
+            return 'silver';
+
+        }
+
+
+
+        return 'bronze';
+
+
+    }
+
+
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tên hạng hiển thị
+    |--------------------------------------------------------------------------
+    */
 
     public function getTierNameAttribute(): string
     {
-        return match($this->tier) {
-            'silver'  => 'Hạng Bạc',
-            'gold'    => 'Hạng Vàng',
-            'diamond' => 'Hạng Kim Cương',
-            default   => 'Thành viên',
+
+
+        return match($this->calculateTier()){
+
+
+            'silver'
+                => 'Hạng Bạc',
+
+
+
+            'gold'
+                => 'Hạng Vàng',
+
+
+
+            'diamond'
+                => 'Hạng Kim Cương',
+
+
+
+            default
+                => 'Hạng Đồng',
+
+
         };
+
+
     }
 
-    /**
-     * Cập nhật phân hạng dựa trên tổng chi tiêu hiện tại
-     */
-    public function calculateTier(): string
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dùng cho blade:
+    | $user->current_tier_name
+    |--------------------------------------------------------------------------
+    */
+    public function getCurrentTierNameAttribute(): string
     {
-        if ($this->total_spent >= 10000000) {
-            return 'diamond';
-        } elseif ($this->total_spent >= 5000000) {
-            return 'gold';
-        } elseif ($this->total_spent >= 2000000) {
-            return 'silver';
+        return $this->tier_name;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Phần trăm tiến trình nâng hạng
+    |--------------------------------------------------------------------------
+    */
+
+    public function getTierProgressAttribute(): int
+    {
+
+
+        $spent = (float)$this->total_spent;
+
+
+
+        if($spent >= 10000000){
+
+            return 100;
+
         }
 
-        return 'member';
+
+
+        if($spent >= 5000000){
+
+            return round(
+                (($spent-5000000)/5000000)*100
+            );
+
+        }
+
+
+
+        if($spent >= 2000000){
+
+            return round(
+                (($spent-2000000)/3000000)*100
+            );
+
+        }
+
+
+
+        return round(
+            ($spent/2000000)*100
+        );
+
+
     }
 
-    /**
-     * Cộng tiền, tích điểm, ghi log lịch sử và tự động nâng hạng
-     */
-    public function rewardLoyaltyForOrder($order): void
-    {
-        $orderTotal = is_object($order) ? (float) $order->total_amount : (float) $order;
-        $orderId    = is_object($order) ? $order->id : null;
 
-        DB::transaction(function () use ($orderTotal, $orderId) {
-            $pointsEarned = (int) floor($orderTotal / 10000);
 
-            // 1. Cập nhật dữ liệu trên Model Memory
-            $this->total_spent += $orderTotal;
-            if ($pointsEarned > 0) {
-                $this->points += $pointsEarned;
-            }
 
-            // 2. Tự động tính toán lại Tier
-            $this->tier = $this->calculateTier();
 
-            // 3. Lưu toàn bộ thay đổi của User trong 1 query duy nhất
-            $this->save();
 
-            // 4. Ghi log tích điểm (nếu bảng PointLog tồn tại)
-            if ($pointsEarned > 0 && class_exists(\App\Models\PointLog::class)) {
-                $this->pointLogs()->create([
-                    'order_id'    => $orderId,
-                    'points'      => $pointsEarned,
-                    'type'        => 'earn',
-                    'description' => $orderId ? "Tích điểm từ đơn hàng #{$orderId}" : "Tích điểm từ đơn hàng",
-                ]);
-            }
-        });
-    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Thông tin nâng hạng
+    |--------------------------------------------------------------------------
+    */
 
     public function getNextTierProgressAttribute(): array
     {
-        $spent = (float) $this->total_spent;
 
-        if ($spent < 2000000) {
-            $nextTier = 'Hạng Bạc';
-            $target   = 2000000;
-            $percent  = min(100, round(($spent / $target) * 100));
-        } elseif ($spent < 5000000) {
-            $nextTier = 'Hạng Vàng';
-            $target   = 5000000;
-            $percent  = min(100, round((($spent - 2000000) / 3000000) * 100));
-        } elseif ($spent < 10000000) {
-            $nextTier = 'Hạng Kim Cương';
-            $target   = 10000000;
-            $percent  = min(100, round((($spent - 5000000) / 5000000) * 100));
-        } else {
-            return ['next_tier' => 'Cao nhất', 'needed' => 0, 'percent' => 100];
+
+        $spent = (float)$this->total_spent;
+
+
+
+        if($spent >= 10000000){
+
+
+            return [
+
+                'percent'=>100,
+
+                'needed'=>0,
+
+                'next_tier'=>'Đã đạt hạng cao nhất'
+
+            ];
+
+
         }
 
+
+
+        if($spent >= 5000000){
+
+
+            return [
+
+                'percent'=>round(
+                    (($spent-5000000)/5000000)*100
+                ),
+
+                'needed'=>10000000-$spent,
+
+                'next_tier'=>'Hạng Kim Cương'
+
+            ];
+
+
+        }
+
+
+
+        if($spent >= 2000000){
+
+
+            return [
+
+                'percent'=>round(
+                    (($spent-2000000)/3000000)*100
+                ),
+
+                'needed'=>5000000-$spent,
+
+                'next_tier'=>'Hạng Vàng'
+
+            ];
+
+
+        }
+
+
+
+
         return [
-            'next_tier' => $nextTier,
-            'needed'    => max(0, $target - $spent),
-            'percent'   => $percent,
+
+
+            'percent'=>round(
+                ($spent/2000000)*100
+            ),
+
+
+            'needed'=>2000000-$spent,
+
+
+            'next_tier'=>'Hạng Bạc'
+
+
         ];
+
+
+
     }
+
+
+
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cộng điểm sau đơn hàng
+    |--------------------------------------------------------------------------
+    */
+
+    public function rewardLoyaltyForOrder($order): void
+    {
+
+
+        $orderTotal = is_object($order)
+            ? (float)$order->total_amount
+            : (float)$order;
+
+
+
+        $orderId = is_object($order)
+            ? $order->id
+            : null;
+
+
+
+
+        DB::transaction(function() use(
+            $orderTotal,
+            $orderId
+        ){
+
+
+            $pointsEarned = floor(
+                $orderTotal / 10000
+            );
+
+
+
+            $this->total_spent += $orderTotal;
+
+
+
+            $this->points += $pointsEarned;
+
+
+
+            // tự tính lại hạng
+
+            $this->tier = $this->calculateTier();
+
+
+
+            $this->save();
+
+
+
+
+            if(
+                $pointsEarned > 0 &&
+                class_exists(PointLog::class)
+            ){
+
+
+                $this->pointLogs()->create([
+
+
+                    'order_id'=>$orderId,
+
+
+                    'points'=>$pointsEarned,
+
+
+                    'type'=>'earn',
+
+
+                    'description'=>
+                    "Tích điểm từ đơn hàng"
+
+
+
+                ]);
+
+            }
+
+
+
+        });
+
+
+
+    }
+
+
+
+
+
+
 
     public function savedVouchers()
     {
+
         return $this->belongsToMany(
+
             Voucher::class,
+
             'voucher_users',
+
             'user_id',
+
             'voucher_id'
+
         );
+
     }
 
     public function notificationPreferences(): HasMany
     {
         return $this->hasMany(NotificationPreference::class);
+    }
+
+    public static function unreadCacheKey(string $userId): string
+    {
+        return "notif:unread:{$userId}";
+    }
+
+    public static function notificationListCacheKey(
+        string $userId
+    ): string {
+        return "notif:header:{$userId}";
+    }
+
+    public function cachedUnreadCount(): int
+    {
+        return Cache::remember(
+            self::unreadCacheKey($this->id),
+            now()->addMinutes(10),
+            fn () => $this->unreadNotifications()->count()
+        );
+    }
+
+    public function cachedHeaderNotifications()
+    {
+        return Cache::remember(
+            self::notificationListCacheKey($this->id),
+            now()->addMinutes(10),
+            fn () => $this->notifications()
+                ->latest()
+                ->limit(8)
+                ->get()
+        );
     }
 }

@@ -1,5 +1,9 @@
 @extends('client.layouts.app')
 
+@section('sidebar')
+    <div class="hidden"></div>
+@endsection
+
 @section('title', 'Quét QR thanh toán - MommyKids')
 
 @section('content')

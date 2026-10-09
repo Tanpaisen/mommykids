@@ -1,53 +1,57 @@
-<?php
+<?php 
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers; 
 
-use App\Models\Category;
-use App\Models\Product;
-use App\Services\CampaignService;
+use App\Models\Category; 
+use App\Models\Product; 
+use App\Models\Setting; 
+use App\Models\Faq;
+use App\Services\CampaignService; 
 
-class HomeController extends Controller
-{
+class HomeController extends Controller 
+{ 
     public function index(
         CampaignService $campaignService
-    ) {
+    ) { 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Cấu hình chung hệ thống
+        |--------------------------------------------------------------------------
+        */
+        $settings = Setting::first(); 
+
+
         /*
         |--------------------------------------------------------------------------
         | Sản phẩm nổi bật
         |--------------------------------------------------------------------------
-        |
-        | Không cache giá cuối cùng vì Campaign có thể bắt đầu/kết thúc
-        | trong lúc cache vẫn còn hiệu lực.
-        |
         */
-        $featuredProducts = Product::query()
-            ->active()
-            ->featured()
-            ->withReviewStats()
-            ->latest()
-            ->limit(10)
-            ->get()
+        $featuredProducts = Product::query() 
+            ->active() 
+            ->featured() 
+            ->withReviewStats() 
+            ->latest() 
+            ->limit(10) 
+            ->get() 
             ->map(
-                fn (Product $product) =>
+                fn (Product $product) => 
                     $this->toCampaignCard(
                         $product,
                         $campaignService
                     )
-            );
+            ); 
+
 
         /*
         |--------------------------------------------------------------------------
         | Các section sản phẩm theo danh mục
         |--------------------------------------------------------------------------
-        |
-        | Chỉ giữ Category có sản phẩm để hiển thị các block sản phẩm
-        | ở phía dưới trang chủ.
-        |
         */
-        $sections = Category::query()
-            ->active()
+        $sections = Category::query() 
+            ->active() 
             ->with([
-                'products' => fn ($query) =>
+                'products' => fn ($query) => 
                     $query
                         ->active()
                         ->withReviewStats()
@@ -63,6 +67,7 @@ class HomeController extends Controller
                 function (
                     Category $category
                 ) use ($campaignService) {
+
                     return [
                         'title' => $category->name,
 
@@ -85,23 +90,14 @@ class HomeController extends Controller
                     ];
                 }
             )
-            ->values();
+            ->values(); 
+
+
 
         /*
         |--------------------------------------------------------------------------
-        | Danh mục riêng cho sidebar Home
+        | Danh mục sidebar Home
         |--------------------------------------------------------------------------
-        |
-        | Khác $sections:
-        |
-        | $sections:
-        | - phục vụ block sản phẩm
-        | - chỉ có category đang có sản phẩm
-        |
-        | $homeCategories:
-        | - phục vụ menu bên trái Home
-        | - lấy toàn bộ category active
-        |
         */
         $homeCategories = Category::query()
             ->active()
@@ -109,12 +105,41 @@ class HomeController extends Controller
             ->limit(10)
             ->get();
 
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | FAQ - Câu hỏi thường gặp
+        |--------------------------------------------------------------------------
+        */
+        $faqs = Faq::query()
+            ->where('is_active', 1)
+            ->orderBy('sort_order')
+            ->get();
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Trả dữ liệu sang trang khách hàng
+        |--------------------------------------------------------------------------
+        */
         return view('client.home', [
+
             'featuredProducts' => $featuredProducts,
+
             'sections' => $sections,
+
             'homeCategories' => $homeCategories,
-        ]);
-    }
+
+            'settings' => $settings,
+
+            'faqs' => $faqs,
+
+        ]); 
+    } 
+
+
 
     /*
     |--------------------------------------------------------------------------
@@ -124,18 +149,24 @@ class HomeController extends Controller
     private function toCampaignCard(
         Product $product,
         CampaignService $campaignService
-    ): array {
+    ): array { 
+
         $card = $product->toCardArray();
+
+
 
         $campaign = $campaignService
             ->getBestCampaignForProduct(
                 $product
             );
 
+
+
         /*
-         * Không có Campaign.
+         * Không có Campaign
          */
         if (!$campaign) {
+
             $card['is_campaign'] = false;
             $card['campaign_id'] = null;
             $card['campaign_type'] = null;
@@ -143,7 +174,11 @@ class HomeController extends Controller
             return $card;
         }
 
+
+
         $basePrice = (int) $product->price;
+
+
 
         $effectivePrice = (int) $campaignService
             ->getCampaignPrice(
@@ -151,19 +186,24 @@ class HomeController extends Controller
                 $product
             );
 
+
+
         /*
-         * Campaign không thực sự làm giảm giá.
+         * Campaign không giảm giá thật
          */
         if (
             $basePrice <= 0 ||
             $effectivePrice >= $basePrice
         ) {
+
             $card['is_campaign'] = false;
             $card['campaign_id'] = null;
             $card['campaign_type'] = null;
 
             return $card;
         }
+
+
 
         $discountPercent = (int) round(
             (
@@ -172,13 +212,10 @@ class HomeController extends Controller
             ) * 100
         );
 
+
+
         /*
-         * Card hiện tại hiểu các field:
-         *
-         * price
-         * old_price
-         * discount
-         * is_campaign
+         * Field hiển thị card sản phẩm
          */
         $card['price'] = $effectivePrice;
 
@@ -192,6 +229,8 @@ class HomeController extends Controller
 
         $card['campaign_type'] = $campaign->type;
 
+
+
         return $card;
-    }
+    } 
 }

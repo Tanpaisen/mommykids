@@ -63,6 +63,31 @@
                 <label class="block text-xs font-bold text-gray-600 mb-1">Câu trả lời</label>
                 <textarea name="answer" rows="3" required class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-[#FF2A54]"></textarea>
             </div>
+            <div>
+    <label class="block text-xs font-bold text-gray-600 mb-1">
+        Danh mục
+    </label>
+
+    <select name="category"
+            class="w-full px-3 py-2 border rounded-lg text-sm">
+        <option value="Chung">Chung</option>
+        <option value="Vận chuyển">Vận chuyển</option>
+        <option value="Thành viên">Thành viên</option>
+        <option value="Đổi trả">Đổi trả</option>
+    </select>
+</div>
+
+
+<div>
+    <label class="block text-xs font-bold text-gray-600 mb-1">
+        Thứ tự
+    </label>
+
+    <input type="number"
+           name="sort_order"
+           value="0"
+           class="w-full px-3 py-2 border rounded-lg text-sm">
+</div>
             <div class="flex justify-end gap-2 pt-2">
                 <button type="button" onclick="document.getElementById('addFaqModal').classList.add('hidden')" class="px-4 py-2 bg-gray-100 rounded-lg text-sm font-semibold">Hủy</button>
                 <button type="submit" class="px-4 py-2 bg-[#FF2A54] text-white rounded-lg text-sm font-semibold">Lưu câu hỏi</button>

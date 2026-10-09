@@ -8,39 +8,121 @@ use Illuminate\Http\Request;
 
 class FaqController extends Controller
 {
+
     public function index(Request $request)
     {
         $query = Faq::query();
 
-        if ($request->filled('search')) {
-            $query->where('question', 'like', '%' . $request->search . '%');
+
+        if($request->filled('search')){
+
+            $query->where(function($q) use($request){
+
+                $q->where('question','like','%'.$request->search.'%')
+                  ->orWhere('answer','like','%'.$request->search.'%');
+
+            });
+
         }
 
-        $faqs = $query->orderBy('sort_order', 'asc')->latest()->paginate(10);
-        return view('admin.hoi-dap.index', compact('faqs'));
+
+        if($request->filled('category')){
+
+            $query->where(
+                'category',
+                $request->category
+            );
+
+        }
+
+
+        if($request->filled('status')){
+
+            $query->where(
+                'is_active',
+                $request->status
+            );
+
+        }
+
+
+        $faqs = $query
+            ->orderBy('sort_order')
+            ->latest()
+            ->paginate(10);
+
+
+        return view(
+            'admin.hoi-dap.index',
+            compact('faqs')
+        );
     }
+
+
 
     public function store(Request $request)
     {
-        $request->validate([
-            'question' => 'required',
-            'answer' => 'required',
+
+        $data=$request->validate([
+
+            'question'=>'required',
+            'answer'=>'required',
+
         ]);
+
 
         Faq::create([
-            'question' => $request->question,
-            'answer' => $request->answer,
-            'category' => $request->category ?? 'Chung',
-            'is_active' => $request->has('is_active') ? 1 : 0,
-            'sort_order' => $request->sort_order ?? 0,
+
+            'question'=>$data['question'],
+            'answer'=>$data['answer'],
+            'category'=>$request->category ?? 'Chung',
+            'is_active'=>1,
+            'sort_order'=>$request->sort_order ?? 0,
+
         ]);
 
-        return redirect()->back()->with('success', 'Thêm câu hỏi thành công!');
+
+        return back()
+            ->with(
+                'success',
+                'Thêm câu hỏi thành công'
+            );
+
     }
+
+
 
     public function destroy($id)
     {
+
         Faq::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'Đã xóa câu hỏi!');
+
+
+        return back()
+            ->with(
+                'success',
+                'Đã xóa câu hỏi'
+            );
+
     }
+
+
+
+    public function toggle($id)
+    {
+
+        $faq = Faq::findOrFail($id);
+
+
+        $faq->is_active =
+            !$faq->is_active;
+
+
+        $faq->save();
+
+
+        return back();
+
+    }
+
 }

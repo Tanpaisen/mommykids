@@ -26,7 +26,3 @@ Route::get('/hoi-dap', [FaqController::class, 'index'])->name('hoi-dap.index');
 Route::post('/hoi-dap', [FaqController::class, 'store'])->name('hoi-dap.store');
 Route::delete('/hoi-dap/{id}', [FaqController::class, 'destroy'])->name('hoi-dap.destroy');
 
-// Route tạm cho Quản lý Bình luận
-Route::get('/binh-luan', function () {
-    return back()->with('info', 'Tính năng bình luận đang được phát triển');
-})->name('comments.index');

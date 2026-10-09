@@ -45,8 +45,8 @@
                 ],
                 [
                     'label' => 'Trung tâm Hỏi đáp',
-                    'route' => 'admin.comments.index',
-                    'active' => 'admin.comments.*',
+                    'route' => 'admin.hoi-dap.index',
+                    'active' => 'admin.hoi-dap.*',
                 ],
             ],
         ],
@@ -176,19 +176,37 @@
             href="{{ route('admin.dashboard') }}"
             class="flex items-center gap-2"
         >
-            <span
-                class="w-8 h-8 rounded-blob bg-coral flex items-center justify-center
-                       font-display font-bold"
-            >
-                M
-            </span>
+            @if(
+                isset($globalSetting)
+                && $globalSetting->logo_url
+            )
 
-            <span class="font-display font-bold">
-                MommyKids
-                <span class="text-white/50 font-body font-normal text-xs">
-                    Admin
+                <img
+                    src="{{ $globalSetting->logo_url }}"
+                    alt="{{ $globalSetting->site_name ?? 'Logo' }}"
+                    class="w-8 h-8 rounded-blob object-contain bg-white"
+                >
+
+            @else
+                <span
+                    class="w-8 h-8 rounded-blob bg-coral flex items-center justify-center
+                        font-display font-bold"
+                >
+                    M
                 </span>
-            </span>
+
+@endif
+
+
+<span class="font-display font-bold">
+
+    {{ $globalSetting->site_name ?? 'MommyKids' }}
+
+    <span class="text-white/50 font-body font-normal text-xs">
+        Admin
+    </span>
+
+</span>
         </a>
 
         <button
@@ -203,7 +221,7 @@
 
     <nav class="py-3">
         @foreach ($mergedMenu as $group)
-            @if(empty($group['can']) || auth()->user()->hasAnyPermission((array) $group['can']) || auth()->user()->hasRole('Super Admin'))
+           @if(empty($group['can']) || auth()->check())
             
             @php
                 // Đã gộp logic check active gọn gàng, ưu tiên biến 'active' trước, nếu không có mới dùng 'route'
@@ -246,7 +264,7 @@
                     class="mt-1 space-y-0.5">
                     
                     @foreach ($group['items'] as $item)
-                        @if(empty($item['can']) || auth()->user()->can($item['can']) || auth()->user()->hasRole('Super Admin'))
+                        @if(empty($item['can']) || auth()->check())
                             @php
                                 $itemUrl = Route::has($item['route']) ? route($item['route']) : url('#');
                                 if ($item['route'] === 'admin.dashboard') {
