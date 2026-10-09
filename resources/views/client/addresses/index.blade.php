@@ -344,7 +344,7 @@
                 type="hidden"
                 name="_method"
                 id="mkAddressMethod"
-                value="PATCH"
+                value="PUT"
                 disabled
             >
 
@@ -834,7 +834,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (methodInput) {
             methodInput.disabled = false;
-            methodInput.value = 'PATCH';
+            methodInput.value = 'PUT';
         }
 
         if (editAddressId) {
@@ -923,7 +923,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (methodInput) {
                 methodInput.disabled = false;
-                methodInput.value = 'PATCH';
+                methodInput.value = 'PUT';
             }
 
             if (editAddressId) {
