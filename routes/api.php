@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Cart\CheckoutController;
 use App\Http\Controllers\Payment\ZaloPayController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Payment\StripeController;
