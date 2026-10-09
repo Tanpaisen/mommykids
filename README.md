@@ -1,5 +1,3 @@
-Chào Tân, dựa trên đoạn nội dung bạn cung cấp cùng với các thông tin về kiến trúc hệ thống MommyKids mà chúng ta đã làm việc (Laravel, MySQL, Redis, Reverb, tích hợp thanh toán và vận chuyển), mình đã cấu trúc và viết lại file `README.md` sao cho thật chuyên nghiệp, đầy đủ và chuẩn format của một dự án trên GitHub/GitLab nhé:
-
 ```markdown
 # MommyKids 👶🍼
 
@@ -112,7 +110,5 @@ php artisan reverb:start --port=8081 --debug
 *Phát triển bởi [Lê Minh Tân] trưởng nhóm(https://www.google.com/search?q=https://github.com/Tanpaisen) và Nhóm phát triển MommyKids(4 thành viên TÚ, Tô TUẤN, ANH TUẤN).*
 
 ```
-
-Bạn có thể copy thẳng đoạn text trên và dán vào file `README.md` của dự án nhé. Nếu bạn muốn thêm bớt phần nào (ví dụ như danh sách thành viên nhóm) thì cứ báo mình!
 
 ```
