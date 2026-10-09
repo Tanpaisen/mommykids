@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Models\HandbookCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -22,8 +23,16 @@ class ArticleController extends Controller
         }
 
         $articles = $query->latest()->paginate(10);
-        return view('admin.cam-nang.index', compact('articles'));
+
+        // Lấy danh sách chương / mục cẩm nang cho form admin
+        $categories = HandbookCategory::all();
+
+        return view('admin.cam-nang.index', compact(
+            'articles',
+            'categories'
+        ));
     }
+
 
     public function store(Request $request)
     {
@@ -42,12 +51,18 @@ class ArticleController extends Controller
             'status' => $request->status ?? 'published',
         ]);
 
-        return redirect()->back()->with('success', 'Thêm bài viết cẩm nang thành công!');
+        return redirect()
+            ->back()
+            ->with('success', 'Thêm bài viết cẩm nang thành công!');
     }
+
 
     public function destroy($id)
     {
         Article::findOrFail($id)->delete();
-        return redirect()->back()->with('success', 'Đã xóa bài viết!');
+
+        return redirect()
+            ->back()
+            ->with('success', 'Đã xóa bài viết!');
     }
 }

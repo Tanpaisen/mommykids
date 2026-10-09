@@ -130,7 +130,14 @@
             <button @click="activeTab = 'cart'" 
                     :class="activeTab === 'cart' ? 'border-rose-500 text-rose-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-700'"
                     class="py-4 px-1 text-sm border-b-2 transition">
-                Giỏ hàng hiện tại ({{ count($customer->cartItems ?? []) }})
+                Giỏ hàng hiện tại (
+{{ 
+    $customer->carts
+        ->where('status','active')
+        ->flatMap->items
+        ->sum('quantity')
+}}
+)
             </button>
             <button @click="activeTab = 'wishlist'" 
                     :class="activeTab === 'wishlist' ? 'border-rose-500 text-rose-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-700'"
@@ -185,7 +192,13 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
-                        @forelse($customer->cartItems ?? [] as $item)
+                        @php
+    $cartItems = $customer->carts
+        ->where('status','active')
+        ->flatMap->items;
+@endphp
+
+@forelse($cartItems as $item)
                             <tr class="hover:bg-slate-50/80 transition">
                                 <td class="py-3.5 px-4 font-medium text-slate-800">{{ $item->product->name ?? 'Sản phẩm đã xóa' }}</td>
                                 <td class="py-3.5 px-4 text-center">

@@ -16,9 +16,24 @@
     <title>
         @yield(
             'title',
-            'MommyKids - Mẹ và bé'
+            
+            
         )
     </title>
+    @if(
+        isset($globalSetting)
+        && $globalSetting->favicon_url
+    )
+        <link
+            rel="icon"
+            href="{{ $globalSetting->favicon_url }}"
+        >
+    @else
+        <link
+            rel="icon"
+            href="{{ asset('favicon.ico') }}"
+        >
+    @endif
 
     <meta
         name="description"

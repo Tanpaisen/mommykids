@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Setting extends Model
 {
@@ -36,4 +37,69 @@ class Setting extends Model
         'meta_description',
         'header_scripts',
     ];
+
+    /**
+     * URL hiển thị logo.
+     *
+     * Cloudinary mới -> dùng trực tiếp.
+     * Local cũ -> asset storage.
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        return $this->resolveMediaUrl(
+            $this->logo
+        );
+    }
+
+    /**
+     * URL hiển thị favicon.
+     */
+    public function getFaviconUrlAttribute(): ?string
+    {
+        return $this->resolveMediaUrl(
+            $this->favicon
+        );
+    }
+
+    private function resolveMediaUrl(
+        ?string $value
+    ): ?string {
+        if (!$value) {
+            return null;
+        }
+
+        /*
+         * Cloudinary hoặc URL ngoài.
+         */
+        if (
+            Str::startsWith(
+                $value,
+                [
+                    'http://',
+                    'https://',
+                ]
+            )
+        ) {
+            return $value;
+        }
+
+        /*
+         * Hỗ trợ ảnh local cũ trong database.
+         */
+        $cleanPath = ltrim(
+            str_replace(
+                [
+                    'public/',
+                    'storage/',
+                ],
+                '',
+                $value
+            ),
+            '/'
+        );
+
+        return asset(
+            'storage/' . $cleanPath
+        );
+    }
 }

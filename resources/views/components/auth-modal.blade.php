@@ -5,13 +5,26 @@
         <!-- Nút Đóng Modal -->
         <button onclick="closeLoginModal()" class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-2xl font-bold z-10">&times;</button>
 
-        <!-- Bên trái: Banner Đỏ -->
-        <div class="md:w-1/2 bg-rose-600 p-6 text-white flex flex-col items-center justify-center text-center relative overflow-hidden">
-            <h3 class="text-2xl font-black mb-1">100%</h3>
-            <p class="text-xl font-bold uppercase tracking-wide">Hàng Chính Hãng</p>
-            <div class="mt-4 w-40 h-56 bg-rose-500 rounded-2xl border-4 border-white/20 shadow-inner flex items-center justify-center p-2">
-                 <span class="text-xs text-rose-100 font-semibold">MommyKids App</span>
-            </div>
+        <!-- Bên trái: Branding MommyKids -->
+        <div
+            class="hidden md:block md:w-1/2"
+            style="
+                position:relative;
+                overflow:hidden;
+                background:#FF6F81;
+            "
+        >
+            <img
+                src="{{ asset('images/auth-banner.png') }}"
+                alt="MommyKids Banner"
+                style="
+                    width:100%;
+                    height:100%;
+                    object-fit:cover;
+                    object-position:center;
+                    display:block;
+                "
+            >
         </div>
 
         <!-- Bên phải: Form Đăng nhập Email OTP & Social -->

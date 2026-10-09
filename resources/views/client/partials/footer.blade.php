@@ -325,36 +325,64 @@
 
                 <div class="mk-footer-brand">
 
-                    <span class="mk-footer-logo">
-                        M
-                    </span>
+                    @if(
+                        isset($globalSetting)
+                        && $globalSetting->logo_url
+                    )
 
-                    <span class="mk-footer-brand-name">
-                        Mommy<span>Kids</span>
-                    </span>
+                        <img
+                            src="{{ $globalSetting->logo_url }}"
+                            alt="{{ $globalSetting->site_name ?? 'MommyKids' }}"
+                            style="
+                                width:2rem;
+                                height:2rem;
+                                object-fit:contain;
+                            "
+                        >
 
-                </div>
+                    @else
+
+        <span class="mk-footer-logo">
+            M
+        </span>
+
+    @endif
+
+
+    <span class="mk-footer-brand-name">
+        {{ $globalSetting->site_name ?? 'MommyKids' }}
+    </span>
+
+</div>
 
 
                 <p class="mk-footer-description">
-                    Chuỗi cửa hàng mẹ và bé chính hãng —
-                    Đồng hành cùng mẹ, chắp cánh cho bé.
+                    
                 </p>
 
 
                 <p class="mk-footer-hotline">
                     Hotline:
                     <strong>
-                        1800 6886
+                        {{ $globalSetting->hotline ?? '1800 6886' }}
                     </strong>
+                </p>
+                <p class="mk-footer-hotline">
+                    Email:
+                    <strong>
+                        {{ $globalSetting->email ?? '' }}
+                   </strong>
+                </p>
+                <p class="mk-footer-hotline">
+                     Địa chỉ:
+                    <strong>
+                        {{ $globalSetting->address ?? '' }}
+                   </strong>
                 </p>
 
             </div>
 
-
-            {{-- =====================================================
-                ABOUT
-            ====================================================== --}}
+            {{-- Về chúng tôi --}}
             <div>
 
                 <p class="mk-footer-title">
@@ -364,25 +392,28 @@
                 <ul class="mk-footer-list">
 
                     <li>
-                        <a href="{{ route('pages.about') }}" class="mk-header-link">
+                        <a href="{{ url('/gioi-thieu') }}">
                             Giới thiệu
                         </a>
                     </li>
 
+
                     <li>
-                        <a href="{{ route('pages.stores') }}" class="mk-header-link">
+                        <a href="{{ url('/he-thong-cua-hang') }}">
                             Hệ thống cửa hàng
                         </a>
                     </li>
 
+
                     <li>
-                        <a href="#">
+                        <a href="{{ url('/tuyen-dung') }}">
                             Tuyển dụng
                         </a>
                     </li>
 
+
                     <li>
-                        <a href="#mk-footer">
+                        <a href="{{ url('/lien-he') }}">
                             Liên hệ
                         </a>
                     </li>
@@ -392,37 +423,39 @@
             </div>
 
 
-            {{-- =====================================================
-                POLICY
-            ====================================================== --}}
+            {{-- Chính sách --}}
             <div>
 
                 <p class="mk-footer-title">
                     Chính sách
                 </p>
 
+
                 <ul class="mk-footer-list">
 
                     <li>
-                        <a href="{{ route('pages.return') }}" class="mk-header-link">
+                        <a href="{{ url('/chinh-sach-doi-tra') }}">
                             Đổi trả hàng
                         </a>
                     </li>
 
+
                     <li>
-                        <a href="{{ route('pages.shipping') }}" class="mk-header-link">
+                        <a href="{{ url('/chinh-sach-van-chuyen') }}">
                             Vận chuyển
                         </a>
                     </li>
 
+
                     <li>
-                        <a href="#">
+                        <a href="{{ url('/chinh-sach-bao-mat') }}">
                             Bảo mật
                         </a>
                     </li>
 
+
                     <li>
-                        <a href="#">
+                        <a href="{{ url('/thanh-toan') }}">
                             Thanh toán
                         </a>
                     </li>
@@ -485,7 +518,7 @@
                 <div class="mk-footer-social">
 
                     <a
-                        href="#"
+                        href="{{ $globalSetting->facebook_url ?? '#' }}"
                         class="mk-footer-social-link"
                         aria-label="Facebook"
                     >
@@ -493,7 +526,7 @@
                     </a>
 
                     <a
-                        href="#"
+                         href="{{ $globalSetting->zalo_url ?? '#' }}"
                         class="mk-footer-social-link"
                         aria-label="Zalo"
                     >
@@ -501,7 +534,7 @@
                     </a>
 
                     <a
-                        href="#"
+                        href="{{ $globalSetting->instagram_url ?? '#' }}"
                         class="mk-footer-social-link"
                         aria-label="Instagram"
                     >
@@ -529,8 +562,7 @@
         <div class="mk-footer-bottom">
 
             <p>
-                © {{ date('Y') }} MommyKids.
-                Đã đăng ký bản quyền.
+              {{ $globalSetting->copyright ?? ('© '.date('Y').' MommyKids. Đã đăng ký bản quyền.') }}
             </p>
 
 

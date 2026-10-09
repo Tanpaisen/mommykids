@@ -5,6 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Quản trị') · MommyKids Admin</title>
+
+    {{-- ============ FAVICON (Bổ sung mới) ============ --}}
+    @if(
+        isset($globalSetting)
+        && $globalSetting->favicon_url
+    )
+        <link
+            rel="icon"
+            href="{{ $globalSetting->favicon_url }}"
+        >
+    @else
+        <link
+            rel="icon"
+            href="{{ asset('favicon.ico') }}"
+        >
+    @endif
+
     @vite(['resources/css/app.css', 'resources/js/admin.js'])
     @stack('styles')
 </head>

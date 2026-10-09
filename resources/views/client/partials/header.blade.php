@@ -258,48 +258,59 @@
         </button>
 
 
-        {{-- LOGO --}}
-        <a
-            href="{{ route('home') }}"
-            class="mk-header-logo"
+       {{-- LOGO --}}
+<a 
+    href="{{ route('home') }}" 
+    class="mk-header-logo"
+>
+
+    @if(isset($globalSetting) && $globalSetting->logo)
+
+        <img
+            src="{{ $globalSetting->logo_url }}"
+            {{-- alt="{{ $globalSetting->site_name ?? 'MommyKids' }}" --}}
+            style="
+                height:40px;
+                width:auto;
+                object-fit:contain;
+            "
         >
-            <span
-                style="
-                    width:2rem;
-                    height:2rem;
 
-                    border-radius:50%;
+    @else
 
-                    background:#FF6F81;
-                    color:#fff;
+        <span
+            style="
+                width:2rem;
+                height:2rem;
+                border-radius:50%;
+                background:#FF6F81;
+                color:#fff;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-weight:800;
+            "
+        >
+            M
+        </span>
 
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
+    @endif
 
-                    font-family:'Baloo 2',cursive;
-                    font-size:.9rem;
-                    font-weight:800;
-                "
-            >
-                M
-            </span>
 
-            <span
-                class="hidden sm:inline"
-                style="
-                    color:#2B2530;
+    {{-- <span
+        class="hidden sm:inline"
+        style="
+            color:#2B2530;
+            font-family:'Baloo 2',cursive;
+            font-size:1.15rem;
+            font-weight:800;
+            white-space:nowrap;
+        "
+    >
+        {{ $globalSetting->site_name ?? 'MommyKids' }}
+    </span> --}}
 
-                    font-family:'Baloo 2',cursive;
-                    font-size:1.15rem;
-                    font-weight:800;
-
-                    white-space:nowrap;
-                "
-            >
-                Mommy<span style="color:#FF6F81;">Kids</span>
-            </span>
-        </a>
+</a>
 
 
         {{-- =================================================
@@ -941,22 +952,426 @@
 
             {{-- LOGIN / ACCOUNT --}}
             @auth
-
-                <a
-                    href="{{ route('profile.edit') }}"
-                    title="{{ auth()->user()->name }}"
+                <div
+                    id="mk-account-wrapper"
                     style="
-                        color:#FF6F81;
-
-                        font-size:.78rem;
-                        font-weight:600;
-
-                        text-decoration:none;
-                        white-space:nowrap;
+                        position:relative;
+                        flex-shrink:0;
                     "
                 >
-                    Tài khoản
-                </a>
+                    {{-- NÚT TÀI KHOẢN --}}
+                    <button
+                        type="button"
+                        id="mk-account-btn"
+                        aria-expanded="false"
+                        style="
+                            display:flex;
+                            align-items:center;
+                            gap:.4rem;
+
+                            padding:.38rem .65rem;
+
+                            border:none;
+                            border-radius:999px;
+
+                            background:#fff;
+                            color:#FF6F81;
+
+                            font-family:'Be Vietnam Pro',sans-serif;
+                            font-size:.78rem;
+                            font-weight:600;
+
+                            cursor:pointer;
+                            white-space:nowrap;
+
+                            transition:
+                                background .15s ease,
+                                color .15s ease;
+                        "
+                    >
+                        {{-- ICON USER --}}
+                        <span
+                            style="
+                                width:28px;
+                                height:28px;
+
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+
+                                border-radius:50%;
+
+                                background:#FFE3E8;
+                                color:#FF6F81;
+
+                                font-size:.78rem;
+                                font-weight:700;
+                            "
+                        >
+                            {{ mb_strtoupper(
+                                mb_substr(
+                                    auth()->user()->name ?? 'U',
+                                    0,
+                                    1
+                                )
+                            ) }}
+                        </span>
+
+                        {{-- TÊN USER --}}
+                        <span
+                            style="
+                                max-width:110px;
+                                overflow:hidden;
+                                text-overflow:ellipsis;
+                                white-space:nowrap;
+                            "
+                        >
+                            {{ auth()->user()->name }}
+                        </span>
+
+                        {{-- MŨI TÊN --}}
+                        <svg
+                            id="mk-account-arrow"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"
+                            style="
+                                transition:transform .2s ease;
+                            "
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M6 9l6 6 6-6"
+                            />
+                        </svg>
+                    </button>
+
+                    {{-- POPUP --}}
+                    <div
+                        id="mk-account-menu"
+                        style="
+                            display:none;
+
+                            position:absolute;
+                            top:calc(100% + 10px);
+                            right:0;
+
+                            width:210px;
+
+                            padding:.45rem;
+
+                            border:1px solid #F1EDF2;
+                            border-radius:14px;
+
+                            background:#fff;
+
+                            box-shadow:
+                                0 12px 35px
+                                rgba(43,37,48,.14);
+
+                            z-index:999;
+                        "
+                    >
+                        {{-- THÔNG TIN USER --}}
+                        <div
+                            style="
+                                padding:.65rem .75rem .75rem;
+
+                                border-bottom:
+                                    1px solid #F3F0F4;
+
+                                margin-bottom:.35rem;
+                            "
+                        >
+                            <div
+                                style="
+                                    color:#2B2530;
+                                    font-size:.8rem;
+                                    font-weight:700;
+
+                                    overflow:hidden;
+                                    text-overflow:ellipsis;
+                                    white-space:nowrap;
+                                "
+                            >
+                                {{ auth()->user()->name }}
+                            </div>
+
+                            <div
+                                style="
+                                    margin-top:.15rem;
+
+                                    color:#99919B;
+                                    font-size:.68rem;
+
+                                    overflow:hidden;
+                                    text-overflow:ellipsis;
+                                    white-space:nowrap;
+                                "
+                            >
+                                {{ auth()->user()->email }}
+                            </div>
+                        </div>
+
+                        {{-- 1. THÔNG TIN CÁ NHÂN --}}
+                        <a
+                            href="{{ route('profile.edit') }}"
+                            style="
+                                display:flex;
+                                align-items:center;
+                                gap:.65rem;
+
+                                padding:.65rem .75rem;
+
+                                border-radius:10px;
+
+                                color:#2B2530;
+
+                                font-size:.78rem;
+                                font-weight:500;
+
+                                text-decoration:none;
+                            "
+                            onmouseover="
+                                this.style.background='#FFF1F3'
+                            "
+                            onmouseout="
+                                this.style.background='transparent'
+                            "
+                        >
+                            <span
+                                style="
+                                    width:30px;
+                                    height:30px;
+
+                                    display:flex;
+                                    align-items:center;
+                                    justify-content:center;
+
+                                    border-radius:9px;
+
+                                    background:#FFE3E8;
+                                    color:#FF6F81;
+                                "
+                            >
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="
+                                            M15.75 6
+                                            a3.75 3.75 0 11-7.5 0
+                                            3.75 3.75 0 017.5 0z
+
+                                            M4.501 20.118
+                                            a7.5 7.5 0 0114.998 0
+                                        "
+                                    />
+                                </svg>
+                            </span>
+
+                            <span>
+                                Thông tin cá nhân
+                            </span>
+                        </a>
+
+                        {{-- 2. ĐĂNG XUẤT --}}
+                        <form
+                            method="POST"
+                            action="{{ route('logout') }}"
+                            style="margin:0;"
+                        >
+                            @csrf
+
+                            <button
+                                type="submit"
+                                style="
+                                    width:100%;
+
+                                    display:flex;
+                                    align-items:center;
+                                    gap:.65rem;
+
+                                    padding:.65rem .75rem;
+
+                                    border:none;
+                                    border-radius:10px;
+
+                                    background:transparent;
+                                    color:#E5484D;
+
+                                    font-family:
+                                        'Be Vietnam Pro',
+                                        sans-serif;
+
+                                    font-size:.78rem;
+                                    font-weight:500;
+
+                                    cursor:pointer;
+                                    text-align:left;
+                                "
+                                onmouseover="
+                                    this.style.background='#FFF1F1'
+                                "
+                                onmouseout="
+                                    this.style.background='transparent'
+                                "
+                            >
+                                <span
+                                    style="
+                                        width:30px;
+                                        height:30px;
+
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+
+                                        border-radius:9px;
+
+                                        background:#FFF0F0;
+                                        color:#E5484D;
+                                    "
+                                >
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="
+                                                M15.75 9V5.25
+                                                A2.25 2.25 0 0013.5 3h-6
+                                                a2.25 2.25 0 00-2.25 2.25v13.5
+                                                A2.25 2.25 0 007.5 21h6
+                                                a2.25 2.25 0 002.25-2.25V15
+
+                                                M18 15l3-3m0 0-3-3m3 3H9
+                                            "
+                                        />
+                                    </svg>
+                                </span>
+
+                                <span>
+                                    Đăng xuất
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <script>
+                    document.addEventListener(
+                        'DOMContentLoaded',
+                        function () {
+                            const wrapper =
+                                document.getElementById(
+                                    'mk-account-wrapper'
+                                );
+
+                            const button =
+                                document.getElementById(
+                                    'mk-account-btn'
+                                );
+
+                            const menu =
+                                document.getElementById(
+                                    'mk-account-menu'
+                                );
+
+                            const arrow =
+                                document.getElementById(
+                                    'mk-account-arrow'
+                                );
+
+                            if (
+                                !wrapper ||
+                                !button ||
+                                !menu
+                            ) {
+                                return;
+                            }
+
+                            function closeAccountMenu() {
+                                menu.style.display = 'none';
+
+                                button.setAttribute(
+                                    'aria-expanded',
+                                    'false'
+                                );
+
+                                if (arrow) {
+                                    arrow.style.transform =
+                                        'rotate(0deg)';
+                                }
+                            }
+
+                            button.addEventListener(
+                                'click',
+                                function (event) {
+                                    event.stopPropagation();
+
+                                    const isOpen =
+                                        menu.style.display
+                                        === 'block';
+
+                                    if (isOpen) {
+                                        closeAccountMenu();
+                                        return;
+                                    }
+
+                                    menu.style.display = 'block';
+
+                                    button.setAttribute(
+                                        'aria-expanded',
+                                        'true'
+                                    );
+
+                                    if (arrow) {
+                                        arrow.style.transform =
+                                            'rotate(180deg)';
+                                    }
+                                }
+                            );
+
+                            menu.addEventListener(
+                                'click',
+                                function (event) {
+                                    event.stopPropagation();
+                                }
+                            );
+
+                            document.addEventListener(
+                                'click',
+                                closeAccountMenu
+                            );
+
+                            document.addEventListener(
+                                'keydown',
+                                function (event) {
+                                    if (event.key === 'Escape') {
+                                        closeAccountMenu();
+                                    }
+                                }
+                            );
+                        }
+                    );
+                </script>
 
             @else
 
@@ -971,7 +1386,10 @@
 
                         color:#FF6F81;
 
-                        font-family:'Be Vietnam Pro',sans-serif;
+                        font-family:
+                            'Be Vietnam Pro',
+                            sans-serif;
+
                         font-size:.78rem;
                         font-weight:600;
 

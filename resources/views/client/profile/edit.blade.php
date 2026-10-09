@@ -8,81 +8,15 @@
 
 @php
 
-    // Gán thử số tiền chi tiêu để test (Bỏ comment dòng bên dưới để test nhanh)
+$user = $user->fresh();
 
-    //$user->total_spent = 75000000; 
+$totalSpent = (float) $user->fresh()->total_spent;
 
+$currentTier = $user->current_tier_name;
 
+$progress = $user->next_tier_progress;
 
-    $totalSpent = $user->total_spent ?? 0;
-
-
-
-    // Tự động xác định Hạng hiện tại và Tiến trình nâng hạng
-
-    if ($totalSpent >= 10000000) {
-
-        $currentTier = 'Hạng Kim Cương';
-
-        $progress = [
-
-            'percent'   => 100, 
-
-            'needed'    => 0, 
-
-            'next_tier' => ''
-
-        ];
-
-    } elseif ($totalSpent >= 5000000) {
-
-        $currentTier = 'Hạng Vàng';
-
-        $progress = [
-
-            'percent'   => round(($totalSpent - 5000000) / 5000000 * 100),
-
-            'needed'    => 10000000 - $totalSpent,
-
-            'next_tier' => 'Hạng Kim Cương'
-
-        ];
-
-    } elseif ($totalSpent >= 2000000) {
-
-        $currentTier = 'Hạng Bạc';
-
-        $progress = [
-
-            'percent'   => round(($totalSpent - 2000000) / 3000000 * 100),
-
-            'needed'    => 5000000 - $totalSpent,
-
-            'next_tier' => 'Hạng Vàng'
-
-        ];
-
-    } else {
-
-        $currentTier = 'Hạng Thành viên';
-
-        $progress = [
-
-            'percent'   => round($totalSpent / 2000000 * 100),
-
-            'needed'    => 2000000 - $totalSpent,
-
-            'next_tier' => 'Hạng Bạc'
-
-        ];
-
-    }
-
-
-
-    // ĐỒNG BỘ MÃ KHÁCH HÀNG
-
-    $customerCode = $user->loyalty_code ?? ('MK-' . $user->id);
+$customerCode = $user->loyalty_code ?? ('MK-' . $user->id);
 
 @endphp
 
@@ -191,8 +125,7 @@
         font-weight: 800;
 
         font-size: 24px;
-
-        border-radius: 50%;
+border-radius: 50%;
 
         display: flex;
 
@@ -397,8 +330,7 @@
         font-size: 12px;
 
         color: #718096;
-
-        font-weight: 500;
+font-weight: 500;
 
         margin-bottom: 2px;
 
@@ -495,7 +427,7 @@
     .profile-address-location { margin: 7px 0 0; color: #66616b; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
     .profile-address-label { display: inline-block; margin-top: 10px; background: #f5f5f7; color: #6c6570; padding: 3px 9px; border-radius: 7px; font-size: 12px; }
     .profile-address-edit { align-self: flex-start; white-space: nowrap; color: #ed315d; text-decoration: none; font-size: 13px; font-weight: 750; padding: 8px 0; }
-    .profile-address-edit:hover { color: #c91f4b; text-decoration: underline; }
+.profile-address-edit:hover { color: #c91f4b; text-decoration: underline; }
     .profile-address-empty { text-align: center; border: 1px dashed #f2baca; border-radius: 15px; padding: 28px 18px; color: #66616b; }
     .profile-address-empty a { color: #e82a58; font-weight: 750; text-decoration: none; }
     @media (max-width: 640px) {
@@ -588,8 +520,7 @@
             <div class="loyalty-progress-card mb-3">
 
                 <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 12.5px;">
-
-                    <span class="text-secondary">Chi tiêu: <strong class="text-dark">{{ number_format($totalSpent) }}đ</strong></span>
+<span class="text-secondary">Chi tiêu: <strong class="text-dark">{{ number_format($totalSpent) }}đ</strong></span>
 
                     @if(($progress['needed'] ?? 0) > 0)
 
@@ -699,8 +630,7 @@
                             <div class="label-value">{{ $user->name ?? 'Chưa cập nhật' }}</div>
 
                         </div>
-
-                    </div>
+</div>
 
                     <div class="col-sm-6">
 
@@ -796,7 +726,7 @@
             <section class="profile-address-section mb-4" aria-labelledby="profileAddressTitle">
                 <div class="profile-address-head">
                     <h5 class="profile-address-title" id="profileAddressTitle"><span aria-hidden="true" style="color:#ff2a54;">📍</span> Sổ địa chỉ nhận hàng</h5>
-                    <a href="{{ route('profile.addresses.index') }}?add=1" class="btn-gradient-danger profile-address-add">+ Thêm địa chỉ mới</a>
+<a href="{{ route('profile.addresses.index') }}?add=1" class="btn-gradient-danger profile-address-add">+ Thêm địa chỉ mới</a>
                 </div>
 
                 @php
