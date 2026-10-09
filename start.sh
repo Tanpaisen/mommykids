@@ -1,11 +1,21 @@
 #!/bin/sh
+set -e
 
-# 1. Thực thi các lệnh chạy 1 lần lúc ứng dụng vừa khởi động (lúc này đã nhận đủ Env từ Railway)
-echo "Đang khởi tạo cache..."
+echo "Khởi tạo MommyKids..."
 php artisan optimize
-# php artisan migrate --force  (Thường các lệnh migrate database cũng được để ở đây)
-# php artisan cache:warm-up-all (Nếu bạn tự viết command này)
 
-# 2. Sau khi dọn dẹp và chuẩn bị xong, bàn giao toàn quyền lại cho Supervisor
+(
+    sleep 10
+
+    echo "Đang warm cache nền..."
+
+    if php artisan cache:warm --ghn-delay=100; then
+        echo "Warm cache nền thành công."
+    else
+        echo "Warm cache nền có lỗi; giữ cache GHN cũ và ứng dụng vẫn tiếp tục chạy."
+    fi
+) &
+
 echo "Khởi động Supervisor..."
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+exec /usr/bin/supervisord \
+    -c /etc/supervisor/conf.d/supervisord.conf

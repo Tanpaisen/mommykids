@@ -10,13 +10,13 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
-use App\Http\Controllers\CartController;
+use App\Http\Controllers\Cart\CartController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Auth\SocialLoginController; // <-- Đã thêm Controller Social Login
-use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Cart\CheckoutController;
 use App\Http\Controllers\PageController;
 
 // --- CONTROLLERS ADMIN ---

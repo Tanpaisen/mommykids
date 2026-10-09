@@ -17,18 +17,6 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasUlids;
 
-    public function cachedUnreadCount(): int
-    {
-        return Cache::remember(self::unreadCacheKey($this->id), now()->addMinutes(30), function () {
-            return $this->unreadNotifications()->count();
-        });
-    }
-
-    public static function unreadCacheKey(string $userId): string
-    {
-        return "notif:unread:{$userId}";
-    }
-
     /**
      * Các thuộc tính được phép mass assignment.
      *
@@ -247,5 +235,37 @@ class User extends Authenticatable
     public function notificationPreferences(): HasMany
     {
         return $this->hasMany(NotificationPreference::class);
+    }
+
+    public static function unreadCacheKey(string $userId): string
+    {
+        return "notif:unread:{$userId}";
+    }
+
+    public static function notificationListCacheKey(
+        string $userId
+    ): string {
+        return "notif:header:{$userId}";
+    }
+
+    public function cachedUnreadCount(): int
+    {
+        return Cache::remember(
+            self::unreadCacheKey($this->id),
+            now()->addMinutes(10),
+            fn () => $this->unreadNotifications()->count()
+        );
+    }
+
+    public function cachedHeaderNotifications()
+    {
+        return Cache::remember(
+            self::notificationListCacheKey($this->id),
+            now()->addMinutes(10),
+            fn () => $this->notifications()
+                ->latest()
+                ->limit(8)
+                ->get()
+        );
     }
 }
