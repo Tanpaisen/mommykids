@@ -1,66 +1,118 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+Chào Tân, dựa trên đoạn nội dung bạn cung cấp cùng với các thông tin về kiến trúc hệ thống MommyKids mà chúng ta đã làm việc (Laravel, MySQL, Redis, Reverb, tích hợp thanh toán và vận chuyển), mình đã cấu trúc và viết lại file `README.md` sao cho thật chuyên nghiệp, đầy đủ và chuẩn format của một dự án trên GitHub/GitLab nhé:
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+```markdown
+# MommyKids 👶🍼
 
-## About Laravel
+**MommyKids** là hệ thống thương mại điện tử chuyên cung cấp các sản phẩm chăm sóc mẹ và bé, được xây dựng mạnh mẽ trên nền tảng **Laravel 10**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Hệ thống cung cấp trải nghiệm mua sắm hiện đại, mượt mà và hỗ trợ đầy đủ các nghiệp vụ từ giỏ hàng, quản lý đơn hàng, tính phí vận chuyển tự động, thanh toán trực tuyến, áp dụng voucher, tích điểm thưởng cho đến hệ thống thông báo realtime và trang quản trị (Admin Dashboard) chuyên nghiệp.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🌐 Website Demo
 
-## Learning Laravel
+*   **Website chính thức:** [https://mommykids.up.railway.app](https://mommykids.up.railway.app)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🛠 Công nghệ sử dụng (Tech Stack)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Hệ thống được thiết kế theo kiến trúc 3-Tier (Presentation, Application/Logic, Data), bao gồm:
 
-## Laravel Sponsors
+*   **Backend:** PHP 8.x, Laravel 10.
+*   **Frontend:** Blade Templates, ReactJS (tích hợp qua Vite).
+*   **Cơ sở dữ liệu:** MySQL (hoặc TiDB Cloud Serverless).
+*   **Cache & Hàng đợi (Queue):** Redis.
+*   **Real-time & WebSockets:** Laravel Reverb.
+*   **Deployment:** Railway.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+---
 
-### Premium Partners
+## 🚀 Các tính năng nổi bật
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+### 🛍️ Dành cho Khách hàng (User)
+*   **Mua sắm & Giỏ hàng:** Tìm kiếm sản phẩm, xem chi tiết, thêm vào giỏ hàng và quản lý giỏ hàng thông minh.
+*   **Vận chuyển tự động:** Tích hợp API **Giao Hàng Nhanh (GHN)** để lấy danh sách Tỉnh/Huyện/Xã chính xác và tính phí ship theo thời gian thực dựa trên khối lượng.
+*   **Thanh toán đa dạng:** Hỗ trợ đa cổng thanh toán bao gồm:
+    *   Thanh toán khi nhận hàng (COD).
+    *   Chuyển khoản ngân hàng tự động (VietQR / tích hợp SePay).
+    *   ZaloPay (Sandbox).
+    *   Thẻ quốc tế Visa/Mastercard qua Stripe (Sandbox).
+    *   PayPal (Sandbox).
+*   **Ưu đãi & Điểm thưởng:** 
+    *   Cơ chế Voucher thông minh (áp dụng song song mã giảm giá đơn hàng và mã miễn phí vận chuyển).
+    *   Hệ thống tích luỹ điểm thưởng khi mua hàng và quy đổi điểm để giảm giá trực tiếp.
+*   **Quản lý tài khoản:** Quản lý thông tin cá nhân, sổ địa chỉ nhận hàng, theo dõi trạng thái đơn hàng.
 
-## Contributing
+### ⚙️ Dành cho Quản trị viên (Admin)
+*   **Dashboard tổng quan:** Thống kê doanh thu, đơn hàng, sản phẩm bán chạy.
+*   **Quản lý Sản phẩm & Tồn kho:** Thêm, sửa, xóa sản phẩm, danh mục, cập nhật tồn kho.
+*   **Xử lý Đơn hàng:** Xác nhận đơn, cập nhật trạng thái giao hàng, tạo vận đơn đồng bộ với GHN.
+*   **Quản lý Khuyến mãi:** Tạo các chiến dịch (Campaign) giảm giá, quản lý mã Voucher.
+*   **Quản lý Khách hàng:** Xem thông tin, lịch sử mua hàng và điểm tích lũy của khách.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 💻 Hướng dẫn cài đặt môi trường Local
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Để chạy dự án trên máy tính cá nhân, bạn cần cài đặt sẵn: **PHP >= 8.1**, **Composer**, **Node.js**, **MySQL** và **Redis**.
 
-## Security Vulnerabilities
+**Bước 1: Clone dự án về máy**
+```bash
+git clone [https://github.com/Tanpaisen/mommykids.git](https://github.com/Tanpaisen/mommykids.git)
+cd mommykids
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```
 
-## License
+**Bước 2: Cài đặt các thư viện (Dependencies)**
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+composer install
+npm install
+
+```
+
+**Bước 3: Cấu hình môi trường (.env)**
+Copy file `.env.example` thành `.env` và cập nhật các thông số kết nối Database, Redis, và các API Keys (GHN, ZaloPay, Stripe...):
+
+```bash
+cp .env.example .env
+php artisan key:generate
+
+```
+
+**Bước 4: Chạy Migration và Seed dữ liệu mẫu**
+
+```bash
+php artisan migrate --seed
+
+```
+
+**Bước 5: Chạy các dịch vụ (Mở nhiều terminal)**
+
+```bash
+# Terminal 1: Chạy server Laravel
+php artisan serve
+
+# Terminal 2: Biên dịch Frontend (Vite)
+npm run dev
+
+# Terminal 3: Chạy Queue Worker (xử lý email, job ngầm)
+php artisan queue:work
+
+# Terminal 4: Chạy WebSocket Server (Thông báo realtime)
+php artisan reverb:start --port=8081 --debug
+
+```
+
+*Truy cập dự án tại: `http://localhost:8000*`
+
+---
+
+*Phát triển bởi [Lê Minh Tân] trưởng nhóm(https://www.google.com/search?q=https://github.com/Tanpaisen) và Nhóm phát triển MommyKids(4 thành viên TÚ, Tô TUẤN, ANH TUẤN).*
+
+```
+
+Bạn có thể copy thẳng đoạn text trên và dán vào file `README.md` của dự án nhé. Nếu bạn muốn thêm bớt phần nào (ví dụ như danh sách thành viên nhóm) thì cứ báo mình!
+
+```
